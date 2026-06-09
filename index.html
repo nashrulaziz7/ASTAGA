@@ -5,10 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Input Nilai Premium</title>
   
+  <!-- Memuat Tailwind CSS untuk Desain -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Memuat React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Memuat Babel agar browser mengerti bahasa React (JSX) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Memuat SheetJS untuk membaca file Excel (.xls, .xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800">
   <div id="root"></div>
@@ -23,8 +31,10 @@
     const IconBookOpen = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>;
     const IconGraduationCap = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>;
     const IconSave = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>;
-    const IconUploadCloud = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path><polyline points="16 16 12 12 8 16"></polyline></svg>;
     const IconSettings = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
+    const IconCheckCircle = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+    const IconAlertCircle = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>;
+    const IconFileText = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>;
 
     // --- HELPER FUNCTION: PROPER CASE ---
     const toProperCase = (str) => {
@@ -32,7 +42,7 @@
       return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
     };
 
-    // --- DEFAULT MOCK DATA (Dipakai kalau Admin belum upload) ---
+    // --- DEFAULT MOCK DATA ---
     const DEFAULT_MASTER_DATA = {
       teachers: [
         { name: 'Pak Budi', password: '123', assignments: [{ classId: '10A', mapel: 'Matematika' }, { classId: '10B', mapel: 'Matematika' }] },
@@ -87,9 +97,7 @@
       });
 
       const [currentUser, setCurrentUser] = useState(null);
-      const [activeAssignment, setActiveAssignment] = useState(null); // { kelas, mapel }
-      
-      // State untuk Popup Lucu & Notifikasi biasa
+      const [activeAssignment, setActiveAssignment] = useState(null);
       const [popup, setPopup] = useState({ show: false, type: 'success' });
       const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -141,14 +149,10 @@
 
     // --- LOGIN SCREEN ---
     function LoginScreen({ masterData, onLogin, onLoginFail }) {
-      const [mode, setMode] = useState('guru'); // 'guru' | 'admin'
-      
-      // State Guru
+      const [mode, setMode] = useState('guru'); 
       const [selectedGuru, setSelectedGuru] = useState('');
       const [selectedAssign, setSelectedAssign] = useState('');
       const [password, setPassword] = useState('');
-      
-      // State Admin
       const [adminPass, setAdminPass] = useState('');
 
       const guruObj = masterData.teachers.find(t => t.name === selectedGuru);
@@ -165,7 +169,7 @@
 
       const handleLoginAdmin = (e) => {
         e.preventDefault();
-        if (adminPass === 'admin123') { // Hardcoded Admin Password
+        if (adminPass === 'admin123') { 
           onLogin('ADMIN', null);
         } else {
           onLoginFail();
@@ -248,7 +252,8 @@
                     <label className="block text-sm font-bold text-slate-700 mb-2">Password Admin</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IconLock className="h-5 w-5 text-slate-400" /></div>
-                      <input type="password" className="pl-10 w-full rounded-xl border-2 border-slate-200 py-3 px-3 text-slate-900 focus:outline-none focus:border-slate-800 font-medium" placeholder="Kunci rahasia (admin123)" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} required />
+                      {/* Pembaruan Placeholder Admin */}
+                      <input type="password" className="pl-10 w-full rounded-xl border-2 border-slate-200 py-3 px-3 text-slate-900 focus:outline-none focus:border-slate-800 font-medium" placeholder="Input Kode Rahasiamu" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} required />
                     </div>
                   </div>
                   <button type="submit" className="w-full bg-slate-800 text-white font-bold rounded-xl py-3.5 hover:bg-slate-900 active:scale-95 transition-all shadow-lg mt-4">
@@ -275,70 +280,98 @@
 
     // --- ADMIN DASHBOARD ---
     function AdminDashboard({ masterData, setMasterData, onLogout, showToast, toast }) {
+      
+      // Update: Logika Upload Guru menggunakan SheetJS (Mendukung file Excel)
       const handleUploadGuru = (e) => {
         const file = e.target.files[0];
         if(!file) return;
+        
         const reader = new FileReader();
         reader.onload = (evt) => {
-          const lines = evt.target.result.split('\n');
-          const teachersMap = {};
-          
-          // Format CSV: Nama Guru, Password, Kelas, Mapel
-          lines.slice(1).forEach(line => {
-            const parts = line.split(',');
-            if(parts.length >= 4) {
-              const nama = toProperCase(parts[0].trim());
-              const pass = parts[1].trim();
-              const kelas = parts[2].trim().toUpperCase(); // Kelas biasanya Upper, cth: 10A
-              const mapel = toProperCase(parts[3].trim());
-              
-              if(nama) {
-                if(!teachersMap[nama]) {
-                  teachersMap[nama] = { name: nama, password: pass, assignments: [] };
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = window.XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = window.XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+            const teachersMap = {};
+            
+            // Baris pertama (index 0) biasanya Header: Nama Guru, Password, Kelas, Mapel
+            rows.slice(1).forEach(parts => {
+              if(parts.length >= 4 && parts[0]) {
+                const nama = toProperCase(String(parts[0]).trim());
+                const pass = String(parts[1]).trim();
+                const kelas = String(parts[2]).trim().toUpperCase();
+                const mapel = toProperCase(String(parts[3]).trim());
+                
+                if(nama) {
+                  if(!teachersMap[nama]) {
+                    teachersMap[nama] = { name: nama, password: pass, assignments: [] };
+                  }
+                  teachersMap[nama].assignments.push({ classId: kelas, mapel: mapel });
                 }
-                teachersMap[nama].assignments.push({ classId: kelas, mapel: mapel });
               }
+            });
+            
+            const newTeachers = Object.values(teachersMap);
+            if(newTeachers.length > 0) {
+              setMasterData(prev => ({ ...prev, teachers: newTeachers }));
+              showToast(`Berhasil import ${newTeachers.length} Data Guru dari Excel!`, 'success');
+            } else {
+              showToast(`Data Excel kosong atau format tidak sesuai!`, 'error');
             }
-          });
-          
-          const newTeachers = Object.values(teachersMap);
-          if(newTeachers.length > 0) {
-            setMasterData(prev => ({ ...prev, teachers: newTeachers }));
-            showToast(`Berhasil import ${newTeachers.length} Data Guru!`, 'success');
+          } catch(err) {
+            showToast(`Gagal membaca file. Pastikan itu file Excel yang valid.`, 'error');
+            console.error(err);
           }
         };
-        reader.readAsText(file);
+        // FileReader as ArrayBuffer untuk membaca Excel Binary
+        reader.readAsArrayBuffer(file); 
+        e.target.value = ''; // reset input
       };
 
+      // Update: Logika Upload Siswa menggunakan SheetJS (Mendukung file Excel)
       const handleUploadSiswa = (e) => {
         const file = e.target.files[0];
         if(!file) return;
+        
         const reader = new FileReader();
         reader.onload = (evt) => {
-          const lines = evt.target.result.split('\n');
-          const studentsMap = {}; // Mengelompokkan per kelas
-          
-          // Format CSV: Kelas, ID Siswa, Nama Siswa
-          lines.slice(1).forEach(line => {
-            const parts = line.split(',');
-            if(parts.length >= 3) {
-              const kelas = parts[0].trim().toUpperCase();
-              const idSiswa = parts[1].trim();
-              const namaSiswa = toProperCase(parts[2].trim());
-              
-              if(kelas && idSiswa) {
-                if(!studentsMap[kelas]) studentsMap[kelas] = [];
-                studentsMap[kelas].push({ id: idSiswa, name: namaSiswa });
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = window.XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = window.XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+            const studentsMap = {};
+            
+            // Baris pertama (index 0) biasanya Header: Kelas, ID Siswa, Nama Siswa
+            rows.slice(1).forEach(parts => {
+              if(parts.length >= 3 && parts[0]) {
+                const kelas = String(parts[0]).trim().toUpperCase();
+                const idSiswa = String(parts[1]).trim();
+                const namaSiswa = toProperCase(String(parts[2]).trim());
+                
+                if(kelas && idSiswa) {
+                  if(!studentsMap[kelas]) studentsMap[kelas] = [];
+                  studentsMap[kelas].push({ id: idSiswa, name: namaSiswa });
+                }
               }
+            });
+            
+            if(Object.keys(studentsMap).length > 0) {
+              setMasterData(prev => ({ ...prev, students: studentsMap }));
+              showToast(`Berhasil import Siswa dari ${Object.keys(studentsMap).length} Kelas!`, 'success');
+            } else {
+              showToast(`Data Excel kosong atau format tidak sesuai!`, 'error');
             }
-          });
-          
-          if(Object.keys(studentsMap).length > 0) {
-            setMasterData(prev => ({ ...prev, students: studentsMap }));
-            showToast(`Berhasil import Siswa dari ${Object.keys(studentsMap).length} Kelas!`, 'success');
+          } catch(err) {
+            showToast(`Gagal membaca file. Pastikan itu file Excel yang valid.`, 'error');
+            console.error(err);
           }
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
+        e.target.value = ''; // reset input
       };
 
       return (
@@ -351,8 +384,8 @@
           <main className="max-w-4xl mx-auto p-6 w-full space-y-6">
             <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
               <h2 className="text-xl font-bold mb-2">1. Upload Data Master Guru & Mapel</h2>
-              <p className="text-slate-500 text-sm mb-4">Upload CSV dengan susunan kolom: <strong>Nama Guru, Password, Kelas, Mapel</strong></p>
-              <input type="file" accept=".csv" onChange={handleUploadGuru} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+              <p className="text-slate-500 text-sm mb-4">Upload File Excel (.xls / .xlsx) dengan kolom: <strong>Nama Guru, Password, Kelas, Mapel</strong></p>
+              <input type="file" accept=".xls,.xlsx" onChange={handleUploadGuru} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
               
               <div className="mt-4 p-4 bg-slate-50 rounded-xl">
                 <p className="font-bold text-sm mb-2">Preview (Ada {masterData.teachers.length} Guru tersimpan):</p>
@@ -364,8 +397,8 @@
 
             <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
               <h2 className="text-xl font-bold mb-2">2. Upload Data Master Siswa</h2>
-              <p className="text-slate-500 text-sm mb-4">Upload CSV dengan susunan kolom: <strong>Kelas, ID Siswa, Nama Siswa</strong></p>
-              <input type="file" accept=".csv" onChange={handleUploadSiswa} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
+              <p className="text-slate-500 text-sm mb-4">Upload File Excel (.xls / .xlsx) dengan kolom: <strong>Kelas, ID Siswa, Nama Siswa</strong></p>
+              <input type="file" accept=".xls,.xlsx" onChange={handleUploadSiswa} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
               
               <div className="mt-4 p-4 bg-slate-50 rounded-xl">
                 <p className="font-bold text-sm mb-2">Preview Kelas Terdaftar:</p>
