@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Input Nilai Premium</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ASTAGA - Asisten Sistem Terpadu Guru Al Kautsar</title>
   
   <!-- Memuat Tailwind CSS untuk Desain -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,65 +21,48 @@
   <!-- Pengaturan Font Inter untuk estetika yang lebih modern & jelas -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    /* Menyembunyikan panah pada input nomor */
+    body, html, #root { 
+      font-family: 'Inter', sans-serif; 
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
-    /* Sembunyikan scrollbar untuk kapsul kelas */
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased text-sm">
+<body class="bg-slate-50 text-slate-900 antialiased text-xs">
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo } = React;
 
     // =========================================================================
-    // --- 1. DEKLARASI KONSTAN GLOBAL (DI-HOIST UTAMA AGAR BEBAS TDZ ERROR) ---
+    // --- 1. DEKLARASI KONSTAN GLOBAL ---
     // =========================================================================
-    
-    // --- KOLOM NILAI STANDAR ---
     const GRADE_COLUMNS = ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'];
-
-    // --- SCRIPT_URL SINKRONISASI CLOUD ---
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxumv2L-7WFcbc1arIkxDZVE2WC9CwOyWrbe1Tm30IQfeXI29YFMhaG7DvsS2Qe0LUZ/exec';
 
-    // --- DAFTAR MAPEL DEFAULT ---
     const DEFAULT_MAPELS = [
-      "Pendidikan Agama Islam",
-      "Bahasa Indonesia",
-      "Pendidikan Jasmani Olahraga dan Kesehatan",
-      "Koding",
-      "Tahfidz",
-      "Kemuhammadiyahan",
-      "Ilmu Pengetahuan Alam dan Sosial",
-      "Bahasa Inggris",
-      "Bahasa Jawa",
-      "Iqra'",
-      "Pendidikan Pancasila",
-      "Matematika",
-      "Seni Budaya",
-      "Bahasa Arab",
-      "Praktik Ibadah"
+      "Pendidikan Agama Islam", "Bahasa Indonesia", "Pendidikan Jasmani Olahraga dan Kesehatan",
+      "Koding", "Tahfidz", "Kemuhammadiyahan", "Ilmu Pengetahuan Alam dan Sosial",
+      "Bahasa Inggris", "Bahasa Jawa", "Iqra'", "Pendidikan Pancasila", "Matematika",
+      "Seni Budaya", "Bahasa Arab", "Praktik Ibadah"
     ];
 
-    // --- DEFAULT DATA MASTER AWAL (BACKUP LOKAL) ---
     const DEFAULT_MASTER_DATA = {
       teachers: [
-        { name: 'Pak Budi', password: '123', assignments: [{ classId: '10A', mapel: 'Matematika' }, { classId: '10B', mapel: 'Matematika' }] },
-        { name: 'Bu Siti', password: '123', assignments: [{ classId: '10A', mapel: 'Bahasa Indonesia' }] },
+        { name: 'Pak Budi', password: '123', assignments: [{ classId: '10A', mapel: 'Matematika' }] },
+        { name: 'Bu Siti', password: '123', assignments: [{ classId: '10A', mapel: 'Bahasa Indonesia' }] }
       ],
-      students: {
-        '10A': [ { id: '1', name: 'Agus Setiawan' }, { id: '2', name: 'Bambang Pamungkas' }, { id: '3', name: 'Citra Kirana' }, { id: '4', name: 'Dewi Lestari' } ],
-        '10B': [ { id: '1', name: 'Eko Patrio' }, { id: '2', name: 'Fajar Alfian' } ],
-      },
+      students: { '10A': [ { id: '1', name: 'Agus Setiawan' } ] },
       gradesSummary: {} 
     };
 
-    // --- PALET WARNA PASTEL JAUH LEBIH VIBRANT ---
     const AVATAR_COLORS = [
       'bg-indigo-200 border-indigo-400 text-indigo-900 shadow-sm hover:bg-indigo-300', 
       'bg-emerald-200 border-emerald-400 text-emerald-900 shadow-sm hover:bg-emerald-300', 
@@ -98,38 +81,34 @@
       'bg-gradient-to-br from-rose-100/95 via-rose-50/50 to-white border-rose-300/80 shadow-md shadow-rose-100/40 hover:border-rose-500 hover:shadow-lg',
     ];
 
-    // --- PUSTAKA BAHASA UNTUK POPUP RANDOM ---
     const SUCCESS_LOGIN_MSGS = [
       { emoji: '🥳🎉', title: 'WUIH MANTAP!', desc: 'Berhasil masuk Suhu! Sini saya bantu ketikin nilainya~ ❤️' },
       { emoji: '✨🚀', title: 'AYO GASSS!', desc: 'Akhirnya masuk juga! Semangat ya guruku tersayang! 🥰' },
       { emoji: '⭐🤩', title: 'SUHU DATANG!', desc: 'Mantap Suhu! Silakan tebarkan nilai rapot indahmu hari ini!' }
     ];
-    
     const ERROR_LOGIN_MSGS = [
       { emoji: '🤦‍♂️🤪', title: 'GAGAL FOKUS!', desc: 'Aduh gagal! Passwordnya salah atau kurang kopi nih? ☕' },
       { emoji: '🧐🤔', title: 'PINTU TERKUNCI!', desc: 'Salah password bos! Coba inget-inget lagi sambil merem~ 🤪' }
     ];
-    
     const ROMANTIC_REMEDI_MSGS = [
       { emoji: '🥺🌹', title: 'Tunggu Dulu Guru Keren...', desc: 'Masih ada nilai anak-anak di bawah KKM tuh. Masa depannya jangan dimerahkan ya... 🥺' },
       { emoji: '❤️🩹😘', title: 'Eits, Kurang Dikit Lagi...', desc: 'Aduh, kasihan mereka yang dapat nilai merah. Yuk kasih remidi dulu demi masa depan cerah mereka! 🌹' }
     ];
-    
     const SWITCH_CLASS_MSGS = [
       { emoji: '🫣💔', title: 'YAKIN SIAP BERPALING?', desc: 'Beneran nih mau pindah ke mapel lain? Pastikan nilai di kelas ini udah kamu Kirim ya biar aman! 🥺' },
       { emoji: '🏃‍♂️💨', title: 'CUSSS PINDAH KELAS!', desc: 'Cieee mau mampir ke kelas sebelah. Jangan lupa klik tombol Kirim Nilai dulu sebelum cabut ya bos!' }
     ];
+    const KOCAK_EMPTY_WARNINGS = [
+      "Wandeeeh bos! Nilainya masih kosong melompong gini mau dikirim? Guru gaib ya yang dapet nilai? Isinya jangan kosong kayak dompet tanggal tua dong! 🤪💸",
+      "Astaga naga! Nilainya masih kosong bersih gini mau diunduh? Masa ngunduh angin puyuh sih? Isi dulu minimal satu nilai siswa ya bos! 👻🔥",
+      "Eits, gak bisa satset gitu dong! Nilainya aja belum dapet hidayah alias masih kosong begini. Ketikin nilainya dulu yuk biar berkah! 🙋‍♂️💭",
+      "Waduh! Mau pamer lembar kosong ke sekolah ya? 🤣 Isinya masih bersih tanpa noda nih. Tolong diinput dulu ya guru panutanku! 🧸🌸"
+    ];
+
+    function toProperCase(str) { return !str ? '' : str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()); }
 
     // =========================================================================
-    // --- 2. KOLEKSI FUNGSI PEMBANTU UTAMA ---
-    // =========================================================================
-    function toProperCase(str) {
-      if (!str) return '';
-      return str.toLowerCase().replace(/\b\w/g, function(s) { return s.toUpperCase(); });
-    }
-
-    // =========================================================================
-    // --- KOMPONEN IKON ---
+    // --- 2. KOMPONEN IKON ---
     // =========================================================================
     function IconLock({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>; }
     function IconUser({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>; }
@@ -137,7 +116,7 @@
     function IconBookOpen({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>; }
     function IconGraduationCap({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>; }
     function IconSave({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>; }
-    function IconSettings({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>; }
+    function IconSettings({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 1 0 5.66 5.66"></path></svg>; }
     function IconCheckCircle({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>; }
     function IconAlertCircle({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>; }
     function IconFileText({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>; }
@@ -151,11 +130,11 @@
     function IconTrash({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>; }
     function IconPlus({ className }) { return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>; }
 
-    // --- POPUP HAPUS DATA ADMIN ---
+    // =========================================================================
+    // --- 3. KOMPONEN POPUP GLOBAL ---
+    // =========================================================================
     function FunnyDeletePopup({ show, targetName, type, onConfirm, onCancel }) {
       if (!show) return null;
-      let emoji = '😭💔';
-      let title = 'YAKIN MAU HAPUS?';
       let desc = `Beneran mau menghapus ${targetName}? Nanti kalau kangen gimana?`;
       if (type === 'teacher') desc = `Yakin mau usir Guru ${targetName}? Ntar siapa yang ngisi nilainya bos? 🥺`;
       if (type === 'student') desc = `Mau mengeluarkan ${targetName}? Jangan-jangan dia anak baek-baek... 😱`;
@@ -164,20 +143,33 @@
 
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className="relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform transition-all animate-[scale_0.2s_ease-out] hover:scale-[1.03] active:scale-95 transition-all">
-            <div className="text-4xl mb-2 animate-bounce">{emoji}</div>
-            <h2 className="text-base font-black mb-1 tracking-tight text-rose-950">{title}</h2>
-            <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90 leading-relaxed">{desc}</p>
+          <div className="relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform animate-[scale_0.2s_ease-out] hover:scale-[1.03] active:scale-95 transition-all">
+            <div className="text-4xl mb-2 animate-bounce">😭💔</div>
+            <h2 className="text-base font-black mb-1 tracking-tight text-rose-950">YAKIN MAU HAPUS?</h2>
+            <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90">{desc}</p>
             <div className="flex gap-2">
-              <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition-all shadow-sm hover:scale-105 active:scale-95">Gak Jadi 🥺</button>
-              <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] shadow-sm transition-all hover:scale-105 active:scale-95">Iya, Hapus! 💥</button>
+              <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition-all shadow-sm">Gak Jadi 🥺</button>
+              <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition-all shadow-sm">Iya, Hapus! 💥</button>
             </div>
           </div>
         </div>
       );
     }
 
-    // --- POPUP NOTIFIKASI UMUM ---
+    function FunnyKocakPopup({ show, message, onClose }) {
+      if (!show) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="relative w-full max-w-xs rounded-[28px] p-6 text-center shadow-2xl bg-amber-50 border border-amber-300 transform hover:scale-[1.03] transition-all">
+            <div className="text-5xl mb-3 animate-bounce">🤪💸🎒</div>
+            <h2 className="text-base font-black mb-2 text-amber-950 uppercase">ASTAGA, KOSONG!</h2>
+            <p className="text-xs mb-4 font-semibold text-amber-800 opacity-95">{message}</p>
+            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-white font-extrabold text-xs shadow-md bg-amber-600 hover:bg-amber-700 active:scale-95 transition-transform">Oke Siap Bos! 🫡</button>
+          </div>
+        </div>
+      );
+    }
+
     function FunnyPopup({ show, type, msgIndex, onClose }) {
       if (!show) return null;
       const msg = type === 'success' ? SUCCESS_LOGIN_MSGS[msgIndex % SUCCESS_LOGIN_MSGS.length] : ERROR_LOGIN_MSGS[msgIndex % ERROR_LOGIN_MSGS.length];
@@ -187,57 +179,58 @@
 
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className={`relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl border transform transition-all duration-300 hover:scale-[1.03] active:scale-95 ${bg}`}>
+          <div className={`relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl border transform hover:scale-[1.03] active:scale-95 transition-all ${bg}`}>
             <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div>
-            <h2 className={`text-base font-black mb-1 tracking-tight ${text}`}>{msg.title}</h2>
-            <p className={`text-[11px] mb-4 font-semibold ${text} opacity-90 leading-relaxed`}>{msg.desc}</p>
-            <button onClick={onClose} className={`w-full py-2 rounded-xl text-white font-bold text-[11px] shadow-sm transition-all hover:scale-105 active:scale-95 ${btn}`}>Oke Siap Bos!</button>
+            <h2 className={`text-base font-black mb-1 ${text}`}>{msg.title}</h2>
+            <p className={`text-[11px] mb-4 font-semibold ${text} opacity-90`}>{msg.desc}</p>
+            <button onClick={onClose} className={`w-full py-2 rounded-xl text-white font-bold text-[11px] shadow-sm active:scale-95 transition-transform ${btn}`}>Oke Siap Bos!</button>
           </div>
         </div>
       );
     }
 
-    // --- POPUP REMIDI ---
     function RemediPopup({ show, msgIndex, onClose }) {
       if (!show) return null;
       const msg = ROMANTIC_REMEDI_MSGS[msgIndex % ROMANTIC_REMEDI_MSGS.length];
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className="relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform transition-all duration-300 hover:scale-[1.03] active:scale-95 transition-all">
+          <div className="relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform transition-all duration-300 hover:scale-[1.03] active:scale-95">
             <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div>
             <h2 className="text-base font-black mb-1 tracking-tight text-rose-900">{msg.title}</h2>
             <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90 leading-relaxed">{msg.desc}</p>
-            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm transition-all hover:scale-105 active:scale-95 bg-rose-600 hover:bg-rose-700">Siapp, aku rapiin dulu! 💕</button>
+            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm bg-rose-600 hover:bg-rose-700 active:scale-95 transition-transform">Siapp, aku rapiin dulu! 💕</button>
           </div>
         </div>
       );
     }
 
-    // --- POPUP PINDAH KELAS ---
     function SwitchPopup({ show, msgIndex, onConfirm, onCancel, targetAssign }) {
       if (!show || !targetAssign) return null;
       const msg = SWITCH_CLASS_MSGS[msgIndex % SWITCH_CLASS_MSGS.length];
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className="relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl bg-indigo-50 border border-indigo-200 transform transition-all duration-300 hover:scale-[1.03] active:scale-95 transition-all">
+          <div className="relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl bg-indigo-50 border border-indigo-200 transform transition-all duration-300 hover:scale-[1.03] active:scale-95">
             <div className="text-4xl mb-2 animate-bounce">{msg.emoji}</div>
             <h2 className="text-base font-black mb-1 tracking-tight text-indigo-950">{msg.title}</h2>
             <p className="text-[11px] mb-4 font-semibold text-indigo-800 opacity-90 leading-relaxed">{msg.desc}</p>
             <div className="flex gap-2">
-              <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition-all shadow-sm hover:scale-105 active:scale-95">Bentar, Cek Dulu!</button>
-              <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] shadow-sm transition-all hover:scale-105 active:scale-95">Aman, Pindah! 🚀</button>
+              <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] shadow-sm active:scale-95 transition-transform">Bentar, Cek Dulu!</button>
+              <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] shadow-sm active:scale-95 transition-transform">Aman, Pindah! 🚀</button>
             </div>
           </div>
         </div>
       );
     }
 
-    // --- INDUK APLIKASI (SUDAH DIATUR DENGAN BENAR) ---
+    // =========================================================================
+    // --- 4. KOMPONEN INDUK APLIKASI ---
+    // =========================================================================
     function App() {
       const [masterData, setMasterData] = useState(DEFAULT_MASTER_DATA);
       const [currentUser, setCurrentUser] = useState(null);
       const [activeAssignment, setActiveAssignment] = useState(null);
       const [popup, setPopup] = useState({ show: false, type: 'success', index: 0 });
+      const [kocakPopup, setKocakPopup] = useState({ show: false, message: '' });
       const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
       const [isLoading, setIsLoading] = useState(true);
 
@@ -273,13 +266,13 @@
         return (
           <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
             <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-[11px] text-slate-500 font-bold tracking-widest uppercase animate-pulse">Menghubungkan ke Cloud...</p>
+            <p className="text-[11px] text-slate-500 font-bold tracking-widest uppercase animate-pulse">Menghubungkan ke Cloud ASTAGA...</p>
           </div>
         );
       }
 
       return (
-        <>
+        <div className="min-h-screen max-h-screen h-screen bg-slate-50 flex flex-col overflow-hidden text-xs">
           {!currentUser ? (
             <LoginScreen 
               masterData={masterData} 
@@ -292,14 +285,18 @@
           ) : currentUser === 'ADMIN' ? (
             <AdminDashboard masterData={masterData} setMasterData={setMasterData} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onRefreshData={fetchCloudMasterData} />
           ) : (
-            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={fetchCloudMasterData} setActiveAssignment={setActiveAssignment} />
+            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={fetchCloudMasterData} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg) => setKocakPopup({show: true, message: msg})} />
           )}
+          
           <FunnyPopup show={popup.show} type={popup.type} msgIndex={popup.index} onClose={() => setPopup({ ...popup, show: false })} />
-        </>
+          <FunnyKocakPopup show={kocakPopup.show} message={kocakPopup.message} onClose={() => setKocakPopup({ ...kocakPopup, show: false })} />
+        </div>
       );
     }
 
-    // --- LAYAR LOGIN ---
+    // =========================================================================
+    // --- 5. KOMPONEN LAYAR LOGIN ---
+    // =========================================================================
     function LoginScreen({ masterData, onLogin, onLoginFail }) {
       const [mode, setMode] = useState('guru'); 
       const [selectedGuru, setSelectedGuru] = useState('');
@@ -327,14 +324,14 @@
       };
 
       return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-          <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl overflow-hidden border border-slate-200 relative animate-in fade-in duration-300">
+        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] w-full">
+          <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl border border-slate-200 relative animate-in fade-in duration-300 hover:shadow-2xl transition-all">
             <div className={`p-6 text-center transition-colors duration-500 ${mode === 'admin' ? 'bg-slate-900' : 'bg-indigo-600'}`}>
               <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner">
                 {mode === 'admin' ? <IconSettings className="text-white w-7 h-7 animate-[spin_4s_linear_infinite]" /> : <IconGraduationCap className="text-white w-7 h-7" />}
               </div>
-              <h1 className="text-xl font-black text-white mb-0.5 tracking-wide animate-pulse">PORTAL NILAI</h1>
-              <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Sistem Terpadu Guru'}</p>
+              <h1 className="text-2xl font-black text-white tracking-widest leading-none animate-pulse">ASTAGA</h1>
+              <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru Al Kautsar'}</p>
             </div>
             
             <div className="p-6">
@@ -366,10 +363,10 @@
                     <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Password / PIN</label>
                     <div className="relative hover:scale-[1.02] active:scale-95 transition-all duration-300">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IconLock className="h-4 w-4 text-slate-400" /></div>
-                      <input type="password" className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-bold bg-slate-50 hover:bg-indigo-100 transition-colors" placeholder="Masukkan password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                      <input type="password" className="pl-9 w-full rounded-xl border-2 border-slate-200 py-2.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-bold bg-slate-50 hover:bg-indigo-100 transition-colors" placeholder="Masukkan password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     </div>
                   </div>
-                  <button type="submit" className="w-full bg-indigo-600 text-white font-extrabold rounded-xl py-2.5 hover:bg-indigo-700 hover:shadow-lg transition-all shadow-md mt-2 text-xs tracking-wide hover:-translate-y-1 active:scale-95 duration-300">GAS MASUK! 🚀</button>
+                  <button type="submit" className="w-full bg-indigo-600 text-white font-extrabold rounded-xl py-2.5 hover:bg-indigo-700 shadow-md mt-2 text-xs tracking-wide hover:-translate-y-1 active:scale-95 transition-all duration-300">GAS MASUK! 🚀</button>
                 </form>
               ) : (
                 <form onSubmit={handleLoginAdmin} className="space-y-4 animate-in fade-in slide-in-from-right-4">
@@ -380,14 +377,14 @@
                       <input type="password" className="pl-9 w-full rounded-xl border-2 border-slate-200 py-2.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-slate-800 font-bold bg-slate-50 hover:bg-slate-100 transition-colors" placeholder="Kode Rahasia Admin" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} required />
                     </div>
                   </div>
-                  <button type="submit" className="w-full bg-slate-900 text-white font-extrabold rounded-xl py-2.5 hover:bg-slate-800 hover:shadow-lg transition-all shadow-md mt-2 text-xs tracking-wide hover:-translate-y-1 active:scale-95 duration-300">BUKA PANEL ADMIN 🗝️</button>
+                  <button type="submit" className="w-full bg-slate-900 text-white font-extrabold rounded-xl py-2.5 hover:bg-slate-800 shadow-md mt-2 text-xs tracking-wide hover:-translate-y-1 active:scale-95 transition-all duration-300">BUKA PANEL ADMIN 🗝️</button>
                 </form>
               )}
             </div>
             
             <div className="bg-slate-50 border-t border-slate-200 p-4 text-center">
               <button onClick={() => { setMode(mode === 'guru' ? 'admin' : 'guru'); setPassword(''); setAdminPass(''); }} className="text-[11px] font-extrabold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-wider">
-                {mode === 'guru' ? '🛠️ Masuk sebagai Admin?' : '👨‍🏫 Kembali to Login Guru'}
+                {mode === 'guru' ? '🛠️ Masuk sebagai Admin?' : '👨‍🏫 Kembali ke Login Guru'}
               </button>
             </div>
           </div>
@@ -395,9 +392,11 @@
       );
     }
 
-    // --- PANEL ADMIN (DIURUTKAN SESUAI KEBUTUHAN) ---
+    // =========================================================================
+    // --- 6. KOMPONEN PANEL ADMIN UTAMA ---
+    // =========================================================================
     function AdminDashboard({ masterData, setMasterData, onLogout, showToast, toast, onRefreshData }) {
-      const [activeTab, setActiveTab] = useState('overview'); // overview | database | settings
+      const [activeTab, setActiveTab] = useState('overview'); 
       const [isSyncing, setIsSyncing] = useState(false);
       const [expandedGuru, setExpandedGuru] = useState({});
       const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -406,58 +405,30 @@
       const totalSiswa = Object.values(masterData.students).flat().length - (masterData.students["__MAPELS__"] ? masterData.students["__MAPELS__"].length : 0);
       const totalKelas = Object.keys(masterData.students).filter(k => k !== "__MAPELS__").length;
       
-      // MENGHITUNG KEMAJUAN REAL-TIME DARI GOOGLE SHEETS
       const trackingData = useMemo(() => {
-        let totalCellsExpected = 0;
-        let totalCellsFilled = 0;
-        
+        let totalCellsExpected = 0, totalCellsFilled = 0;
         const list = masterData.teachers.flatMap(t => 
           t.assignments.map(a => {
             const key = `${a.classId}|${a.mapel}|${t.name}`;
             const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
-            
-            const totalAssignedCells = sum.uhTotal + sum.stsTotal + sum.sasTotal;
-            const totalFilledCells = sum.uhCount + sum.stsCount + sum.sasCount;
-            
-            totalCellsExpected += totalAssignedCells;
-            totalCellsFilled += totalFilledCells;
-
-            const progress = totalAssignedCells === 0 ? 0 : Math.round((totalFilledCells / totalAssignedCells) * 100);
-            
+            const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
+            const filled = sum.uhCount + sum.stsCount + sum.sasCount;
+            totalCellsExpected += expected; totalCellsFilled += filled;
+            const progress = expected === 0 ? 0 : Math.round((filled / expected) * 100);
             const uhPct = sum.uhTotal === 0 ? 0 : Math.round((sum.uhCount / sum.uhTotal) * 100);
             const stsPct = sum.stsTotal === 0 ? 0 : Math.round((sum.stsCount / sum.stsTotal) * 100);
             const sasPct = sum.sasTotal === 0 ? 0 : Math.round((sum.sasCount / sum.sasTotal) * 100);
-
-            let statusStr = "Belum Mulai";
-            let badgeBg = "bg-rose-50 text-rose-700 border-rose-200 shadow-sm";
-            if (progress === 100) {
-              statusStr = "Selesai";
-              badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm";
-            } else if (progress > 0) {
-              statusStr = "Proses";
-              badgeBg = "bg-amber-50 text-amber-700 border-amber-200 shadow-sm";
-            }
-
-            return { 
-              guru: t.name, 
-              kelas: a.classId, 
-              mapel: a.mapel, 
-              progress, 
-              statusStr, 
-              badgeBg,
-              uhPct,
-              stsPct,
-              sasPct
-            };
+            let statusStr = "Belum Mulai"; let badgeBg = "bg-rose-50 text-rose-700 border-rose-200 shadow-sm";
+            if (progress === 100) { statusStr = "Selesai"; badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm"; } 
+            else if (progress > 0) { statusStr = "Proses"; badgeBg = "bg-amber-50 text-amber-700 border-amber-200 shadow-sm"; }
+            return { guru: t.name, kelas: a.classId, mapel: a.mapel, progress, statusStr, badgeBg, uhPct, stsPct, sasPct };
           })
         );
-
         list.sort((a, b) => a.progress - b.progress);
-        const globalProgress = totalCellsExpected === 0 ? 0 : Math.round((totalFilled / totalCellsExpected) * 100);
+        const globalProgress = totalCellsExpected === 0 ? 0 : Math.round((totalCellsFilled / totalCellsExpected) * 100);
         return { list, globalProgress };
       }, [masterData]);
 
-      // --- KELOMPOK PROGRES GURU (DIURUTKAN ABJAD GURU) ---
       const teachersProgress = useMemo(() => {
         const map = {};
         masterData.teachers.forEach(t => map[t.name] = { name: t.name, total: 0, completed: 0, assignments: [] });
@@ -467,101 +438,60 @@
           map[item.guru].total++;
           if (item.progress === 100) map[item.guru].completed++;
         });
-
         return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
       }, [masterData, trackingData]);
 
-      // =========================================================================
-      // --- PEMULIHAN FUNGSI ADMIN YANG HILANG (DIJAWAB TUNTAS OLEH MAESTRO) ---
-      // =========================================================================
-      const toggleGuru = (name) => {
-        setExpandedGuru(prev => ({ ...prev, [name]: !prev[name] }));
-      };
+      const toggleGuru = (name) => { setExpandedGuru(prev => ({ ...prev, [name]: !prev[name] })); };
 
       const downloadTemplateGuru = () => {
         const header = ["No", "Nama Guru", "Password", "Mapel 1", "Kelas Mapel 1 (Pisahkan dgn koma)", "Mapel 2", "Kelas Mapel 2", "Mapel 3", "Kelas Mapel 3", "Mapel 4", "Kelas Mapel 4", "Mapel 5", "Kelas Mapel 5"];
         const ws = window.XLSX.utils.aoa_to_sheet([header, [1, "Pak Budi Contoh", "123", "Matematika", "10A, 10B", "", "", "", "", "", "", "", ""]]);
-        const wb = window.XLSX.utils.book_new();
-        window.XLSX.utils.book_append_sheet(wb, ws, "MasterGuru");
-        window.XLSX.writeFile(wb, "Template_Master_Guru.xlsx");
+        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterGuru"); window.XLSX.writeFile(wb, "Template_Master_Guru.xlsx");
       };
 
       const downloadTemplateSiswa = () => {
         const header = ["Kelas", "No Presensi", "Nama Siswa"];
         const ws = window.XLSX.utils.aoa_to_sheet([header, ["10A", "1", "Agus Contoh"]]);
-        const wb = window.XLSX.utils.book_new();
-        window.XLSX.utils.book_append_sheet(wb, ws, "MasterSiswa");
-        window.XLSX.writeFile(wb, "Template_Master_Siswa.xlsx");
+        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterSiswa"); window.XLSX.writeFile(wb, "Template_Master_Siswa.xlsx");
       };
 
       const syncToCloud = async (action, payloadKey, payloadData, successMsg) => {
         setIsSyncing(true);
         try {
-          await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, [payloadKey]: payloadData })
-          });
+          await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, [payloadKey]: payloadData }) });
           showToast(successMsg, "success");
-        } catch (err) {
-          showToast("Koneksi gagal, tersimpan lokal sementara.", "error");
-        } finally {
-          setIsSyncing(false);
-        }
+        } catch (err) { showToast("Koneksi gagal, tersimpan lokal sementara.", "error"); } finally { setIsSyncing(false); }
       };
 
       const handleResetGrades = async () => {
-        setShowResetConfirm(false);
-        setIsSyncing(true);
+        setShowResetConfirm(false); setIsSyncing(true);
         try {
-          await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: "resetGrades" })
-          });
-          showToast("Berhasil! Semua rekap nilai di-reset.", "success");
-          onRefreshData();
-        } catch (err) {
-          showToast("Gagal reset. Cek koneksi!", "error");
-        } finally {
-          setIsSyncing(false);
-        }
+          await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "resetGrades" }) });
+          showToast("Berhasil! Semua rekap nilai di-reset.", "success"); onRefreshData();
+        } catch (err) { showToast("Gagal reset. Cek koneksi!", "error"); } finally { setIsSyncing(false); }
       };
 
       const handleUploadGuru = (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
+        const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
           try {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = window.XLSX.read(data, {type: 'array'});
-            if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-              showToast("File Excel tidak berisi lembar kerja apapun!", "error");
-              return;
-            }
+            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
+            if (!workbook.SheetNames.length) { showToast("File Excel kosong!", "error"); return; }
             const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
             const teachersMap = {};
             rows.slice(1).forEach(parts => {
               if(parts.length > 1 && parts[1]) {
-                const nama = toProperCase(String(parts[1]).trim());
-                const pass = parts[2] !== "" ? String(parts[2]).trim() : "123";
+                const nama = toProperCase(String(parts[1]).trim()); const pass = parts[2] !== "" ? String(parts[2]).trim() : "123";
                 if(nama) {
                   if(!teachersMap[nama]) teachersMap[nama] = { name: nama, password: pass, assignments: [] };
                   for(let i = 0; i < 5; i++) {
-                    const mIdx = 3 + (i * 2);
-                    const kIdx = 4 + (i * 2);
+                    const mIdx = 3 + (i * 2); const kIdx = 4 + (i * 2);
                     if (parts[mIdx] !== undefined && parts[kIdx] !== undefined) {
                        const mName = toProperCase(String(parts[mIdx]).trim());
                        const kArr = String(parts[kIdx]).split(',').map(k => k.trim().toUpperCase()).filter(k => k);
                        if (mName && kArr.length > 0) {
-                         kArr.forEach(k => {
-                           if(!teachersMap[nama].assignments.find(a => a.classId === k && a.mapel === mName)) {
-                             teachersMap[nama].assignments.push({ classId: k, mapel: mName });
-                           }
-                         });
+                         kArr.forEach(k => { if(!teachersMap[nama].assignments.find(a => a.classId === k && a.mapel === mName)) teachersMap[nama].assignments.push({ classId: k, mapel: mName }); });
                        }
                     }
                   }
@@ -569,334 +499,230 @@
               }
             });
             const newTeachers = Object.values(teachersMap).filter(t => t.assignments.length > 0);
-            if(newTeachers.length > 0) {
-              setMasterData(p => ({ ...p, teachers: newTeachers }));
-              syncToCloud("saveMasterGuru", "teachers", newTeachers, "Data Guru tersimpan ke Cloud!");
-            } else {
-              showToast(`Format tabel dalam Excel tidak pas atau kosong!`, 'error');
-            }
-          } catch(err) {
-            console.error("Guru Upload Error:", err);
-            showToast(`Gagal membaca file Excel Guru.`, 'error');
-          }
-        };
-        reader.readAsArrayBuffer(file);
-        e.target.value = '';
+            if(newTeachers.length > 0) { setMasterData(p => ({ ...p, teachers: newTeachers })); syncToCloud("saveMasterGuru", "teachers", newTeachers, "Data Guru tersimpan ke Cloud!"); } 
+            else showToast(`Format Excel salah!`, 'error');
+          } catch(err) { showToast(`Gagal baca Excel Guru.`, 'error'); }
+        }; reader.readAsArrayBuffer(file); e.target.value = ''; 
       };
 
       const handleUploadSiswa = (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
+        const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
           try {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = window.XLSX.read(data, {type: 'array'});
-            if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-              showToast("File Excel tidak berisi lembar kerja apapun!", "error");
-              return;
-            }
+            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
+            if (!workbook.SheetNames.length) { showToast("File Excel kosong!", "error"); return; }
             const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
-            const studentsMap = { ...masterData.students };
-            for (let k in studentsMap) {
-              if (k !== "__MAPELS__") delete studentsMap[k];
-            }
+            const studentsMap = { ...masterData.students }; 
+            for (let k in studentsMap) { if (k !== "__MAPELS__") delete studentsMap[k]; }
             rows.slice(1).forEach((parts, idx) => {
               if(parts.length >= 3 && parts[0]) {
-                const kelas = String(parts[0]).trim().toUpperCase();
-                const idSiswa = parts[1] !== "" ? String(parts[1]).trim() : String(idx + 1);
-                const namaSiswa = toProperCase(String(parts[2]).trim());
-                if(kelas && namaSiswa) {
-                  if(!studentsMap[kelas]) studentsMap[kelas] = [];
-                  studentsMap[kelas].push({ id: idSiswa, name: namaSiswa });
-                }
+                const kelas = String(parts[0]).trim().toUpperCase(); const idSiswa = parts[1] !== "" ? String(parts[1]).trim() : String(idx + 1); const namaSiswa = toProperCase(String(parts[2]).trim());
+                if(kelas && namaSiswa) { if(!studentsMap[kelas]) studentsMap[kelas] = []; studentsMap[kelas].push({ id: idSiswa, name: namaSiswa }); }
               }
             });
-            if(Object.keys(studentsMap).length > 0) {
-              setMasterData(p => ({ ...p, students: studentsMap }));
-              syncToCloud("saveMasterSiswa", "students", studentsMap, "Data Siswa tersimpan ke Cloud!");
-            } else {
-              showToast(`Format data siswa dalam Excel tidak pas atau kosong!`, 'error');
-            }
-          } catch(err) {
-            console.error("Siswa Upload Error:", err);
-            showToast(`Gagal membaca file Excel Siswa.`, 'error');
-          }
-        };
-        reader.readAsArrayBuffer(file);
-        e.target.value = '';
+            if(Object.keys(studentsMap).length > 0) { setMasterData(p => ({ ...p, students: studentsMap })); syncToCloud("saveMasterSiswa", "students", studentsMap, "Data Siswa tersimpan ke Cloud!"); } 
+            else showToast(`Format Excel salah!`, 'error');
+          } catch(err) { showToast(`Gagal baca Excel Siswa.`, 'error'); }
+        }; reader.readAsArrayBuffer(file); e.target.value = ''; 
       };
 
       return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative text-xs">
-          {/* POPUP KONFIRMASI RESET */}
-          {showResetConfirm && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-              <div className="relative w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl transform transition-all animate-[bounce_0.5s_ease-in-out] bg-rose-50 border border-rose-200">
-                <div className="text-5xl mb-3 animate-pulse">😱💔🔥</div>
-                <h2 className="text-xl font-extrabold mb-1.5 tracking-tight text-rose-950">YAKIN MAU RESET?</h2>
-                <p className="text-xs mb-4 font-semibold text-rose-700 opacity-95 leading-relaxed">
-                  Semua rekap nilai dari semua guru yang sudah masuk ke Google Sheets akan didelete permanen! <br/><br/>
-                  Tenang, data guru dan siswa akan tetap aman kok. Masih mau reset sekarang?
-                </p>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition-colors hover:scale-105 active:scale-95">Gak Jadi Deh 🥺</button>
-                  <button onClick={handleResetGrades} className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition-all hover:scale-105 active:scale-95">Iya, Reset Aja! 💥</button>
-                </div>
-              </div>
-            </div>
-          )}
+        <div className="h-screen max-h-screen flex flex-col font-sans text-xs overflow-hidden bg-slate-50">
+          <FunnyDeletePopup show={showResetConfirm} targetName="Seluruh Rekap Nilai" type="class" onConfirm={handleResetGrades} onCancel={() => setShowResetConfirm(false)} />
 
-          <header className="bg-slate-900 text-white shadow-xl sticky top-0 z-20">
-            <div className="max-w-7xl mx-auto px-4 h-12 flex items-center justify-between">
-              <div className="flex items-center space-x-2 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer">
-                <div className="bg-indigo-500 p-1 rounded-lg"><IconSettings className="w-4 h-4 text-white" /></div>
-                <h1 className="font-bold text-lg tracking-wide text-slate-100">PANEL ADMIN</h1>
-              </div>
-              <div className="flex space-x-1 border border-slate-700 bg-slate-800 rounded-lg p-0.5 shadow-inner">
-                <button onClick={() => setActiveTab('overview')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 ${activeTab === 'overview' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Progres</button>
-                <button onClick={() => setActiveTab('database')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 ${activeTab === 'database' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Database</button>
-                <button onClick={() => setActiveTab('settings')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 ${activeTab === 'settings' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Pengaturan</button>
-              </div>
-              <button onClick={onLogout} className="text-slate-300 hover:text-rose-400 px-2 py-1 rounded-lg font-bold text-2xs flex items-center space-x-1 transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 hover:bg-slate-800" title="Keluar"><IconLogOut className="w-4 h-4" /></button>
+          <header className="flex-none bg-slate-900 text-white shadow-xl h-12 flex items-center justify-between px-4 z-20">
+            <div className="flex items-center space-x-2 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer">
+              <div className="bg-indigo-500 p-1 rounded-lg"><IconSettings className="w-4 h-4 text-white" /></div>
+              <h1 className="font-extrabold text-[13px] tracking-widest text-slate-100 flex items-center gap-1.5">ASTAGA <span className="bg-indigo-700 px-1.5 py-0.5 rounded text-[8px] tracking-wide">ADMIN</span></h1>
             </div>
+            <div className="flex space-x-1 border border-slate-700 bg-slate-800 rounded-lg p-0.5 shadow-inner">
+              <button onClick={() => setActiveTab('overview')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 ${activeTab === 'overview' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Progres</button>
+              <button onClick={() => setActiveTab('database')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 ${activeTab === 'database' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Database</button>
+              <button onClick={() => setActiveTab('settings')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 ${activeTab === 'settings' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Pengaturan</button>
+            </div>
+            <button onClick={onLogout} className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 hover:bg-slate-800" title="Keluar"><IconLogOut className="w-4 h-4" /></button>
           </header>
 
-          <main className="flex-1 max-w-5xl mx-auto p-3 sm:p-4 w-full animate-in fade-in duration-500">
+          <main className="flex-1 flex flex-col overflow-hidden max-w-5xl mx-auto p-3 sm:p-4 w-full min-h-0">
             {isSyncing && (
-              <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl border border-indigo-200 flex items-center justify-center space-x-2 text-[10px] font-bold animate-pulse mb-3 shadow-sm uppercase tracking-wider">
-                <div className="w-3 h-3 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan data ke Google Sheets...</span>
+              <div className="flex-none bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl border border-indigo-200 flex items-center justify-center space-x-2 text-[10px] font-bold animate-pulse mb-3 shadow-sm uppercase tracking-wider">
+                <div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data Cloud...</span>
               </div>
             )}
 
-            {activeTab === 'overview' && (
-              <div className="space-y-4">
-                
-                {/* 4 STAT CARDS KECIL, MODERN & WARNA LEBIH JELAS (TIDAK POLOSAN) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                  <div className="bg-gradient-to-br from-sky-100 to-sky-50 border border-sky-300 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
-                    <div className="bg-white border border-sky-100 p-1.5 rounded-xl shadow-inner"><IconUsers className="w-4 h-4 text-sky-600" /></div>
-                    <div><p className="text-[9px] text-sky-700 font-bold uppercase tracking-wider">Guru Aktif</p><h3 className="text-sm font-black text-slate-800">{totalGuru}</h3></div>
+            <div className="flex-1 overflow-y-auto scrollbar-hide space-y-4 pb-10">
+              {activeTab === 'overview' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                    <div className="bg-gradient-to-br from-sky-100 to-sky-50 border border-sky-300 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
+                      <div className="bg-white border border-sky-100 p-1.5 rounded-xl shadow-inner"><IconUsers className="w-4 h-4 text-sky-600" /></div>
+                      <div><p className="text-[9px] text-sky-700 font-bold uppercase tracking-wider">Guru Aktif</p><h3 className="text-sm font-black text-slate-800">{totalGuru}</h3></div>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-300 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
+                      <div className="bg-white border border-emerald-100 p-1.5 rounded-xl shadow-inner"><IconGraduationCap className="w-4 h-4 text-emerald-600" /></div>
+                      <div><p className="text-[9px] text-emerald-700 font-bold uppercase tracking-wider">Siswa</p><h3 className="text-sm font-black text-slate-800">{totalSiswa}</h3></div>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-300/80 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
+                      <div className="bg-white border border-amber-100 p-1.5 rounded-xl shadow-inner"><IconBookOpen className="w-4 h-4 text-amber-600" /></div>
+                      <div><p className="text-[9px] text-amber-700 font-bold uppercase tracking-wider">Kelas</p><h3 className="text-sm font-black text-slate-800">{totalKelas}</h3></div>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 border border-indigo-300/80 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
+                      <div className="bg-white border border-indigo-100 p-1.5 rounded-xl shadow-inner"><IconActivity className="w-4 h-4 text-indigo-600" /></div>
+                      <div><p className="text-[9px] text-indigo-700 font-bold uppercase tracking-wider">Global</p><h3 className="text-sm font-black text-indigo-800">{trackingData.globalProgress}%</h3></div>
+                      <div className="absolute bottom-0 left-0 h-1 bg-indigo-400" style={{ width: `${trackingData.globalProgress}%` }}></div>
+                    </div>
                   </div>
-                  <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-300 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
-                    <div className="bg-white border border-emerald-100 p-1.5 rounded-xl shadow-inner"><IconGraduationCap className="w-4 h-4 text-emerald-600" /></div>
-                    <div><p className="text-[9px] text-emerald-700 font-bold uppercase tracking-wider">Siswa</p><h3 className="text-sm font-black text-slate-800">{totalSiswa}</h3></div>
-                  </div>
-                  <div className="bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-300 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
-                    <div className="bg-white border border-amber-100 p-1.5 rounded-xl shadow-inner"><IconBookOpen className="w-4 h-4 text-amber-600" /></div>
-                    <div><p className="text-[9px] text-amber-700 font-bold uppercase tracking-wider">Kelas</p><h3 className="text-sm font-black text-slate-800">{totalKelas}</h3></div>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 border border-indigo-300 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer">
-                    <div className="bg-white border border-indigo-100 p-1.5 rounded-xl shadow-inner"><IconActivity className="w-4 h-4 text-indigo-600" /></div>
-                    <div><p className="text-[9px] text-indigo-700 font-bold uppercase tracking-wider">Global</p><h3 className="text-sm font-black text-indigo-800">{trackingData.globalProgress}%</h3></div>
-                    <div className="absolute bottom-0 left-0 h-1 bg-indigo-400" style={{ width: `${trackingData.globalProgress}%` }}></div>
+
+                  <div className="space-y-2 animate-in fade-in">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wide">Status Kelengkapan Nilai Per Guru</h2>
+                        <p className="text-[10px] text-slate-500">Klik nama guru untuk detail kelas.</p>
+                      </div>
+                      <button onClick={onRefreshData} className="bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all text-slate-600 font-bold px-2.5 py-1.5 rounded-lg shadow-sm flex items-center space-x-1.5 text-3xs hover:scale-[1.03] hover:-translate-y-0.5 duration-300">
+                        <IconRefresh className="w-3.5 h-3.5 text-slate-500" /><span>Sync Nilai</span>
+                      </button>
+                    </div>
+
+                    {teachersProgress.map((guruItem, idx) => {
+                      const pct = guruItem.total === 0 ? 0 : Math.round((guruItem.completed / guruItem.total) * 100);
+                      const isExpanded = !!expandedGuru[guruItem.name];
+                      const cardStyle = TEACHER_CARD_COLORS[idx % TEACHER_CARD_COLORS.length];
+
+                      return (
+                        <div key={idx} className={`rounded-xl border overflow-hidden shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.01] transition-all duration-300 ${cardStyle}`}>
+                          <div onClick={() => toggleGuru(guruItem.name)} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 cursor-pointer hover:bg-white/40">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-bold text-base shadow-sm ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>{guruItem.name.charAt(0)}</div>
+                              <div>
+                                <h3 className="font-extrabold text-slate-800 text-xs">{guruItem.name}</h3>
+                                <p className="text-3xs text-slate-500 font-bold uppercase tracking-wider">Mengajar {guruItem.total} Kelas / Mapel</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200/50">
+                              <div className="text-left sm:text-right">
+                                <span className="text-3xs font-extrabold text-slate-400 uppercase tracking-wider block">Status</span>
+                                <p className="text-2xs font-black text-slate-700">{guruItem.completed}/{guruItem.total} Selesai</p>
+                              </div>
+                              <div className="flex items-center space-x-1.5">
+                                <span className="text-3xs font-extrabold text-slate-400 uppercase tracking-wider hidden xs:inline">Progres</span>
+                                <span className={`px-2.5 py-0.5 rounded-lg text-2xs font-black border shadow-sm ${pct === 100 ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : pct > 0 ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>{pct}%</span>
+                              </div>
+                              <IconActivity className={`w-4 h-4 text-slate-400 transform transition-transform duration-300 ${isExpanded ? 'rotate-180 text-indigo-600' : ''}`} />
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="border-t border-slate-200/50 bg-white/40 p-3 animate-in fade-in duration-300">
+                              {guruItem.assignments.length === 0 ? <p className="text-3xs font-semibold text-slate-400 text-center py-2">Belum ada tugas kelas/subjek yang dimuat naik.</p> : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {guruItem.assignments.map((assign, aIdx) => (
+                                    <div key={aIdx} className="bg-white/80 backdrop-blur-sm p-2.5 rounded-lg border border-slate-200/60 flex items-center justify-between gap-2.5 shadow-sm hover:border-slate-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300">
+                                      <div>
+                                        <p className="font-extrabold text-slate-800 text-xs">{assign.mapel}</p>
+                                        <span className="inline-block mt-0.5 bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded text-3xs border border-slate-200">Kelas {assign.kelas}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-1 bg-white border border-slate-200/60 p-1 rounded-lg shadow-inner">
+                                        {['uh', 'sts', 'sas'].map(type => {
+                                          const val = assign[`${type}Pct`];
+                                          const clr = val === 100 ? 'bg-teal-100 text-teal-800 border-teal-300 shadow-inner' : val > 0 ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse' : 'bg-slate-50 text-slate-400 border-slate-200';
+                                          return <div key={type} className={`px-2 py-0.5 rounded text-3xs font-extrabold tracking-wider border transition-all ${clr}`}>{type.toUpperCase()} {val}%</div>
+                                        })}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
+              )}
 
-                {/* --- RINGKASAN KEMAJUAN --- */}
-                <div className="space-y-2">
-                  <div className="pb-1.5 flex justify-between items-center">
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-800">Progres Pengisian Nilai Per Guru</h2>
-                      <p className="text-2xs text-slate-500">Klik nama guru untuk detail kelas.</p>
+              {activeTab === 'database' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in">
+                  <div className="bg-gradient-to-br from-indigo-50/60 via-white to-indigo-50/10 rounded-2xl shadow-sm border border-indigo-200 flex flex-col hover:shadow-md hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer">
+                    <div className="p-5 border-b border-indigo-100/50">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="bg-white border border-indigo-200 p-1.5 rounded-xl shadow-inner"><IconUser className="w-4 h-4 text-indigo-500"/></div>
+                          <h2 className="text-sm font-black text-slate-800">Master Data Guru</h2>
+                        </div>
+                        <button onClick={downloadTemplateGuru} className="flex items-center space-x-1 text-3xs font-bold bg-white hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200 text-indigo-600 px-2 py-1 rounded-lg transition-all hover:scale-[1.05] active:scale-95 shadow-sm">
+                          <IconDownload className="w-3.5 h-3.5" /> <span>Template</span>
+                        </button>
+                      </div>
+                      <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 text-center bg-white/80 hover:bg-white hover:border-indigo-400 transition-colors relative cursor-pointer group" onClick={(e) => { if(e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').click() }}>
+                        <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1 group-hover:text-indigo-600 transition-colors" />
+                        <span className="text-2xs font-extrabold text-slate-600 group-hover:text-indigo-800 block">Klik & Pilih Excel Guru</span>
+                        <input type="file" accept=".xls,.xlsx" onChange={handleUploadGuru} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      </div>
                     </div>
-                    <button 
-                      onClick={onRefreshData}
-                      className="bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all text-slate-600 font-bold p-1.5 rounded-lg shadow-sm flex items-center space-x-1.5 text-3xs hover:scale-[1.03] hover:-translate-y-0.5 duration-300"
-                    >
-                      <IconRefresh className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Sync</span>
+                    <div className="p-5 pt-3 bg-white/40 flex-1 rounded-b-2xl">
+                      <p className="font-extrabold text-3xs text-indigo-500 uppercase tracking-widest mb-2">Tersimpan: {masterData.teachers.length} Guru</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {masterData.teachers.map((t,i) => <span key={i} className="bg-white border border-indigo-200 px-2.5 py-0.5 rounded-lg text-3xs font-bold text-indigo-800 shadow-sm">{t.name}</span>)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-emerald-50/60 via-white to-emerald-50/10 rounded-2xl shadow-sm border border-emerald-200 flex flex-col hover:shadow-md hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer">
+                    <div className="p-5 border-b border-emerald-50/50">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="bg-white border border-emerald-200 p-1.5 rounded-xl shadow-inner"><IconGraduationCap className="w-4 h-4 text-emerald-500"/></div>
+                          <h2 className="text-sm font-black text-slate-800">Master Data Siswa</h2>
+                        </div>
+                        <button onClick={downloadTemplateSiswa} className="flex items-center space-x-1 text-3xs font-bold bg-white hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200 text-emerald-600 px-2 py-1 rounded-lg transition-all hover:scale-[1.05] active:scale-95 shadow-sm">
+                          <IconDownload className="w-3.5 h-3.5" /> <span>Template</span>
+                        </button>
+                      </div>
+                      <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 text-center bg-white/80 hover:bg-white hover:border-emerald-400 transition-colors relative cursor-pointer group" onClick={(e) => { if(e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').click() }}>
+                        <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1 group-hover:text-emerald-600 transition-colors" />
+                        <span className="text-2xs font-extrabold text-slate-600 group-hover:text-indigo-800 block">Klik & Pilih Excel Siswa</span>
+                        <input type="file" accept=".xls,.xlsx" onChange={handleUploadSiswa} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      </div>
+                    </div>
+                    <div className="p-5 pt-3 bg-white/40 flex-1 rounded-b-2xl">
+                      <p className="font-extrabold text-3xs text-emerald-500 uppercase tracking-widest mb-2">Tersimpan: {totalKelas} Kelas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.keys(masterData.students).filter(k => k !== "__MAPELS__").map((k,i) => <span key={i} className="bg-white border border-emerald-200 px-2.5 py-0.5 rounded-lg text-3xs font-bold text-emerald-800 shadow-sm">Kls {k} ({masterData.students[k].length})</span>)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-rose-50 to-orange-50/60 border border-rose-300 rounded-2xl p-5 col-span-1 md:col-span-2 mt-2 shadow-sm hover:shadow-md hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="bg-white border border-rose-200 p-1.5 rounded-xl shadow-inner"><IconAlertCircle className="w-4 h-4 text-rose-500" /></div>
+                      <h2 className="text-sm font-black text-rose-950">Zona Bahaya (Danger Zone)</h2>
+                    </div>
+                    <p className="text-rose-800 text-3xs mb-4 leading-relaxed font-bold">
+                      Menghapus semua tab rekap nilai di Google Sheets anda secara permanen. Data master guru dan siswa akan tetap disimpan dengan aman.
+                    </p>
+                    <button onClick={() => setShowResetConfirm(true)} className="bg-rose-500 hover:bg-rose-600 active:scale-95 transition-all hover:scale-[1.03] hover:-translate-y-0.5 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-rose-500/10">
+                      Reset Semua Rekap Nilai Siswa
                     </button>
                   </div>
-
-                  {teachersProgress.map((guruItem, idx) => {
-                    const pct = guruItem.total === 0 ? 0 : Math.round((guruItem.completed / guruItem.total) * 100);
-                    const isExpanded = !!expandedGuru[guruItem.name];
-                    const cardStyle = TEACHER_CARD_COLORS[idx % TEACHER_CARD_COLORS.length];
-
-                    return (
-                      <div key={idx} className={`rounded-xl border overflow-hidden shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${cardStyle}`}>
-                        {/* Pengepala Kad Guru */}
-                        <div 
-                          onClick={() => toggleGuru(guruItem.name)}
-                          className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 cursor-pointer hover:bg-white/20 transition-colors"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-bold text-base shadow-sm ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
-                              {guruItem.name.charAt(0)}
-                            </div>
-                            <div>
-                              <h3 className="font-extrabold text-slate-800 text-xs">{guruItem.name}</h3>
-                              <p className="text-3xs text-slate-500 font-bold uppercase tracking-wider">Mengajar {guruItem.total} Kelas / Mapel</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200/50">
-                            <div className="text-left sm:text-right">
-                              <span className="text-3xs font-extrabold text-slate-400 uppercase tracking-wider block">Status</span>
-                              <p className="text-2xs font-black text-slate-700">{guruItem.completed}/{guruItem.total} Selesai</p>
-                            </div>
-
-                            {/* BENTUK KAPSUL REKA BENTUK MODEN & BERSIH (PASTEL LUXURIOUS) */}
-                            <div className="flex items-center space-x-1.5">
-                              <span className="text-3xs font-extrabold text-slate-400 uppercase tracking-wider hidden xs:inline">Progres</span>
-                              <span className={`px-2.5 py-0.5 rounded-lg text-2xs font-black border tracking-wider transition-all shadow-sm ${
-                                pct === 100 
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                                  : pct > 0 
-                                    ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse' 
-                                    : 'bg-slate-50 text-slate-400 border-slate-200'
-                              }`}>{pct}%</span>
-                            </div>
-
-                            <div className="text-slate-400">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180 text-indigo-600' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Butiran Setiap Tugas Kelas Guru */}
-                        {isExpanded && (
-                          <div className="border-t border-slate-200/50 bg-white/40 p-3 animate-in fade-in duration-300">
-                            {guruItem.assignments.length === 0 ? (
-                              <p className="text-3xs font-semibold text-slate-400 text-center py-2">Belum ada tugas kelas/subjek yang dimuat naik.</p>
-                            ) : (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {guruItem.assignments.map((assign, aIdx) => (
-                                  <div key={aIdx} className="bg-white/80 backdrop-blur-sm p-2.5 rounded-lg border border-slate-200/60 flex items-center justify-between gap-2.5 shadow-sm hover:border-slate-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300">
-                                    <div>
-                                      <p className="font-extrabold text-slate-800 text-xs">{assign.mapel}</p>
-                                      <span className="inline-block mt-0.5 bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded text-3xs">Kelas {assign.kelas}</span>
-                                    </div>
-                                    
-                                    {/* 3 SHAPES SEBARIS MODEN DENGAN WARNA LEBIH GENTLE & BERKONTRAST TINGGI */}
-                                    <div className="flex items-center space-x-1 bg-white border border-slate-200/60 p-1 rounded-lg shadow-inner">
-                                      {/* SEGMEN UH */}
-                                      <div className={`px-2 py-0.5 rounded text-3xs font-extrabold tracking-wider border transition-all ${
-                                        assign.uhPct === 100 
-                                          ? 'bg-teal-100 text-teal-800 border-teal-300 shadow-inner' 
-                                          : assign.uhPct > 0 
-                                            ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse' 
-                                            : 'bg-slate-50 text-slate-400 border-slate-200'
-                                      }`}>
-                                        UH {assign.uhPct}%
-                                      </div>
-
-                                      {/* SEGMEN STS */}
-                                      <div className={`px-2 py-0.5 rounded text-3xs font-extrabold tracking-wider border transition-all ${
-                                        assign.stsPct === 100 
-                                          ? 'bg-sky-100 text-sky-800 border-sky-300 shadow-inner' 
-                                          : assign.stsPct > 0 
-                                            ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse' 
-                                            : 'bg-slate-50 text-slate-400 border-slate-200'
-                                      }`}>
-                                        STS {assign.stsPct}%
-                                      </div>
-
-                                      {/* SEGMEN SAS */}
-                                      <div className={`px-2 py-0.5 rounded text-3xs font-extrabold tracking-wider border transition-all ${
-                                        assign.sasPct === 100 
-                                          ? 'bg-purple-100 text-purple-800 border-purple-300 shadow-inner' 
-                                          : assign.sasPct > 0 
-                                            ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse' 
-                                            : 'bg-slate-50 text-slate-400 border-slate-200'
-                                      }`}>
-                                        SAS {assign.sasPct}%
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'database' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4">
-                {/* DATABASE GURU - SOFT PASTEL GRADIENT */}
-                <div className="bg-gradient-to-br from-indigo-50/60 via-white to-indigo-50/10 rounded-2xl shadow-sm border border-indigo-200 flex flex-col hover:shadow-md hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer">
-                  <div className="p-5 border-b border-indigo-100/50">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="bg-white border border-indigo-200 p-1.5 rounded-xl shadow-inner"><IconUser className="w-4 h-4 text-indigo-500"/></div>
-                        <h2 className="text-sm font-black text-slate-800">Master Data Guru</h2>
-                      </div>
-                      <button onClick={downloadTemplateGuru} className="flex items-center space-x-1 text-3xs font-bold bg-white hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200 text-indigo-600 px-2 py-1 rounded-lg transition-all hover:scale-[1.03] active:scale-95 shadow-sm">
-                        <IconDownload className="w-3.5 h-3.5" /> <span>Template</span>
-                      </button>
-                    </div>
-                    <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 text-center bg-white/80 hover:bg-white hover:border-indigo-400 transition-colors relative cursor-pointer group" onClick={(e) => { if(e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').click() }}>
-                      <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1 group-hover:text-indigo-600 transition-colors" />
-                      <span className="text-2xs font-extrabold text-slate-600 group-hover:text-indigo-800 block">Klik & Pilih Excel Guru</span>
-                      <input type="file" accept=".xls,.xlsx" onChange={handleUploadGuru} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    </div>
-                  </div>
-                  <div className="p-5 pt-3 bg-white/40 flex-1 rounded-b-2xl">
-                    <p className="font-extrabold text-3xs text-indigo-500 uppercase tracking-widest mb-2">Tersimpan: {masterData.teachers.length} Guru</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {masterData.teachers.map((t,i) => <span key={i} className="bg-white border border-indigo-200 px-2.5 py-0.5 rounded-lg text-3xs font-bold text-indigo-800 shadow-sm">{t.name}</span>)}
-                    </div>
-                  </div>
+              {activeTab === 'settings' && (
+                <div className="pb-4">
+                  <AdminSettingsTab masterData={masterData} setMasterData={setMasterData} syncGuru={syncToCloud} syncSiswa={syncToCloud} showToast={showToast} />
                 </div>
-
-                {/* DATABASE SISWA - SOFT PASTEL GRADIENT */}
-                <div className="bg-gradient-to-br from-emerald-50/60 via-white to-emerald-50/10 rounded-2xl shadow-sm border border-emerald-200 flex flex-col hover:shadow-md hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer">
-                  <div className="p-5 border-b border-emerald-50/50">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="bg-white border border-emerald-200 p-1.5 rounded-xl shadow-inner"><IconGraduationCap className="w-4 h-4 text-emerald-500"/></div>
-                        <h2 className="text-sm font-black text-slate-800">Master Data Siswa</h2>
-                      </div>
-                      <button onClick={downloadTemplateSiswa} className="flex items-center space-x-1 text-3xs font-bold bg-white hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200 text-emerald-600 px-2 py-1 rounded-lg transition-all hover:scale-[1.03] active:scale-95 shadow-sm">
-                        <IconDownload className="w-3.5 h-3.5" /> <span>Template</span>
-                      </button>
-                    </div>
-                    <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 text-center bg-white/80 hover:bg-white hover:border-emerald-400 transition-colors relative cursor-pointer group" onClick={(e) => { if(e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').click() }}>
-                      <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1 group-hover:text-indigo-600 transition-colors" />
-                      <span className="text-2xs font-extrabold text-slate-600 group-hover:text-indigo-800 block">Klik & Pilih Excel Siswa</span>
-                      <input type="file" accept=".xls,.xlsx" onChange={handleUploadSiswa} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    </div>
-                  </div>
-                  <div className="p-5 pt-3 bg-white/40 flex-1 rounded-b-2xl">
-                    <p className="font-extrabold text-3xs text-emerald-500 uppercase tracking-widest mb-2">Tersimpan: {totalKelas} Kelas</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {Object.keys(masterData.students).filter(k => k !== "__MAPELS__").map((k,i) => <span key={i} className="bg-white border border-emerald-200 px-2.5 py-0.5 rounded-lg text-3xs font-bold text-emerald-800 shadow-sm">Kls {k} ({masterData.students[k].length})</span>)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* --- PANEL RESET --- */}
-                <div className="bg-gradient-to-br from-rose-50 to-orange-50/60 border border-rose-300 rounded-2xl p-5 col-span-1 md:col-span-2 mt-2 shadow-sm hover:shadow-md hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="bg-white border border-rose-200 p-1.5 rounded-xl shadow-inner"><IconAlertCircle className="className w-4 h-4 text-rose-500" /></div>
-                    <h2 className="text-sm font-black text-rose-950">Zona Bahaya (Danger Zone)</h2>
-                  </div>
-                  <p className="text-rose-800 text-3xs mb-4 leading-relaxed font-bold">
-                    Silakan gunakan fungsi ini dengan penuh kehati-hatian. Menekan tombol ini akan menghapus semua tab rekap nilai di Google Sheets Anda secara permanen. Data master guru dan siswa akan tetap aman di cloud.
-                  </p>
-                  <button onClick={() => setShowResetConfirm(true)} className="bg-rose-500 hover:bg-rose-600 active:scale-95 transition-all hover:scale-[1.03] hover:-translate-y-0.5 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-rose-500/10">
-                    Reset Semua Rekap Nilai Siswa
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* --- TAB PENGATURAN ADMIN --- */}
-            {activeTab === 'settings' && (
-              <AdminSettingsTab masterData={masterData} setMasterData={setMasterData} syncGuru={syncToCloud} syncSiswa={syncToCloud} showToast={showToast} />
-            )}
+              )}
+            </div>
           </main>
 
           {toast && toast.show && (
             <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2">
-              <div className="bg-slate-800 text-white rounded-xl shadow-lg px-4 py-2.5 flex items-center space-x-2 font-bold border border-slate-700 text-xs">
-                <IconCheckCircle className="w-4 h-4 text-emerald-400" /><span>{toast.message}</span>
+              <div className={`rounded-xl shadow-lg px-4 py-2.5 flex items-center space-x-2 text-white font-bold text-xs ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                {toast.type === 'success' ? <IconCheckCircle className="w-4 h-4" /> : <IconAlertCircle className="w-4 h-4" />}
+                <span>{toast.message}</span>
               </div>
             </div>
           )}
@@ -904,46 +730,40 @@
       );
     }
 
-    // --- KOMPONEN PENGATURAN GURU, SISWA DAN MAPEL ---
+    // =========================================================================
+    // --- 7. KOMPONEN PENGATURAN (ADMIN SETTINGS TAB) ---
+    // =========================================================================
     function AdminSettingsTab({ masterData, setMasterData, syncGuru, syncSiswa, showToast }) {
-      const [view, setView] = useState('guru'); // guru | mapel | siswa
+      const [view, setView] = useState('guru'); 
       const [newTeacherName, setNewTeacherName] = useState('');
       const [newTeacherPass, setNewTeacherPass] = useState('123');
-      
-      const [deletePrompt, setDeletePrompt] = useState({ show: false, type: '', target: null, name: '', extraTarget: null });
-      
+      const [deletePrompt, setDeletePrompt] = useState({ show: false, type: '', target: null, name: '' });
       const [expandedTeacher, setExpandedTeacher] = useState(null);
+      
       const [selClass, setSelClass] = useState('');
       const [newClassName, setNewClassName] = useState('');
 
-      // State Pengeditan Profil Guru (Nama & Password)
+      const [editingTeacherObj, setEditingTeacherObj] = useState(null);
       const [editingTeacherName, setEditingTeacherName] = useState('');
       const [editingTeacherPass, setEditingTeacherPass] = useState('');
 
-      // State Pengeditan Profil Siswa (No Presensi / ID & Nama Lengkap)
-      const [editingStudentId, setEditingStudentId] = useState(null);
+      const [editingStudentObj, setEditingStudentObj] = useState(null);
       const [editStudentNumber, setEditStudentNumber] = useState('');
       const [editStudentName, setEditStudentName] = useState('');
 
-      // State Mata Pelajaran Baru
       const [newMapelName, setNewMapelName] = useState('');
-
-      // State Pengeditan Mata Pelajaran
       const [editingMapel, setEditingMapel] = useState(null);
       const [editMapelName, setEditMapelName] = useState('');
 
-      // --- SINKRONISASI DAFTAR MAPEL AMAN DARI SPREADSHEET (SINKRON CLOUD) ---
       const mapelsList = useMemo(() => {
         const storedMapels = masterData.students["__MAPELS__"] || DEFAULT_MAPELS;
         return [...storedMapels].sort((a, b) => a.localeCompare(b));
       }, [masterData.students]);
 
-      // --- URUTKAN GURU OTOMATIS BERDASARKAN ABJAD (A-Z) ---
       const sortedTeachers = useMemo(() => {
         return [...masterData.teachers].sort((a, b) => a.name.localeCompare(b.name));
       }, [masterData.teachers]);
 
-      // --- URUTKAN SISWA BERDASARKAN KELAS DAN NO PRESENSI NUMERIK ---
       const sortedStudents = useMemo(() => {
         if (!selClass || !masterData.students[selClass]) return [];
         return [...masterData.students[selClass]].sort((a, b) => {
@@ -952,129 +772,57 @@
       }, [masterData.students, selClass]);
 
       const handleTeacherClick = (t) => {
-        if (expandedTeacher === t.name) {
-          setExpandedTeacher(null);
-        } else {
-          setExpandedTeacher(t.name);
-          setEditingTeacherName(t.name);
-          setEditingTeacherPass(t.password);
-        }
+        if (expandedTeacher === t.name) setExpandedTeacher(null);
+        else setExpandedTeacher(t.name);
       };
 
-      const handleSaveTeacherProfile = (oldName) => {
-        const newName = toProperCase(editingTeacherName.trim());
-        const newPass = editingTeacherPass.trim();
-        
-        if (!newName || !newPass) {
-          showToast("Nama dan password tidak boleh kosong!", "error");
-          return;
-        }
-
-        if (newName !== oldName && masterData.teachers.find(t => t.name === newName)) {
-          showToast("Nama guru tersebut sudah terdaftar!", "error");
-          return;
-        }
-
-        const newData = masterData.teachers.map(t => {
-          if (t.name === oldName) {
-            return { ...t, name: newName, password: newPass };
-          }
-          return t;
-        });
-
+      const handleSaveTeacherProfileInline = (oldName) => {
+        const newName = toProperCase(editingTeacherName.trim()); const newPass = editingTeacherPass.trim();
+        if (!newName || !newPass) { showToast("Nama dan password kosong!", "error"); return; }
+        if (newName !== oldName && masterData.teachers.find(t => t.name === newName)) { showToast("Guru sudah terdaftar!", "error"); return; }
+        const newData = masterData.teachers.map(t => t.name === oldName ? { ...t, name: newName, password: newPass } : t);
         setMasterData(p => ({...p, teachers: newData}));
-        syncGuru("saveMasterGuru", "teachers", newData, `Profil Guru ${newName} sukses diperbarui.`);
-        setExpandedTeacher(null);
+        syncGuru("saveMasterGuru", "teachers", newData, `Profil Guru diperbarui.`);
+        if(expandedTeacher === oldName) setExpandedTeacher(newName);
       };
 
-      const handleStartEditStudent = (s) => {
-        setEditingStudentId(s.id);
-        setEditStudentNumber(s.id);
-        setEditStudentName(s.name);
-      };
-
-      const handleSaveStudentProfile = (oldId) => {
-        const newId = editStudentNumber.trim();
-        const newName = toProperCase(editStudentName.trim());
-
-        if (!newId || !newName) {
-          showToast("ID siswa dan Nama Lengkap tidak boleh kosong!", "error");
-          return;
-        }
-
-        if (newId !== oldId && masterData.students[selClass].find(s => s.id === newId)) {
-          showToast("Nomor presensi tersebut sudah digunakan!", "error");
-          return;
-        }
-
-        const classList = masterData.students[selClass].map(s => {
-          if (s.id === oldId) {
-            return { id: newId, name: newName };
-          }
-          return s;
-        });
-
+      const openEditStudentModal = (s) => { setEditingStudentObj(s); setEditStudentNumber(s.id); setEditStudentName(s.name); };
+      const handleSaveStudentProfile = () => {
+        const newId = editStudentNumber.trim(); const newName = toProperCase(editStudentName.trim());
+        if (!newId || !newName) { showToast("Data kosong!", "error"); return; }
+        if (newId !== editingStudentObj.id && masterData.students[selClass].find(s => s.id === newId)) { showToast("ID sudah digunakan!", "error"); return; }
+        const classList = masterData.students[selClass].map(s => s.id === editingStudentObj.id ? { id: newId, name: newName } : s);
         const newStudents = { ...masterData.students, [selClass]: classList };
         setMasterData(p => ({...p, students: newStudents}));
-        syncSiswa("saveMasterSiswa", "students", newStudents, `Siswa ${newName} sukses diperbarui.`);
-        setEditingStudentId(null);
+        syncSiswa("saveMasterSiswa", "students", newStudents, `Siswa diperbarui.`);
+        setEditingStudentObj(null);
       };
 
-      // --- MANAJEMEN MAPEL (TAMBAH, EDIT, & HAPUS) ---
       const handleAddMapel = (e) => {
         e.preventDefault();
-        const rawMapel = newMapelName.trim();
-        const mapel = rawMapel.length > 5 ? toProperCase(rawMapel) : rawMapel.toUpperCase();
+        const rawMapel = newMapelName.trim(); const mapel = rawMapel.length > 5 ? toProperCase(rawMapel) : rawMapel.toUpperCase();
         if(!mapel) return;
-
-        if (mapelsList.includes(mapel)) {
-          showToast("Mata Pelajaran sudah terdaftar!", "error");
-          return;
-        }
-
+        if (mapelsList.includes(mapel)) { showToast("Mapel terdaftar!", "error"); return; }
         const updatedMapels = [...mapelsList, mapel];
         const newStudents = { ...masterData.students, "__MAPELS__": updatedMapels };
         setMasterData(p => ({...p, students: newStudents}));
-        syncSiswa("saveMasterSiswa", "students", newStudents, `Mapel ${mapel} berhasil ditambahkan.`);
+        syncSiswa("saveMasterSiswa", "students", newStudents, `Mapel ditambahkan.`);
         setNewMapelName('');
       };
 
-      // --- FUNGSI SAVE PENGEDITAN NAMA MAPEL (BARU) ---
-      const handleSaveMapel = (oldName) => {
+      const handleSaveMapel = () => {
         const newName = editMapelName.trim();
-        if (!newName) {
-          showToast("Nama mata pelajaran tidak boleh kosong!", "error");
-          return;
-        }
-        if (newName !== oldName && mapelsList.includes(newName)) {
-          showToast("Mata pelajaran dengan nama tersebut sudah ada!", "error");
-          return;
-        }
-
-        // 1. Perbarui array __MAPELS__
-        const updatedMapels = mapelsList.map(m => m === oldName ? newName : m);
-
-        // 2. Perbarui semua jadwal penugasan guru yang menggunakan mapel lama secara otomatis
+        if (!newName) return;
+        if (newName !== editingMapel && mapelsList.includes(newName)) { showToast("Mapel sudah ada!", "error"); return; }
+        const updatedMapels = mapelsList.map(m => m === editingMapel ? newName : m);
         const updatedTeachers = masterData.teachers.map(t => {
-          const updatedAssigns = t.assignments.map(a => {
-            if (a.mapel === oldName) {
-              return { ...a, mapel: newName };
-            }
-            return a;
-          });
+          const updatedAssigns = t.assignments.map(a => a.mapel === editingMapel ? { ...a, mapel: newName } : a);
           return { ...t, assignments: updatedAssigns };
         });
-
         const newStudents = { ...masterData.students, "__MAPELS__": updatedMapels };
-        setMasterData(p => ({
-          ...p,
-          students: newStudents,
-          teachers: updatedTeachers
-        }));
-
-        // Sinkronisasi data ke cloud Spreadsheet
-        syncSiswa("saveMasterSiswa", "students", newStudents, `Mapel ${oldName} berhasil diubah menjadi ${newName}.`);
-        syncGuru("saveMasterGuru", "teachers", updatedTeachers, "Jadwal guru disesuaikan otomatis.");
+        setMasterData(p => ({ ...p, students: newStudents, teachers: updatedTeachers }));
+        syncSiswa("saveMasterSiswa", "students", newStudents, `Mapel diubah.`);
+        syncGuru("saveMasterGuru", "teachers", updatedTeachers, "Jadwal guru otomatis menyesuaikan.");
         setEditingMapel(null);
       };
 
@@ -1082,13 +830,12 @@
         if(deletePrompt.type === 'teacher') {
           const newData = masterData.teachers.filter(t => t.name !== deletePrompt.target);
           setMasterData(p => ({...p, teachers: newData}));
-          syncGuru("saveMasterGuru", "teachers", newData, `Guru ${deletePrompt.target} dihapus.`);
+          syncGuru("saveMasterGuru", "teachers", newData, `Guru dihapus.`);
           setExpandedTeacher(null);
         } else if(deletePrompt.type === 'class') {
-          const newStudents = { ...masterData.students };
-          delete newStudents[deletePrompt.target];
+          const newStudents = { ...masterData.students }; delete newStudents[deletePrompt.target];
           setMasterData(p => ({...p, students: newStudents}));
-          syncSiswa("saveMasterSiswa", "students", newStudents, `Kelas ${deletePrompt.target} dihapus.`);
+          syncSiswa("saveMasterSiswa", "students", newStudents, `Kelas dihapus.`);
           setSelClass('');
         } else if(deletePrompt.type === 'student') {
           const classList = masterData.students[selClass].filter(s => s.id !== deletePrompt.target);
@@ -1099,25 +846,20 @@
           const updatedMapels = mapelsList.filter(m => m !== deletePrompt.target);
           const newStudents = { ...masterData.students, "__MAPELS__": updatedMapels };
           setMasterData(p => ({...p, students: newStudents}));
-          syncSiswa("saveMasterSiswa", "students", newStudents, `Mapel ${deletePrompt.target} dihapus.`);
+          syncSiswa("saveMasterSiswa", "students", newStudents, `Mapel dihapus.`);
         }
-        setDeletePrompt({ show: false, type: '', target: null, name: '', extraTarget: null });
+        setDeletePrompt({ show: false, type: '', target: null, name: '' });
       };
 
       const handleAddTeacher = (e) => {
         e.preventDefault();
-        const name = toProperCase(newTeacherName.trim());
-        const pass = newTeacherPass.trim();
+        const name = toProperCase(newTeacherName.trim()); const pass = newTeacherPass.trim();
         if(!name || !pass) return;
-        if(masterData.teachers.find(t => t.name === name)) { 
-          showToast("Nama guru sudah ada!", "error"); 
-          return; 
-        }
+        if(masterData.teachers.find(t => t.name === name)) { showToast("Guru sudah ada!", "error"); return; }
         const newData = [...masterData.teachers, { name, password: pass, assignments: [] }];
         setMasterData(p => ({...p, teachers: newData}));
-        syncGuru("saveMasterGuru", "teachers", newData, `Guru ${name} ditambahkan.`);
-        setNewTeacherName('');
-        setNewTeacherPass('123'); 
+        syncGuru("saveMasterGuru", "teachers", newData, `Guru ditambahkan.`);
+        setNewTeacherName(''); setNewTeacherPass('123'); 
       };
 
       const handleDeleteAssign = (teacherName, assignIdx) => {
@@ -1135,8 +877,7 @@
       const handleAddAssign = (e, teacherName) => {
         e.preventDefault();
         const fd = new FormData(e.target);
-        const mapel = fd.get('mapel'); 
-        const kelas = fd.get('kelas').trim().toUpperCase();
+        const mapel = fd.get('mapel'); const kelas = fd.get('kelas').trim().toUpperCase();
         if(!mapel || !kelas) return;
         const newData = masterData.teachers.map(t => {
           if(t.name === teacherName) {
@@ -1153,10 +894,10 @@
       const handleAddClass = (e) => {
         e.preventDefault();
         const c = newClassName.trim().toUpperCase();
-        if(!c || masterData.students[c]) { showToast("Kelas kosong/sudah ada!", "error"); return; }
+        if(!c || masterData.students[c]) { showToast("Kelas kosong/ada!", "error"); return; }
         const newStudents = { ...masterData.students, [c]: [] };
         setMasterData(p => ({...p, students: newStudents}));
-        syncSiswa("saveMasterSiswa", "students", newStudents, `Kelas ${c} dibuat.`);
+        syncSiswa("saveMasterSiswa", "students", newStudents, `Kelas dibuat.`);
         setNewClassName(''); setSelClass(c);
       };
 
@@ -1175,20 +916,67 @@
       };
 
       return (
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
-          <FunnyDeletePopup show={deletePrompt.show} targetName={deletePrompt.name} type={deletePrompt.type} onConfirm={confirmDelete} onCancel={() => setDeletePrompt({show:false, type:'', target:null, name:'', extraTarget:null})} />
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in pb-4">
+          <FunnyDeletePopup show={deletePrompt.show} targetName={deletePrompt.name} type={deletePrompt.type} onConfirm={confirmDelete} onCancel={() => setDeletePrompt({show:false, type:'', target:null, name:''})} />
 
-          {/* 3 MENU PILIHAN DIURUTKAN: GURU -> MAPEL -> SISWA DENGAN EFEK HOVER GERAKAN KECIL */}
+          {/* Centered Modals SIMETRIS */}
+          {editingMapel && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+              <div className="w-full max-w-sm rounded-[28px] bg-white border border-slate-200 shadow-2xl p-6 transform hover:scale-[1.01] transition-all">
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                  <h3 className="font-black text-slate-800 text-sm">Edit Nama Mapel</h3>
+                  <button onClick={() => setEditingMapel(null)} className="text-slate-400 hover:text-rose-600 text-xl font-bold">&times;</button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Mata Pelajaran</label>
+                    <input type="text" value={editMapelName} onChange={e=>setEditMapelName(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 bg-slate-50" />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={() => setEditingMapel(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 border text-slate-700 font-bold hover:bg-slate-200 text-xs transition-all active:scale-95 shadow-sm">Batal</button>
+                    <button onClick={handleSaveMapel} className="flex-1 py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold hover:bg-fuchsia-700 text-xs shadow-md transition-all active:scale-95">Simpan</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {editingStudentObj && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+              <div className="w-full max-w-sm rounded-[28px] bg-white border border-slate-200 shadow-2xl p-6 transform hover:scale-[1.01] transition-all">
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                  <h3 className="font-black text-slate-800 text-sm">Edit Profil Siswa</h3>
+                  <button onClick={() => setEditingStudentObj(null)} className="text-slate-400 hover:text-rose-600 text-xl font-bold">&times;</button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nomor Presensi / ID</label>
+                    <input type="text" value={editStudentNumber} onChange={e=>setEditStudentNumber(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Lengkap Siswa</label>
+                    <input type="text" value={editStudentName} onChange={e=>setEditStudentName(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50" />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={() => setEditingStudentObj(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 border text-slate-700 font-bold hover:bg-slate-200 text-xs transition-all active:scale-95 shadow-sm">Batal</button>
+                    <button onClick={handleSaveStudentProfile} className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 text-xs shadow-md transition-all active:scale-95">Simpan</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Symmetrical Menu Tabs */}
           <div className="flex border-b border-slate-100 bg-slate-50 p-2 gap-2">
-            <button onClick={() => setView('guru')} className={`flex-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 shadow-sm ${view === 'guru' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-indigo-50/50'}`}>👨‍🏫 Edit Guru</button>
-            <button onClick={() => setView('mapel')} className={`flex-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 shadow-sm ${view === 'mapel' ? 'bg-fuchsia-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-fuchsia-50/50'}`}>📚 Edit Mapel</button>
-            <button onClick={() => setView('siswa')} className={`flex-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 shadow-sm ${view === 'siswa' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-emerald-50/50'}`}>🎓 Edit Siswa</button>
+            <button onClick={() => setView('guru')} className={`flex-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-sm ${view === 'guru' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-indigo-50/50'}`}>👨‍🏫 Guru</button>
+            <button onClick={() => setView('mapel')} className={`flex-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-sm ${view === 'mapel' ? 'bg-fuchsia-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-fuchsia-50/50'}`}>📚 Mapel</button>
+            <button onClick={() => setView('siswa')} className={`flex-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-sm ${view === 'siswa' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-emerald-50/50'}`}>🎓 Siswa</button>
           </div>
 
-          <div className="p-4 sm:p-6">
+          <div className="p-4 sm:p-6 overflow-y-auto max-h-[65vh]">
             {view === 'guru' && (
-              <div className="space-y-6">
-                <form onSubmit={handleAddTeacher} className="flex flex-col sm:flex-row gap-2.5 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 hover:border-indigo-200 hover:scale-[1.01] hover:-translate-y-0.5 transition-all">
+              <div className="space-y-6 animate-in fade-in">
+                <form onSubmit={handleAddTeacher} className="flex flex-col sm:flex-row gap-2.5 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 hover:border-indigo-200 transition-colors">
                   <div className="flex-1 relative">
                     <IconUser className="absolute left-3 top-2.5 w-4 h-4 text-indigo-400" />
                     <input type="text" placeholder="Nama Guru Baru" value={newTeacherName} onChange={e=>setNewTeacherName(e.target.value)} className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-200 shadow-sm" required />
@@ -1197,60 +985,67 @@
                     <IconLock className="absolute left-3 top-2.5 w-4 h-4 text-indigo-400" />
                     <input type="text" placeholder="Pass (123)" value={newTeacherPass} onChange={e=>setNewTeacherPass(e.target.value)} className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-200 shadow-sm" />
                   </div>
-                  <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[11px] font-black hover:bg-indigo-700 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"><IconPlus className="w-4 h-4"/> Tambah</button>
+                  <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[11px] font-black hover:bg-indigo-700 transition-all shadow-md hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-1.5"><IconPlus className="w-4 h-4"/> Tambah</button>
                 </form>
 
                 <div className="space-y-2">
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Pilih Guru untuk Diedit:</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Daftar Guru Terdaftar:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {sortedTeachers.map((t, idx) => {
-                      const isActive = expandedTeacher === t.name;
-                      const cardStyle = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+                      const isExpanded = expandedTeacher === t.name;
+                      const cardColor = AVATAR_COLORS[idx % AVATAR_COLORS.length];
                       return (
-                        <div key={t.name}>
-                          <button onClick={() => handleTeacherClick(t)} className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-300 ease-out text-left ${isActive ? 'bg-slate-800 text-white border-slate-900 shadow-md scale-105 z-10 relative' : `bg-white hover:-translate-y-1 hover:shadow-md hover:scale-[1.03] active:scale-95 ${cardStyle.replace('bg-','hover:bg-').replace('text-','text-slate-700 hover:text-')}`}`}>
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shadow-inner bg-white/50 border border-white/50">{t.name.charAt(0)}</div>
-                            <div className="flex-1 truncate"><span className="block font-extrabold text-xs truncate">{t.name}</span><span className={`text-[9px] font-bold uppercase tracking-wider ${isActive ? 'text-slate-300' : 'text-slate-500'}`}>{t.assignments.length} Mapel</span></div>
-                          </button>
-
-                          {isActive && (
-                            <div className="absolute left-4 right-4 sm:left-auto sm:right-auto sm:w-80 mt-3 bg-white border border-slate-200 shadow-2xl rounded-2xl p-4 z-50 animate-in slide-in-from-top-2">
-                              <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">EDIT DATA GURU</span>
-                                <button onClick={() => setDeletePrompt({show:true, type:'teacher', target:t.name, name:t.name})} className="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors hover:scale-[1.03] active:scale-95" title="Hapus Guru"><IconTrash className="w-4 h-4"/></button>
+                        <div key={t.name} className="flex flex-col border border-slate-200 p-2 rounded-2xl bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                          <div className="flex items-center justify-between p-1 group">
+                            <div className="flex items-center gap-2.5 flex-1 overflow-hidden">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shadow-inner ${cardColor.split(' ')[0]} ${cardColor.split(' ')[2]}`}>{t.name.charAt(0)}</div>
+                              <div className="flex-1 truncate">
+                                <span className="block font-extrabold text-xs truncate text-slate-800">{t.name}</span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{t.assignments.length} Mapel</span>
                               </div>
-                              
-                              <div className="space-y-2 mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                <div className="space-y-1.5">
-                                  <label className="block text-[9px] font-bold text-slate-500 uppercase">Nama Guru</label>
-                                  <input type="text" value={editingTeacherName} onChange={e=>setEditingTeacherName(e.target.value)} className="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white" placeholder="Nama Guru" />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <label className="block text-[9px] font-bold text-slate-500 uppercase">PIN Password</label>
-                                  <input type="text" value={editingTeacherPass} onChange={e=>setEditingTeacherPass(e.target.value)} className="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white" placeholder="Password PIN" />
-                                </div>
-                                <button onClick={() => handleSaveTeacherProfile(t.name)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-lg text-[10px] font-black transition-all hover:scale-[1.02] active:scale-95 shadow-sm">Simpan Profil Guru</button>
+                            </div>
+                            <div className="flex gap-1">
+                              <button onClick={() => {
+                                setEditingTeacherName(t.name);
+                                setEditingTeacherPass(t.password);
+                                handleTeacherClick(t);
+                              }} className={`p-2 rounded-xl transition-all border border-slate-100 ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`} title="Edit & Jadwal Guru"><IconEdit className="w-4 h-4"/></button>
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="mt-2 p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 space-y-2 animate-in slide-in-from-top-2">
+                              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                                <span className="text-[9px] font-black text-indigo-800 uppercase tracking-widest pl-1">Jadwal Kelas</span>
+                                <button onClick={() => setDeletePrompt({show:true, type:'teacher', target:t.name, name:t.name})} className="text-rose-500 hover:text-white text-[9px] font-bold uppercase px-2 py-1 bg-rose-50 hover:bg-rose-500 rounded-lg hover:scale-105 transition-all shadow-sm">Hapus Guru</button>
                               </div>
 
-                              <div className="flex flex-col gap-2 mb-3 max-h-40 overflow-y-auto pr-1 border-t border-slate-100 pt-3">
-                                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">Jadwal Kelas / Mapel:</span>
-                                {t.assignments.length === 0 ? <p className="text-[10px] text-slate-400 italic">Belum ada jadwal mapel.</p> : 
+                              {/* FORM EDIT NAMA GURU & PIN INLINE SIMETRIS */}
+                              <div className="space-y-2 mb-2 p-2 bg-white rounded-xl border border-slate-200">
+                                <input type="text" value={editingTeacherName} onChange={e=>setEditingTeacherName(e.target.value)} className="w-full px-2.5 py-1 text-[11px] font-bold rounded border border-slate-200" placeholder="Ubah Nama Guru" />
+                                <input type="text" value={editingTeacherPass} onChange={e=>setEditingTeacherPass(e.target.value)} className="w-full px-2.5 py-1 text-[11px] font-bold rounded border border-slate-200" placeholder="Ubah Password" />
+                                <button type="button" onClick={() => handleSaveTeacherProfileInline(t.name)} className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-black rounded-lg shadow-sm">Simpan Profil Guru</button>
+                              </div>
+
+                              <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-1">
+                                {t.assignments.length === 0 ? <p className="text-[10px] text-slate-400 italic text-center py-2">Kosong.</p> : 
                                   t.assignments.map((a, i) => (
-                                    <div key={i} className="flex justify-between items-center bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-[10px] font-bold text-slate-700 hover:border-indigo-200 transition-colors">
-                                      <span>{a.mapel} <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded ml-1">Kls {a.classId}</span></span>
-                                      <button onClick={() => handleDeleteAssign(t.name, i)} className="text-rose-400 hover:text-rose-600 bg-white shadow-sm border border-slate-100 rounded p-1 hover:scale-105 transition-transform"><IconTrash className="w-3 h-3"/></button>
+                                    <div key={i} className="flex justify-between items-center bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 shadow-sm hover:border-indigo-200 transition-all group">
+                                      <span className="truncate">{a.mapel} <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Kls {a.classId}</span></span>
+                                      <button onClick={() => handleDeleteAssign(t.name, i)} className="text-slate-300 hover:text-rose-600"><IconTrash className="w-3.5 h-3.5"/></button>
                                     </div>
                                   ))
                                 }
                               </div>
-                              <form onSubmit={(e) => handleAddAssign(e, t.name)} className="flex gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                                {/* DROPDOWN MAPEL YANG SUDAH DIURUTKAN SECARA OTOMATIS */}
-                                <select name="mapel" className="flex-1 px-1 py-1.5 text-[10px] font-bold rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-300 bg-white cursor-pointer" required>
-                                  <option value="">-- Mapel --</option>
+                              <form onSubmit={(e) => handleAddAssign(e, t.name)} className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-slate-200">
+                                <select name="mapel" className="w-full px-2 py-1.5 text-[10px] font-bold rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200" required>
+                                  <option value="">-- Mapel Baru --</option>
                                   {mapelsList.map(m => <option key={m} value={m}>{m}</option>)}
                                 </select>
-                                <input name="kelas" type="text" placeholder="Kelas" className="w-16 px-2 py-1.5 text-[10px] font-bold rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-300" required />
-                                <button type="submit" className="bg-slate-800 text-white px-2 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-700 hover:scale-[1.03] active:scale-95 transition-all">+</button>
+                                <div className="flex gap-1.5">
+                                  <input name="kelas" type="text" placeholder="Kls (1A)" className="w-full px-2.5 py-1.5 text-[10px] font-bold rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-200" required />
+                                  <button type="submit" className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-indigo-700 active:scale-95 shadow-sm transition-all">Add</button>
+                                </div>
                               </form>
                             </div>
                           )}
@@ -1262,123 +1057,86 @@
               </div>
             )}
 
+            {view === 'mapel' && (
+              <div className="space-y-6 animate-in fade-in">
+                <form onSubmit={handleAddMapel} className="flex flex-col sm:flex-row gap-2.5 p-4 bg-fuchsia-50/50 rounded-2xl border border-fuchsia-100 hover:border-fuchsia-200 hover:scale-[1.01] hover:-translate-y-0.5 transition-all">
+                  <div className="flex-1 relative">
+                    <IconBookOpen className="absolute left-3 top-2.5 w-4 h-4 text-fuchsia-500" />
+                    <input type="text" placeholder="Masukkan Mata Pelajaran Baru (Cth: Koding)" value={newMapelName} onChange={e=>setNewMapelName(e.target.value)} className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-fuchsia-200 shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-fuchsia-300" required />
+                  </div>
+                  <button type="submit" className="bg-fuchsia-600 text-white px-5 py-2 rounded-xl text-[11px] font-black hover:bg-fuchsia-700 transition-all shadow-md hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-1.5"><IconPlus className="w-4 h-4"/> Tambah</button>
+                </form>
+
+                <div className="border border-fuchsia-200 rounded-3xl p-5 bg-white shadow-lg">
+                  <span className="text-[10px] font-extrabold text-fuchsia-800 uppercase tracking-widest block mb-4">DAFTAR MATA PELAJARAN YANG TERSEDIA ({mapelsList.length})</span>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {mapelsList.map((m, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 hover:border-fuchsia-300 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 group">
+                        <span className="font-bold text-slate-800 text-[11px] truncate pr-2">{m}</span>
+                        <div className="flex gap-1.5 flex-none">
+                          <button onClick={() => { setEditingMapel(m); setEditMapelName(m); }} className="text-slate-400 hover:text-indigo-600 p-1.5 bg-white rounded-lg border border-slate-100 transition-all hover:scale-110 shadow-sm" title="Edit Mapel"><IconEdit className="w-3.5 h-3.5"/></button>
+                          <button onClick={() => setDeletePrompt({show:true, type:'mapel', target:m, name:m})} className="text-slate-300 hover:text-rose-600 p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 transition-all hover:scale-110" title="Hapus Mapel">
+                            <IconTrash className="w-3.5 h-3.5"/>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {view === 'siswa' && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-in fade-in">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 hover:border-emerald-200 hover:scale-[1.01] transition-all">
                     <label className="block text-[10px] font-extrabold text-emerald-800 mb-2 uppercase tracking-widest">Pilih Kelas untuk Diedit</label>
                     <div className="relative hover:scale-[1.01] transition-transform">
                       <IconBookOpen className="absolute left-3 top-2.5 w-4 h-4 text-emerald-500" />
-                      <select value={selClass} onChange={e=>{setSelClass(e.target.value); setEditingStudentId(null);}} className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 bg-white cursor-pointer shadow-sm hover:bg-emerald-50/20">
+                      <select value={selClass} onChange={e=>{setSelClass(e.target.value); setEditingStudentObj(null);}} className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 text-slate-800 bg-white cursor-pointer shadow-sm hover:bg-emerald-50/20 transition-all">
                         <option value="">-- Silakan Pilih Kelas --</option>
                         {Object.keys(masterData.students).filter(k => k !== "__MAPELS__").map(k => <option key={k} value={k}>Kelas {k}</option>)}
                       </select>
                     </div>
                   </div>
-                  <form onSubmit={handleAddClass} className="sm:w-1/3 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col gap-2 justify-end hover:border-slate-300 hover:scale-[1.01] hover:-translate-y-0.5 transition-all">
-                    <input type="text" placeholder="Nama Kelas Baru" value={newClassName} onChange={e=>setNewClassName(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-200 shadow-sm" required />
-                    <button type="submit" className="w-full bg-slate-800 text-white px-3 py-2 rounded-xl text-[11px] font-black hover:bg-slate-700 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"><IconPlus className="w-4 h-4"/> Buat Kelas</button>
+                  <form onSubmit={handleAddClass} className="sm:w-1/3 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col gap-2 justify-end hover:border-slate-300 hover:scale-[1.01] hover:-translate-y-0.5 transition-all shadow-sm">
+                    <input type="text" placeholder="Nama Kelas Baru" value={newClassName} onChange={e=>setNewClassName(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-sm" required />
+                    <button type="submit" className="w-full bg-slate-800 text-white px-3 py-2 rounded-xl text-[11px] font-black hover:bg-slate-700 transition-all hover:scale-[1.03] active:scale-95 shadow-md flex items-center justify-center gap-1.5"><IconPlus className="w-4 h-4"/> Buat Kelas</button>
                   </form>
                 </div>
 
                 {selClass && (
-                  <div className="border border-emerald-200 rounded-3xl p-5 bg-white shadow-lg animate-in fade-in slide-in-from-bottom-4">
+                  <div className="border border-emerald-200 rounded-3xl p-5 bg-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
                     <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
                       <h3 className="font-black text-emerald-900 text-sm uppercase tracking-wide flex items-center gap-2"><IconUsers className="w-5 h-5 text-emerald-500"/> Daftar Siswa: Kelas {selClass}</h3>
                       <button onClick={() => setDeletePrompt({show:true, type:'class', target:selClass, name:selClass})} className="text-rose-600 hover:text-white text-[10px] font-bold bg-rose-50 hover:bg-rose-600 px-3 py-1.5 rounded-lg border border-rose-200 shadow-sm hover:scale-[1.03] active:scale-95 transition-all">Hapus Kelas Ini</button>
                     </div>
                     
                     <form onSubmit={handleAddStudent} className="flex flex-col sm:flex-row gap-2 mb-4 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                      <input name="id" type="text" placeholder="No Presensi" className="w-full sm:w-24 px-3 py-2 text-xs font-bold rounded-lg border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-200 shadow-sm bg-white" required />
-                      <input name="name" type="text" placeholder="Nama Lengkap Siswa" className="flex-1 px-3 py-2 text-xs font-bold rounded-lg border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-200 shadow-sm bg-white" required />
-                      <button type="submit" className="bg-emerald-600 text-white px-5 py-2 rounded-lg text-xs font-black hover:bg-emerald-700 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-md">Tambah</button>
+                      <input name="id" type="text" placeholder="No Presensi" className="w-full sm:w-24 px-3 py-2 text-xs font-bold rounded-lg border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-sm bg-white" required />
+                      <input name="name" type="text" placeholder="Nama Lengkap Siswa" className="flex-1 px-3 py-2 text-xs font-bold rounded-lg border border-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-sm bg-white" required />
+                      <button type="submit" className="bg-emerald-600 text-white px-5 py-2 rounded-lg text-xs font-black hover:bg-emerald-700 transition-all hover:scale-[1.03] active:scale-95 shadow-md">Tambah</button>
                     </form>
 
-                    {/* DAFTAR SISWA DIURUTKAN MENURUN BERDASARKAN ID NUMERIK */}
-                    <div className="max-h-72 overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    <div className="max-h-72 overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                       {sortedStudents.length === 0 ? <p className="text-[11px] text-slate-400 text-center py-4 col-span-full">Kelas ini masih kosong.</p> : 
-                        sortedStudents.map(s => {
-                          const isEditing = editingStudentId === s.id;
-                          return (
-                            <div key={s.id} className="col-span-1">
-                              {!isEditing ? (
-                                <div className="flex justify-between items-center bg-slate-50 px-2.5 py-2 rounded-xl border border-slate-200 hover:border-emerald-300 hover:-translate-y-0.5 hover:shadow-md transition-all group">
-                                  <div className="flex gap-2.5 items-center truncate pr-2">
-                                    <span className="text-[10px] font-black text-white bg-slate-400 group-hover:bg-emerald-400 px-1.5 py-0.5 rounded transition-all">{s.id}</span>
-                                    <span className="text-[11px] font-bold text-slate-800 truncate">{s.name}</span>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    <button onClick={() => handleStartEditStudent(s)} className="text-slate-400 hover:text-indigo-600 p-1 bg-white rounded border border-slate-100 transition-all hover:scale-110" title="Edit Siswa"><IconEdit className="w-3.5 h-3.5"/></button>
-                                    <button onClick={() => setDeletePrompt({show:true, type:'student', target:s.id, name:s.name})} className="text-slate-400 hover:text-rose-600 p-1 bg-white rounded border border-slate-100 transition-all hover:scale-110" title="Hapus Siswa"><IconTrash className="w-3.5 h-3.5"/></button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-300 space-y-2 animate-in slide-in-from-top-1 shadow-sm hover:scale-[1.01] transition-all">
-                                  <span className="text-[9px] font-black text-emerald-800 uppercase block tracking-wider">EDIT DATA SISWA</span>
-                                  <div className="flex gap-1.5">
-                                    <input type="text" value={editStudentNumber} onChange={e=>setEditStudentNumber(e.target.value)} className="w-16 px-2 py-1 text-[10px] font-bold rounded border border-emerald-300 focus:outline-none" placeholder="No" />
-                                    <input type="text" value={editStudentName} onChange={e=>setEditStudentName(e.target.value)} className="flex-1 px-2 py-1 text-[10px] font-bold rounded border border-emerald-300 focus:outline-none" placeholder="Nama Lengkap" />
-                                  </div>
-                                  <div className="flex gap-1.5 justify-end">
-                                    <button type="button" onClick={() => setEditingStudentId(null)} className="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-bold text-[9px] hover:bg-slate-50 transition-all hover:scale-105 active:scale-95">Batal</button>
-                                    <button type="button" onClick={() => handleSaveStudentProfile(s.id)} className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[9px] shadow-sm transition-all hover:scale-105 active:scale-95">Simpan</button>
-                                  </div>
-                                </div>
-                              )}
+                        sortedStudents.map(s => (
+                          <div key={s.id} className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 hover:border-emerald-300 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 group">
+                            <div className="flex gap-2.5 items-center truncate pr-2">
+                              <span className="text-[10px] font-black text-white bg-slate-400 group-hover:bg-emerald-400 px-1.5 py-0.5 rounded transition-all">{s.id}</span>
+                              <span className="text-[11px] font-bold text-slate-800 truncate">{s.name}</span>
                             </div>
-                          );
-                        })
+                            <div className="flex gap-1.5 flex-none opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => openEditStudentModal(s)} className="text-slate-400 hover:text-indigo-600 p-1.5 bg-white rounded-lg border border-slate-100 transition-all hover:scale-110 shadow-sm" title="Edit Siswa"><IconEdit className="w-3.5 h-3.5"/></button>
+                              <button onClick={() => setDeletePrompt({show:true, type:'student', target:s.id, name:s.name})} className="text-slate-400 hover:text-rose-600 p-1.5 bg-white rounded-lg border border-slate-100 transition-all hover:scale-110 shadow-sm" title="Hapus Siswa"><IconTrash className="w-3.5 h-3.5"/></button>
+                            </div>
+                          </div>
+                        ))
                       }
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* --- MANAJEMEN MATA PELAJARAN (EDIT MAPEL) DENGAN STRUKTUR EDIT PREMIUM --- */}
-            {view === 'mapel' && (
-              <div className="space-y-6 animate-in fade-in">
-                <form onSubmit={handleAddMapel} className="flex flex-col sm:flex-row gap-2.5 p-4 bg-fuchsia-50/50 rounded-2xl border border-fuchsia-100 hover:border-fuchsia-200 hover:scale-[1.01] hover:-translate-y-0.5 transition-all">
-                  <div className="flex-1 relative">
-                    <IconBookOpen className="absolute left-3 top-2.5 w-4 h-4 text-fuchsia-500" />
-                    <input type="text" placeholder="Masukkan Mata Pelajaran Baru (Cth: Bahasa Jerman)" value={newMapelName} onChange={e=>setNewMapelName(e.target.value)} className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-fuchsia-200 focus:outline-none focus:ring-2 focus:ring-fuchsia-200 shadow-sm bg-white" required />
-                  </div>
-                  <button type="submit" className="bg-fuchsia-600 text-white px-5 py-2 rounded-xl text-[11px] font-black hover:bg-fuchsia-700 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"><IconPlus className="w-4 h-4"/> Tambah</button>
-                </form>
-
-                <div className="border border-fuchsia-200 rounded-3xl p-5 bg-white shadow-lg">
-                  <span className="text-[10px] font-extrabold text-fuchsia-800 uppercase tracking-widest block mb-4">DAFTAR MATA PELAJARAN YANG TERSEDIA ({mapelsList.length})</span>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    {mapelsList.map((m, idx) => {
-                      const isEditing = editingMapel === m;
-                      return (
-                        <div key={idx} className="col-span-1">
-                          {!isEditing ? (
-                            <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 hover:border-fuchsia-300 hover:-translate-y-0.5 hover:shadow-md hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 group">
-                              <span className="font-bold text-slate-800 text-[11px] truncate">{m}</span>
-                              <div className="flex gap-1">
-                                <button onClick={() => { setEditingMapel(m); setEditMapelName(m); }} className="text-slate-400 hover:text-indigo-600 p-1 bg-white rounded border border-slate-100 transition-all hover:scale-110" title="Edit Mapel"><IconEdit className="w-3.5 h-3.5"/></button>
-                                <button onClick={() => setDeletePrompt({show:true, type:'mapel', target:m, name:m})} className="text-slate-300 hover:text-rose-600 p-1 bg-white rounded-lg shadow-sm border border-slate-100 hover:border-rose-200 transition-colors" title="Hapus Mapel">
-                                  <IconTrash className="w-3.5 h-3.5"/>
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="bg-fuchsia-50/50 p-2.5 rounded-xl border border-fuchsia-300 space-y-2 animate-in slide-in-from-top-1 shadow-sm hover:scale-[1.01] transition-all">
-                              <span className="text-[9px] font-black text-fuchsia-800 uppercase block tracking-wider">EDIT NAMA MAPEL</span>
-                              <input type="text" value={editMapelName} onChange={e=>setEditMapelName(e.target.value)} className="w-full px-2 py-1.5 text-10px font-bold rounded border border-fuchsia-300 focus:outline-none bg-white" placeholder="Nama Mapel" />
-                              <div className="flex gap-1.5 justify-end">
-                                <button type="button" onClick={() => setEditingMapel(null)} className="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-bold text-[9px] hover:bg-slate-50 transition-all hover:scale-105 active:scale-95">Batal</button>
-                                <button type="button" onClick={() => handleSaveMapel(m)} className="px-2.5 py-1 rounded bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold text-[9px] shadow-sm transition-all hover:scale-105 active:scale-95">Simpan</button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -1386,8 +1144,10 @@
       );
     }
 
-    // --- DASHBOARD GURU (SUPER MEWAH DENGAN QUICK SWITCH) ---
-    function Dashboard({ user, activeAssignment, masterData, onLogout, showToast, toast, onUpdateSuccess, setActiveAssignment }) {
+    // =========================================================================
+    // --- 8. DASHBOARD GURU ---
+    // =========================================================================
+    function Dashboard({ user, activeAssignment, masterData, onLogout, showToast, toast, onUpdateSuccess, setActiveAssignment, triggerKocakPopup }) {
       const [students, setStudents] = useState([]);
       const [grades, setGrades] = useState({});
       const [isSaving, setIsSaving] = useState(false);
@@ -1398,6 +1158,11 @@
       const [showSwitchPopup, setShowSwitchPopup] = useState(false);
       const [switchIndex, setSwitchIndex] = useState(0);
       const [targetAssignment, setTargetAssignment] = useState(null);
+
+      const [gradesHistory, setGradesHistory] = useState([]);
+      const [historyIndex, setHistoryIndex] = useState(-1);
+      const [showPasteModal, setShowPasteModal] = useState(false);
+      const [pasteText, setPasteText] = useState('');
 
       const teacherProgress = useMemo(() => {
         let totalExpected = 0, totalFilled = 0;
@@ -1415,29 +1180,77 @@
         return { globalPct, assignmentsProgress };
       }, [user.assignments, masterData.gradesSummary]);
 
-      // --- SINKRON SISWA OTOMATIS URUT NUMERIK ---
       useEffect(() => {
         if (activeAssignment) {
           const classStudents = masterData.students[activeAssignment.classId] || [];
-          
-          // Mengurutkan siswa berdasarkan nomor presensi (ID) secara numerik
           const sortedStudentsOfClass = [...classStudents].sort((a, b) => {
             return a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'});
           });
 
           setStudents(sortedStudentsOfClass);
           const initialGrades = {};
-          sortedStudentsOfClass.forEach(s => { 
-            initialGrades[s.id] = GRADE_COLUMNS.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); 
-          });
+          sortedStudentsOfClass.forEach(s => { initialGrades[s.id] = GRADE_COLUMNS.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); });
+          
           setGrades(initialGrades);
+          setGradesHistory([initialGrades]);
+          setHistoryIndex(0);
         }
-      }, [activeAssignment, masterData]);
+      }, [activeAssignment]);
+
+      const isGradesEmpty = () => {
+        if (!students || students.length === 0) return true;
+        return !Object.values(grades).some(studentGrades => Object.values(studentGrades).some(val => val !== '' && val !== null && val !== undefined));
+      };
+
+      const updateGrades = (newGrades) => {
+        const updatedHistory = gradesHistory.slice(0, historyIndex + 1);
+        setGradesHistory([...updatedHistory, newGrades]);
+        setHistoryIndex(updatedHistory.length);
+        setGrades(newGrades);
+      };
 
       const handleGradeChange = (studentId, columnKey, value) => {
         if (value === '' || (Number(value) >= 0 && Number(value) <= 100)) {
-          setGrades(prev => ({ ...prev, [studentId]: { ...prev[studentId], [columnKey]: value } }));
+          const updated = { ...grades, [studentId]: { ...grades[studentId], [columnKey]: value } };
+          updateGrades(updated);
         }
+      };
+
+      const handleUndo = () => {
+        if (historyIndex > 0) {
+          const prevIndex = historyIndex - 1;
+          setHistoryIndex(prevIndex); setGrades(gradesHistory[prevIndex]); showToast("Undo berhasil!", "success");
+        }
+      };
+
+      const handleRedo = () => {
+        if (historyIndex < gradesHistory.length - 1) {
+          const nextIndex = historyIndex + 1;
+          setHistoryIndex(nextIndex); setGrades(gradesHistory[nextIndex]); showToast("Redo berhasil!", "success");
+        }
+      };
+
+      const handleResetGrades = () => {
+        const reseted = {};
+        students.forEach(s => { reseted[s.id] = GRADE_COLUMNS.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); });
+        updateGrades(reseted); showToast("Semua nilai berhasil di-reset!", "success");
+      };
+
+      const handlePasteBlock = (text) => {
+        if (!text.trim()) return;
+        const rows = text.split('\n').map(row => row.split('\t'));
+        let newGrades = { ...grades }; let pasteCount = 0;
+        rows.forEach((row, i) => {
+          const student = students[i]; if (!student) return;
+          let studentGrades = { ...newGrades[student.id] };
+          row.forEach((val, j) => {
+            const colKey = GRADE_COLUMNS[j]; if (!colKey) return;
+            const cleanVal = val.replace(/\r/g, '').trim();
+            if (cleanVal === '' || (Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { studentGrades[colKey] = cleanVal; pasteCount++; }
+          });
+          newGrades[student.id] = studentGrades;
+        });
+        updateGrades(newGrades); setShowPasteModal(false); setPasteText(''); showToast(`Berhasil menempelkan ${pasteCount} nilai dari Excel!`, "success");
       };
 
       const handlePaste = (e, startRowIdx, startColIdx) => {
@@ -1455,15 +1268,12 @@
           });
           newGrades[student.id] = studentGrades;
         });
-        setGrades(newGrades); showToast(`Berhasil menempelkan ${pasteCount} nilai!`, 'success');
+        updateGrades(newGrades); showToast(`Berhasil menempelkan ${pasteCount} nilai!`, 'success');
       };
 
       const downloadGradeTemplate = () => {
         const header = ["No", "ID Siswa", "Nama Siswa", ...GRADE_COLUMNS];
-        const rows = students.map((s, i) => {
-           const rowData = [i + 1, s.id, s.name];
-           GRADE_COLUMNS.forEach(col => rowData.push(grades[s.id]?.[col] || "")); return rowData;
-        });
+        const rows = students.map((s, i) => { const rowData = [i + 1, s.id, s.name]; GRADE_COLUMNS.forEach(col => rowData.push(grades[s.id]?.[col] || "")); return rowData; });
         const ws = window.XLSX.utils.aoa_to_sheet([header, ...rows]);
         const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "InputNilai");
         window.XLSX.writeFile(wb, `Input_Nilai_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`);
@@ -1491,37 +1301,28 @@
                  newGrades[idSiswa] = studentGrades;
               }
             });
-            setGrades(newGrades); showToast(`Berhasil mengunggah ${imported} nilai!`, 'success');
+            updateGrades(newGrades); showToast(`Berhasil mengunggah ${imported} nilai!`, 'success');
           } catch(err) { showToast(`Gagal membaca file Excel.`, 'error'); }
         }; reader.readAsArrayBuffer(file); e.target.value = ''; 
       };
 
       const handleSaveToSpreadsheet = async () => {
-        // --- VALIDASI PENILAIAN DI BAWAH KKM 70 ---
+        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[Math.floor(Math.random() * KOCAK_EMPTY_WARNINGS.length)]); return; }
         let hasRemedi = false;
         for (const student of students) {
           for (const col of GRADE_COLUMNS) {
-            const val = grades[student.id]?.[col];
-            if (val !== '' && Number(val) < 70) { hasRemedi = true; break; }
+            const val = grades[student.id]?.[col]; if (val !== '' && Number(val) < 70) { hasRemedi = true; break; }
           }
           if (hasRemedi) break;
         }
 
-        if (hasRemedi) {
-          setRemediIndex(Math.floor(Math.random() * ROMANTIC_REMEDI_MSGS.length));
-          setShowRemediPopup(true); return; 
-        }
+        if (hasRemedi) { setRemediIndex(Math.floor(Math.random() * ROMANTIC_REMEDI_MSGS.length)); setShowRemediPopup(true); return; }
 
         setIsSaving(true);
-        const dataToSubmit = {
-          action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, mapel: activeAssignment.mapel,
-          grades: students.map(student => ({ id: student.id, nama: student.name, ...grades[student.id] }))
-        };
-
+        const dataToSubmit = { action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, mapel: activeAssignment.mapel, grades: students.map(student => ({ id: student.id, nama: student.name, ...grades[student.id] })) };
         try {
           await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) });
-          showToast('Selesai! Semua nilai berhasil disimpan.', 'success');
-          setTimeout(() => { onUpdateSuccess(); }, 1500);
+          showToast('Selesai! Semua nilai berhasil disimpan.', 'success'); setTimeout(() => { onUpdateSuccess(); }, 1500);
         } catch (error) { showToast('Gagal simpan. Cek internet!', 'error'); } finally { setIsSaving(false); }
       };
 
@@ -1533,8 +1334,8 @@
       const confirmSwitchClass = () => { setActiveAssignment(targetAssignment); setShowSwitchPopup(false); };
 
       const downloadDetailedGradesExcel = () => {
-        const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-        const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[Math.floor(Math.random() * KOCAK_EMPTY_WARNINGS.length)]); return; }
+        const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const now = new Date(); const timeString = `${days[now.getDay()]} , ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} - Jam ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
 
         const rowsData = [
@@ -1542,8 +1343,7 @@
           [`Kelas: ${activeAssignment.classId}`],
           [`Guru Pengajar: ${user.name}`],
           [`Waktu Diunduh: ${timeString}`],
-          [], 
-          ["No", "ID Siswa", "Nama Siswa", ...GRADE_COLUMNS] 
+          [], ["No", "ID Siswa", "Nama Siswa", ...GRADE_COLUMNS] 
         ];
 
         students.forEach((s, idx) => {
@@ -1555,130 +1355,158 @@
         const ws = window.XLSX.utils.aoa_to_sheet(rowsData);
         ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
         ws['!cols'] = [{ wch: 4 }, { wch: 10 }, { wch: 20 }, ...GRADE_COLUMNS.map(() => ({ wch: 6 }))];
-
         const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "Rekap_Nilai");
-        window.XLSX.writeFile(wb, `Laporan_Nilai_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`);
-        showToast("Rekap Nilai berhasil diekspor!", "success");
+        window.XLSX.writeFile(wb, `Laporan_Nilai_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`); showToast("Rekap Nilai diekspor!", "success");
       };
 
       return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-xs">
+        <div className="h-screen max-h-screen flex flex-col font-sans text-xs overflow-hidden bg-slate-50">
           <RemediPopup show={showRemediPopup} msgIndex={remediIndex} onClose={() => setShowRemediPopup(false)} />
           <SwitchPopup show={showSwitchPopup} msgIndex={switchIndex} onConfirm={confirmSwitchClass} onCancel={() => setShowSwitchPopup(false)} targetAssign={targetAssignment} />
           
-          <header className="bg-indigo-600 text-white shadow-md sticky top-0 z-30">
-            <div className="max-w-[1400px] mx-auto px-4 h-12 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <IconGraduationCap className="w-6 h-6 opacity-85" />
-                <div><h1 className="font-black text-xs tracking-wide leading-tight">KELAS {activeAssignment.classId}</h1><p className="text-4xs text-indigo-200 font-medium">Mapel: {activeAssignment.mapel}</p></div>
+          {/* MODAL TEMPEL NILAI EXCEL */}
+          {showPasteModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+              <div className="relative w-full max-w-sm rounded-[28px] p-5 bg-white border border-slate-200 shadow-2xl transform transition-all animate-[bounce_0.4s_ease-in-out]">
+                <div className="text-4xl mb-2 text-center animate-bounce">📋</div>
+                <h2 className="text-sm font-black mb-1.5 text-slate-800 text-center">Tempel Data Nilai Excel</h2>
+                <p className="text-[10px] text-slate-500 font-semibold mb-3 leading-relaxed text-center">Salin baris dan kolom nilai dari Excel (Format: UH1 s/d SAS), lalu tempel di kotak bawah ini.</p>
+                <textarea rows="5" className="w-full border border-slate-200 rounded-xl p-2.5 font-mono text-[10px] focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-slate-800 shadow-inner bg-slate-50" placeholder="Tempel baris nilai dari Excel di sini..." value={pasteText} onChange={(e) => setPasteText(e.target.value)} />
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowPasteModal(false); setPasteText(''); }} className="flex-1 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-[10px] transition-all hover:scale-105 active:scale-95 border shadow-sm">Batal</button>
+                  <button onClick={() => handlePasteBlock(pasteText)} className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] shadow-md transition-all hover:scale-105 active:scale-95">Tempel Nilai</button>
+                </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="text-right hidden sm:block"><p className="text-2xs font-bold leading-tight">{user.name}</p><p className="text-3xs text-indigo-200 leading-tight">Sedang Bertugas</p></div>
-                <button onClick={onLogout} className="p-1.5 bg-indigo-700 hover:bg-red-500 rounded-full transition-all duration-300 hover:scale-[1.05] active:scale-95 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button>
-              </div>
+            </div>
+          )}
+
+          <header className="flex-none bg-indigo-600 text-white shadow-md h-12 flex items-center justify-between px-4 z-30">
+            <div className="flex items-center space-x-2">
+              <IconGraduationCap className="w-6 h-6 opacity-85" />
+              <div><h1 className="font-extrabold text-sm tracking-wide leading-none">ASTAGA</h1><p className="text-[8px] text-indigo-200 font-semibold tracking-wider mt-0.5">Asisten Sistem Terpadu Guru</p></div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="text-right hidden sm:block"><p className="text-2xs font-bold leading-tight">{user.name}</p><p className="text-3xs text-indigo-200 leading-tight">Selamat Bertugas</p></div>
+              <button onClick={onLogout} className="p-1.5 bg-indigo-700 hover:bg-red-500 rounded-full transition-all duration-300 hover:scale-[1.05] active:scale-95 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button>
             </div>
           </header>
 
-          <main className="flex-1 max-w-[1400px] mx-auto w-full p-2 sm:p-4 animate-in fade-in duration-300 overflow-x-hidden">
-            
-            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 rounded-2xl p-4 mb-3 shadow-md relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:scale-[1.01] hover:shadow-lg transition-all duration-300">
-              <div className="absolute top-0 left-0 w-full h-full bg-white opacity-5 pointer-events-none transform -skew-x-12 scale-150"></div>
-              <div className="relative z-10 w-full sm:w-auto">
-                <h2 className="text-white font-black text-sm mb-0.5 flex items-center gap-1.5"><IconActivity className="w-4 h-4"/> Progres Kerjamu</h2>
-                <p className="text-indigo-100 font-medium text-[10px]">Ayo lengkapi nilainya biar cepat kelar bos!</p>
-              </div>
-              <div className="relative z-10 w-full sm:w-1/3 min-w-[200px] bg-white/10 p-2 rounded-xl border border-white/20 backdrop-blur-sm shadow-inner">
-                <div className="flex justify-between text-white mb-1.5 font-bold text-[10px]"><span>Total Pengisian</span><span>{teacherProgress.globalPct}%</span></div>
-                <div className="w-full bg-black/20 rounded-full h-1.5"><div className="bg-white h-1.5 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-1000 ease-out" style={{ width: `${teacherProgress.globalPct}%` }}></div></div>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Kapsul Pindah Kelas:</p>
-              <div className="flex overflow-x-auto gap-1.5 pb-1.5 scrollbar-hide snap-x">
-                {teacherProgress.assignmentsProgress.map((assign, idx) => {
-                  const isActive = assign.classId === activeAssignment.classId && assign.mapel === activeAssignment.mapel;
-                  return (
-                    <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.05] active:scale-95 snap-start ${isActive ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 shadow-sm'}`}>
-                      <div className="text-left"><span className={`block text-[11px] font-black ${isActive?'text-white':'text-slate-800'}`}>{assign.mapel}</span><span className={`block text-[9px] font-bold uppercase tracking-wider ${isActive?'text-indigo-200':'text-slate-400'}`}>Kls {assign.classId}</span></div>
-                      <div className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg shadow-inner ${isActive ? 'bg-white/20 text-white border border-white/30' : assign.pct===100?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'}`}>{assign.pct}%</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-              <div className="p-3 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 bg-gradient-to-r from-slate-50 to-white">
-                <div>
-                   <h2 className="text-xs font-black text-indigo-900 flex items-center uppercase tracking-wide"><IconFileText className="w-3.5 h-3.5 mr-1 text-indigo-500"/> Kelas {activeAssignment.classId} - {activeAssignment.mapel}</h2>
-                   <p className="text-[9px] text-slate-500 mt-0.5 font-semibold">Tersimpan: <strong>{students.length} Siswa</strong>. Tips: Bisa <strong>Paste (Ctrl+V)</strong> dari Excel lho!</p>
+          <main className="flex-1 flex flex-col overflow-hidden max-w-[1400px] mx-auto w-full p-2 sm:p-4">
+            {/* AREA MEMBEKU (STICKY TOPPED LAYOUT) */}
+            <div className="flex-none space-y-3">
+              {/* KARTU PROGRES RAMping */}
+              <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 rounded-xl p-3 shadow-md relative overflow-hidden flex items-center justify-between hover:scale-[1.01] hover:shadow-lg transition-all duration-300">
+                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-5 pointer-events-none transform -skew-x-12 scale-150"></div>
+                <div className="relative z-10 flex items-center gap-1.5">
+                  <IconActivity className="w-4 h-4 text-white animate-pulse"/>
+                  <h2 className="text-white font-black text-[11px] uppercase tracking-widest hidden sm:block">Progres Kerjamu</h2>
+                  <h2 className="text-white font-black text-[11px] uppercase tracking-widest sm:hidden">Progres</h2>
                 </div>
-                
-                <div className="grid grid-cols-2 sm:flex sm:flex-row items-center gap-1.5 w-full lg:w-auto">
-                   <button onClick={downloadGradeTemplate} className="flex items-center justify-center space-x-1 text-[10px] font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-600 active:scale-95 text-white px-2 py-2 rounded-lg transition-all shadow-sm hover:scale-105 hover:-translate-y-0.5 duration-300 w-full sm:w-auto">
-                     <IconDownload className="w-3 h-3" /> <span>Template</span>
-                   </button>
-                   <button onClick={() => fileUploadRef.current.click()} className="flex items-center justify-center space-x-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-2 py-2 rounded-lg transition-all shadow-sm hover:scale-105 hover:-translate-y-0.5 duration-300 w-full sm:w-auto">
-                     <IconUploadCloud className="w-3 h-3" /> <span>Upload</span>
-                   </button>
-                   <input type="file" accept=".xls,.xlsx" ref={fileUploadRef} onChange={handleUploadExcelGrades} className="hidden" />
-                   <button onClick={downloadDetailedGradesExcel} className="flex items-center justify-center space-x-1 text-[10px] font-black uppercase tracking-wider bg-fuchsia-600 hover:bg-fuchsia-700 active:scale-95 text-white px-2 py-2 rounded-lg transition-all shadow-sm hover:scale-105 hover:-translate-y-0.5 duration-300 w-full sm:w-auto">
-                     <IconFileText className="w-3 h-3" /> <span>Unduh Nilai</span>
-                   </button>
-                   <button onClick={handleSaveToSpreadsheet} disabled={isSaving || students.length === 0} className="flex items-center justify-center space-x-1 text-[10px] font-black uppercase tracking-wider bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-2 py-2 rounded-lg transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 hover:scale-105 hover:-translate-y-0.5 duration-300 w-full sm:w-auto">
-                     {isSaving ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <IconSave className="w-3 h-3" />}
-                     <span>Kirim Nilai</span>
-                   </button>
+                <div className="relative z-10 flex-1 ml-4 sm:ml-8 max-w-sm bg-white/10 p-1.5 rounded-xl border border-white/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-inner">
+                  <span className="text-white font-black text-[9px] bg-black/20 px-2 py-0.5 rounded border border-white/10">{teacherProgress.globalPct}%</span>
+                  <div className="flex-1 bg-black/20 rounded-full h-1.5 overflow-hidden">
+                    <div className="h-1.5 rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-rose-400 via-amber-400 via-emerald-400 to-cyan-300 shadow-[0_0_8px_rgba(255,255,255,0.8)]" style={{ width: `${teacherProgress.globalPct}%` }}></div>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-2 sm:p-3 overflow-hidden bg-white">
-                <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-inner relative max-w-full">
-                  <table className="w-full text-xs text-left text-slate-600 whitespace-nowrap">
-                    <thead className="text-[10px] text-slate-500 bg-slate-100 border-b border-slate-200 font-extrabold sticky top-0 z-20 uppercase tracking-wider">
-                      <tr>
-                        <th className="px-1.5 py-2 text-center sticky left-0 bg-slate-100 z-20 shadow-[1px_0_0_0_#e2e8f0]">No</th>
-                        <th className="px-2 py-2 min-w-[120px] max-w-[140px] sticky left-[30px] bg-slate-100 z-20 shadow-[1px_0_0_0_#e2e8f0] truncate">Nama Siswa</th>
-                        {GRADE_COLUMNS.map(col => <th key={col} className="px-0.5 py-2 text-center min-w-[40px]">{col}</th>)}
+              {/* KAPSUL PINDAH KELAS */}
+              <div>
+                <div className="flex overflow-x-auto gap-1.5 pb-1 scrollbar-hide snap-x">
+                  {teacherProgress.assignmentsProgress.map((assign, idx) => {
+                    const isActive = assign.classId === activeAssignment.classId && assign.mapel === activeAssignment.mapel;
+                    return (
+                      <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.05] active:scale-95 snap-start ${isActive ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 shadow-sm'}`}>
+                        <div className="text-left"><span className={`block text-[11px] font-black ${isActive?'text-white':'text-slate-800'}`}>{assign.mapel}</span><span className={`block text-[9px] font-bold uppercase tracking-wider ${isActive?'text-indigo-200':'text-slate-400'}`}>Kls {assign.classId}</span></div>
+                        <div className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg shadow-inner ${isActive ? 'bg-white/20 text-white border border-white/30' : assign.pct===100?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'}`}>{assign.pct}%</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4 MENU AKSI UTAMA SEBARIS BERKONTRAS TINGGI */}
+              <div className="bg-white border border-slate-200 p-2 rounded-2xl flex flex-row items-center gap-2 overflow-x-auto scrollbar-hide w-full shadow-sm">
+                <button onClick={downloadGradeTemplate} className="flex-1 flex items-center justify-center space-x-1.5 text-[9px] sm:text-3xs font-extrabold bg-amber-500 hover:bg-amber-600 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 text-white px-2 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/10 min-w-[100px] border border-amber-600">
+                  <IconDownload className="w-3.5 h-3.5" /> <span>Template</span>
+                </button>
+                <button onClick={() => fileUploadRef.current.click()} className="flex-1 flex items-center justify-center space-x-1.5 text-[9px] sm:text-3xs font-extrabold bg-emerald-600 hover:bg-emerald-700 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 text-white px-2 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/10 min-w-[100px] border border-emerald-700">
+                  <IconUploadCloud className="w-3.5 h-3.5" /> <span>Upload</span>
+                </button>
+                <input type="file" accept=".xls,.xlsx" ref={fileUploadRef} onChange={handleUploadExcelGrades} className="hidden" />
+                <button onClick={downloadDetailedGradesExcel} className="flex-1 flex items-center justify-center space-x-1.5 text-[9px] sm:text-3xs font-extrabold bg-fuchsia-600 hover:bg-fuchsia-700 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 text-white px-2 py-2.5 rounded-xl transition-all shadow-md shadow-fuchsia-600/10 min-w-[100px] border border-fuchsia-700">
+                  <IconFileText className="w-3.5 h-3.5" /> <span>Unduh Nilai</span>
+                </button>
+                <button onClick={handleSaveToSpreadsheet} disabled={isSaving || students.length === 0} className="flex-1 flex items-center justify-center space-x-1.5 text-[9px] sm:text-3xs font-extrabold bg-indigo-600 hover:bg-indigo-700 hover:scale-[1.03] hover:-translate-y-0.5 active:scale-95 text-white px-2 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 min-w-[100px] disabled:hover:scale-100 disabled:hover:-translate-y-0 border border-indigo-700">
+                  {isSaving ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <IconSend className="w-3.5 h-3.5" />}
+                  <span>Kirim Nilai</span>
+                </button>
+              </div>
+            </div>
+
+            {/* TABEL CARD YANG BISA DI-SCROLL */}
+            <div className="flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border border-slate-200 mt-3 min-h-0">
+              <div className="flex-none flex items-center justify-between bg-slate-50 p-2 border-b border-slate-200">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest hidden sm:inline">Toolbar:</span>
+                  <button onClick={() => setShowPasteModal(true)} className="flex items-center gap-1 bg-white hover:bg-indigo-50 text-indigo-600 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg text-[10px] font-black hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-sm">
+                    📋 Tempel
+                  </button>
+                  <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-2.5 py-1 rounded-lg text-[10px] font-black hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0">
+                    ↩️ Undo
+                  </button>
+                  <button onClick={handleRedo} disabled={historyIndex >= gradesHistory.length - 1} className="flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-2.5 py-1 rounded-lg text-[10px] font-black hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0">
+                    ↪️ Redo
+                  </button>
+                </div>
+                <button onClick={handleResetGrades} className="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 hover:border-rose-300 px-2.5 py-1 rounded-lg text-[10px] font-black hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all shadow-sm">
+                  🗑️ Kosongkan
+                </button>
+              </div>
+
+              {/* TABLE AREA SCROLLABLE */}
+              <div className="flex-1 overflow-auto relative rounded-b-2xl scrollbar-hide bg-slate-50/30">
+                <table className="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                  <thead className="text-[10px] text-slate-600 bg-slate-100/90 backdrop-blur-sm border-b border-slate-200 font-extrabold sticky top-0 z-20 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-1.5 py-2 text-center sticky left-0 bg-slate-100/90 z-20 shadow-[1px_0_0_0_#e2e8f0]">No</th>
+                      <th className="px-3 py-2 min-w-[130px] max-w-[150px] sticky left-[30px] bg-slate-100/90 z-20 shadow-[1px_0_0_0_#e2e8f0] truncate">Nama Siswa</th>
+                      {GRADE_COLUMNS.map(col => <th key={col} className="px-0.5 py-2 text-center min-w-[40px]">{col}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.map((student, rowIdx) => (
+                      <tr key={student.id} className="bg-white border-b border-slate-100 last:border-0 hover:bg-indigo-50/50 transition-colors group">
+                        <td className="px-1.5 py-1 font-black text-slate-400 text-center sticky left-0 bg-white group-hover:bg-indigo-50/80 shadow-[1px_0_0_0_#e2e8f0] z-10 text-[10px]">{rowIdx + 1}</td>
+                        <td className="px-2 py-1 font-bold text-slate-800 sticky left-[30px] bg-white group-hover:bg-indigo-50/80 shadow-[1px_0_0_0_#e2e8f0] z-10 truncate max-w-[150px] text-[11px] leading-tight">{student.name}</td>
+                        {GRADE_COLUMNS.map((col, colIdx) => {
+                          const val = grades[student.id]?.[col];
+                          const isRemedi = val !== '' && Number(val) < 70;
+                          const isSuccess = val !== '' && Number(val) >= 70;
+                          return (
+                            <td key={col} className="px-0.5 py-1">
+                              <input type="number" min="0" max="100" placeholder="-" value={val || ''} 
+                                onChange={(e) => handleGradeChange(student.id, col, e.target.value)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)}
+                                className={`w-11 text-center rounded-md border h-8 focus:outline-none focus:ring-1 focus:ring-indigo-300 transition-all font-black text-[11px] hover:-translate-y-0.5 hover:shadow-md duration-300
+                                  ${isRemedi ? 'border-rose-400 bg-rose-50 text-rose-900 focus:bg-white' : isSuccess ? 'border-emerald-400 bg-emerald-50 text-emerald-900 focus:bg-white' : 'border-slate-300 text-slate-900 hover:border-indigo-400 focus:bg-indigo-50/20'}
+                                `} 
+                              />
+                            </td>
+                          );
+                        })}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {students.length === 0 ? (
-                        <tr><td colSpan={GRADE_COLUMNS.length + 2} className="text-center py-4 font-bold text-slate-400 text-[11px]">Siswa kosong. Info Admin ya!</td></tr>
-                      ) : students.map((student, rowIdx) => (
-                        <tr key={student.id} className="bg-white border-b border-slate-100 last:border-0 hover:bg-indigo-50/40 transition-colors group">
-                          <td className="px-1.5 py-1 font-black text-slate-400 text-center sticky left-0 bg-white group-hover:bg-indigo-50 shadow-[1px_0_0_0_#e2e8f0] z-10 text-[10px]">{rowIdx + 1}</td>
-                          <td className="px-2 py-1 font-bold text-slate-800 sticky left-[30px] bg-white group-hover:bg-indigo-50 shadow-[1px_0_0_0_#e2e8f0] z-10 truncate max-w-[140px] text-[11px] leading-tight">{student.name}</td>
-                          {GRADE_COLUMNS.map((col, colIdx) => {
-                            const val = grades[student.id]?.[col];
-                            const isRemedi = val !== '' && Number(val) < 70;
-                            const isSuccess = val !== '' && Number(val) >= 70;
-                            return (
-                              <td key={col} className="px-0.5 py-1">
-                                <input type="number" min="0" max="100" placeholder="-" value={val || ''} 
-                                  onChange={(e) => handleGradeChange(student.id, col, e.target.value)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)}
-                                  className={`w-10 text-center rounded-md border h-8 focus:outline-none focus:ring-1 focus:ring-indigo-300 transition-all font-black text-[11px] hover:-translate-y-0.5 hover:shadow-sm duration-300
-                                    ${isRemedi ? 'border-rose-400 bg-rose-50 text-rose-900 focus:bg-white' : isSuccess ? 'border-emerald-400 bg-emerald-50 text-emerald-900 focus:bg-white' : 'border-slate-300 text-slate-900 hover:border-indigo-400 focus:bg-indigo-50/20'}
-                                  `} 
-                                />
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </main>
 
           {toast && toast.show && (
             <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2">
-              <div className={`rounded-xl shadow-lg px-4 py-2.5 flex items-center space-x-2 text-white font-bold ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`}>
+              <div className={`rounded-xl shadow-lg px-4 py-2.5 flex items-center space-x-2 text-white font-bold text-xs ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
                 {toast.type === 'success' ? <IconCheckCircle className="w-4 h-4" /> : <IconAlertCircle className="w-4 h-4" />}
-                <span className="text-xs">{toast.message}</span>
+                <span>{toast.message}</span>
               </div>
             </div>
           )}
