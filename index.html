@@ -5,26 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ASTAGA - Asisten Sistem Terpadu Guru Al Kautsar</title>
   
+  <!-- Memuat Tailwind CSS untuk Desain -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Memuat React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Memuat Babel untuk mentranspilasi React (JSX) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Memuat SheetJS untuk membaca dan membuat file Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+  <!-- Pengaturan Font Inter untuk estetika yang lebih modern & jelas -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body, html, #root { font-family: 'Inter', sans-serif; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    body, html, #root { 
+      font-family: 'Inter', sans-serif; 
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* STICKY PAKU BUMI ANTI BOCOR */
-    .sticky-no { position: sticky; left: 0; width: 40px; min-width: 40px; max-width: 40px; z-index: 40 !important; background-color: #ffffff; border-right: 1px solid #e2e8f0; background-clip: padding-box; }
-    .sticky-nama { position: sticky; left: 40px; width: 180px; min-width: 180px; max-width: 180px; z-index: 40 !important; background-color: #ffffff; border-right: 2px solid #94a3b8; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.15); background-clip: padding-box; }
-    .sticky-header-no { z-index: 50 !important; background-color: #f8fafc !important; top: 0; }
-    .sticky-header-nama { z-index: 50 !important; background-color: #f8fafc !important; top: 0; border-right: 2px solid #94a3b8; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.15); }
-    tbody tr:hover .sticky-no, tbody tr:hover .sticky-nama { background-color: #eef2ff !important; }
+    /* CSS STICKY PAKU BUMI (TIDAK ADA BACKGROUND DI SINI, DIATUR FULL OLEH TAILWIND) */
+    .sticky-no { 
+      position: sticky; left: 0; width: 40px; min-width: 40px; max-width: 40px; 
+      z-index: 40 !important; border-right: 1px solid #e2e8f0; 
+      background-clip: padding-box; 
+    }
+    .sticky-nama { 
+      position: sticky; left: 40px; width: 180px; min-width: 180px; max-width: 180px; 
+      z-index: 40 !important; border-right: 2px solid #94a3b8; 
+      box-shadow: 2px 0 5px -2px rgba(0,0,0,0.15); background-clip: padding-box; 
+    }
+    
+    .sticky-header-no { z-index: 50 !important; top: 0; }
+    .sticky-header-nama { z-index: 50 !important; top: 0; border-right: 2px solid #94a3b8; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.15); }
+
     .sticky-top-row { position: sticky; top: 0; z-index: 30; }
     .sticky-top-2 { position: sticky; top: 31px; z-index: 30; }
     .sticky-top-3 { position: sticky; top: 62px; z-index: 30; }
@@ -32,48 +56,80 @@
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased text-xs">
   <div id="root"></div>
+
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo } = React;
 
+    // =========================================================================
+    // --- 1. DEKLARASI KONSTAN GLOBAL & LINK GAS ---
+    // =========================================================================
+    // 🔥 LINK GAS TERBARU BOSKU 🔥
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
+
     const GRADE_COLUMNS_NORMAL = ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'];
-    const DEFAULT_MAPELS = ["PENDIDIKAN AGAMA ISLAM", "KEMUHAMMADIYAHAN", "PENDIDIKAN PANCASILA", "BAHASA INDONESIA", "ILMU PENGETAHUAN ALAM DAN SOSIAL", "MATEMATIKA", "PENDIDIKAN JASMANI, OLAHRAGA DAN KESEHATAN", "BAHASA INGGRIS", "KESENIAN", "KODING", "BAHASA JAWA", "BAHASA ARAB", "IBADAH (WUDHU, TAYAMUM, SHALAT)", "TAHFIDZ", "IQRA'"];
+
+    const DEFAULT_MAPELS = [
+      "PENDIDIKAN AGAMA ISLAM", "KEMUHAMMADIYAHAN", "PENDIDIKAN PANCASILA",
+      "BAHASA INDONESIA", "ILMU PENGETAHUAN ALAM DAN SOSIAL", "MATEMATIKA",
+      "PENDIDIKAN JASMANI, OLAHRAGA DAN KESEHATAN", "BAHASA INGGRIS", "KESENIAN", 
+      "KODING", "BAHASA JAWA", "BAHASA ARAB", "IBADAH (WUDHU, TAYAMUM, SHALAT)", 
+      "TAHFIDZ", "IQRA'"
+    ];
+
+    // WARNA PASTEL BACKGROUND UNTUK SUB-BAB MAPEL KHUSUS
     const ITEM_BG_COLORS = ['bg-sky-100', 'bg-emerald-100', 'bg-amber-100', 'bg-violet-100', 'bg-pink-100', 'bg-teal-100', 'bg-orange-100', 'bg-indigo-100'];
 
+    // --- SKEMA MAPEL KHUSUS ---
     const SPECIAL_MAPELS = {
-      "IBADAH (WUDHU, TAYAMUM, SHALAT)": { categories: [
+      "IBADAH (WUDHU, TAYAMUM, SHALAT)": {
+        categories: [
           { name: "Wudhu", color: "#86efac", items: ["Niat", "Cuci Tangan", "Kumur", "Hidung", "Muka", "Tangan Siku", "Kepala Telinga", "Kaki", "Tertib", "Doa"] },
           { name: "Tayamum", color: "#67e8f9", items: ["Niat", "Letak Tangan", "Tiup", "Usap Muka", "Usap Tangan", "Tertib"] },
           { name: "Shalat", color: "#c4b5fd", items: ["Takbiratul Ihram", "Bersedekap", "Bacaan Do'a Iftitah", "Bacaan Surat Al-Fatihah", "Gerakan Ruku'", "Do'a Ruku'", "Gerakan I'tidal", "Do'a I'tidal", "Gerakan Sujud", "Do'a Sujud", "Gerakan Duduk Diantara Dua Sujud", "Do'a Diantara Dua Sujud", "Gerakan Duduk Tahiyat Akhir", "Bacaan Attahiyat & Shalawat", "Salam"] }
-      ]},
-      "TAHFIDZ": { categories: [{ name: "Tahfidz", color: "#38bdf8", items: ["Kelancaran", "Tajwid", "Makharijul Huruf", "S-1", "S-2", "S-3", "S-4", "S-5", "S-6", "S-7"] }] },
-      "IQRA'": { categories: [{ name: "Iqra'", color: "#fdba74", items: ["Ta'awudz & Basmalah", "Kesepatan Membaca", "Kelancaran Membaca", "Suara", "Hal-1", "Hal-2", "Hal-3", "Hal-4", "Hal-5", "Hal-6"] }] }
+        ]
+      },
+      "TAHFIDZ": {
+        categories: [
+          { name: "Tahfidz", color: "#38bdf8", items: ["Kelancaran", "Tajwid", "Makharijul Huruf", "S-1", "S-2", "S-3", "S-4", "S-5", "S-6", "S-7"] }
+        ]
+      },
+      "IQRA'": {
+        categories: [
+          { name: "Iqra'", color: "#fdba74", items: ["Ta'awudz & Basmalah", "Kesepatan Membaca", "Kelancaran Membaca", "Suara", "Hal-1", "Hal-2", "Hal-3", "Hal-4", "Hal-5", "Hal-6"] }
+        ]
+      }
     };
 
     const getMapelSchema = (mapelName) => {
       const special = SPECIAL_MAPELS[mapelName.toUpperCase().trim()];
       if (!special) return { type: 'normal', keys: GRADE_COLUMNS_NORMAL, headers: GRADE_COLUMNS_NORMAL };
+      
       const keys = ['penguji'];
-      special.categories.forEach((cat, cIdx) => { cat.items.forEach((item, iIdx) => { keys.push(`${cIdx}_${iIdx}_UH`); keys.push(`${cIdx}_${iIdx}_STS`); keys.push(`${cIdx}_${iIdx}_SAT`); }); });
+      special.categories.forEach((cat, cIdx) => {
+        cat.items.forEach((item, iIdx) => {
+          keys.push(`${cIdx}_${iIdx}_UH`); keys.push(`${cIdx}_${iIdx}_STS`); keys.push(`${cIdx}_${iIdx}_SAT`);
+        });
+      });
       return { type: 'special', keys, schema: special };
     };
 
     const DEFAULT_MASTER_DATA = { teachers: [], students: {}, gradesSummary: {}, gradesData: {} };
+
     const AVATAR_COLORS = ['bg-indigo-200 border-indigo-400 text-indigo-900', 'bg-emerald-200 border-emerald-400 text-emerald-900', 'bg-amber-200 border-amber-400 text-amber-900', 'bg-fuchsia-200 border-fuchsia-400 text-fuchsia-900', 'bg-sky-200 border-sky-400 text-sky-900', 'bg-rose-200 border-rose-400 text-rose-900'];
-    const TEACHER_CARD_COLORS = ['bg-gradient-to-br from-indigo-100/95 via-indigo-50/50 to-white border-indigo-300/80 shadow-md', 'bg-gradient-to-br from-emerald-100/95 via-emerald-50/50 to-white border-emerald-300/80 shadow-md', 'bg-gradient-to-br from-amber-100/95 via-amber-50/50 to-white border-amber-300/80 shadow-md', 'bg-gradient-to-br from-fuchsia-100/95 via-fuchsia-50/50 to-white border-fuchsia-300/80 shadow-md', 'bg-gradient-to-br from-sky-100/95 via-sky-50/50 to-white border-sky-300/80 shadow-md', 'bg-gradient-to-br from-rose-100/95 via-rose-50/50 to-white border-rose-300/80 shadow-md'];
+    const TEACHER_CARD_COLORS = ['bg-gradient-to-br from-indigo-100/95 via-indigo-50/50 to-white border-indigo-300/80 shadow-md shadow-indigo-100/40 hover:border-indigo-500 hover:shadow-lg', 'bg-gradient-to-br from-emerald-100/95 via-emerald-50/50 to-white border-emerald-300/80 shadow-md shadow-emerald-100/40 hover:border-emerald-500 hover:shadow-lg', 'bg-gradient-to-br from-amber-100/95 via-amber-50/50 to-white border-amber-300/80 shadow-md shadow-amber-100/40 hover:border-amber-500 hover:shadow-lg', 'bg-gradient-to-br from-fuchsia-100/95 via-fuchsia-50/50 to-white border-fuchsia-300/80 shadow-md shadow-fuchsia-100/40 hover:border-fuchsia-500 hover:shadow-lg', 'bg-gradient-to-br from-sky-100/95 via-sky-50/50 to-white border-sky-300/80 shadow-md shadow-sky-100/40 hover:border-sky-500 hover:shadow-lg', 'bg-gradient-to-br from-rose-100/95 via-rose-50/50 to-white border-rose-300/80 shadow-md shadow-rose-100/40 hover:border-rose-500 hover:shadow-lg'];
 
     const SUCCESS_LOGIN_MSGS = [{ emoji: '🥳🎉', title: 'WUIH MANTAP!', desc: 'Berhasil masuk Suhu! Sini saya bantu ketikin nilainya~ ❤️' }];
     const ERROR_LOGIN_MSGS = [{ emoji: '🤦‍♂️🤪', title: 'GAGAL FOKUS!', desc: 'Aduh gagal! Passwordnya salah atau kurang kopi nih? ☕' }];
     const ROMANTIC_REMEDI_MSGS = [{ emoji: '🥺🌹', title: 'Tunggu Dulu Guru Keren...', desc: 'Masih ada nilai anak-anak di bawah KKM tuh. Masa depannya jangan dimerahkan ya... 🥺' }];
     const SWITCH_CLASS_MSGS = [{ emoji: '🫣💔', title: 'YAKIN SIAP BERPALING?', desc: 'Pastikan nilai di kelas ini udah kamu Kirim ya biar aman! 🥺' }];
-    const KOCAK_EMPTY_WARNINGS = ["Wandeeeh bos! Nilainya masih kosong melompong gini mau dikirim? Isinya jangan kosong kayak dompet tanggal tua dong! 🤪💸"];
+    const KOCAK_EMPTY_WARNINGS = ["Wandeeeh bos! Nilainya masih kosong melompong gini mau dikirim? Isinya jangan kosong kayak dompet tanggal tua dong! 🤪💸", "Astaga naga! Nilainya masih kosong bersih gini mau diunduh? Masa ngunduh angin puyuh sih? Isi dulu minimal satu nilai siswa ya bos! 👻🔥"];
 
-    // ICON COMPONENTS
     function IconLock({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;}
     function IconUser({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;}
     function IconLogOut({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;}
     function IconBookOpen({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>;}
     function IconGraduationCap({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>;}
+    function IconSave({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>;}
     function IconSettings({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 1 0 5.66 5.66"></path></svg>;}
     function IconCheckCircle({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;}
     function IconAlertCircle({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>;}
@@ -88,32 +144,47 @@
     function IconTrash({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;}
     function IconPlus({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;}
 
-    // POPUPS
+    // =========================================================================
+    // --- 3. KOMPONEN POPUP GLOBAL ---
+    // =========================================================================
     function FunnyDeletePopup({ show, targetName, type, onConfirm, onCancel }) {
       if (!show) return null;
-      let desc = `Beneran mau menghapus ${targetName}?`;
-      if (type === 'teacher') desc = `Yakin mau usir Guru ${targetName}?`;
-      if (type === 'student') desc = `Mau mengeluarkan ${targetName}?`;
-      if (type === 'class') desc = `Hapus Kelas ${targetName}?`;
+      let desc = `Beneran mau menghapus ${targetName}? Nanti kalau kangen gimana?`;
+      if (type === 'teacher') desc = `Yakin mau usir Guru ${targetName}? Ntar siapa yang ngisi nilainya bos? 🥺`;
+      if (type === 'student') desc = `Mau mengeluarkan ${targetName}? Jangan-jangan dia anak baek-baek... 😱`;
+      if (type === 'class') desc = `Hapus Kelas ${targetName} berserta seluruh siswanya? Kosong melompong dong nanti... 🌪️`;
+      if (type === 'mapel') desc = `Hapus Mata Pelajaran ${targetName} dari sekolah? Nanti anak-anak belajar apa dong... 📚`;
+
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform animate-[scale_0.2s_ease-out] hover:scale-[1.03] active:scale-95 transition-all">
             <div className="text-4xl mb-2 animate-bounce">😭💔</div>
-            <h2 className="text-base font-black mb-1 text-rose-950">YAKIN HAPUS?</h2><p className="text-[11px] mb-4 font-semibold text-rose-800">{desc}</p>
-            <div className="flex gap-2"><button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border border-rose-200 text-rose-700 font-bold text-[11px]">Batal</button><button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-rose-600 text-white font-bold text-[11px]">Hapus! 💥</button></div>
+            <h2 className="text-base font-black mb-1 tracking-tight text-rose-950">YAKIN MAU HAPUS?</h2>
+            <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90">{desc}</p>
+            <div className="flex gap-2">
+              <button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition-all shadow-sm">Gak Jadi 🥺</button>
+              <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition-all shadow-sm">Iya, Hapus! 💥</button>
+            </div>
           </div>
         </div>
       );
     }
 
-    function FunnyKocakPopup({ show, message, onClose }) {
+    // DIMODIFIKASI AGAR MENERIMA THEME SEMESTER
+    function FunnyKocakPopup({ show, message, onClose, isSAS = true }) {
       if (!show) return null;
+      const bg = isSAS ? 'bg-indigo-50 border-indigo-300' : 'bg-orange-50 border-orange-300';
+      const textTitle = isSAS ? 'text-indigo-950' : 'text-orange-950';
+      const textDesc = isSAS ? 'text-indigo-800' : 'text-orange-800';
+      const btn = isSAS ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-orange-600 hover:bg-orange-700';
+
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-xs rounded-[28px] p-6 text-center shadow-2xl bg-amber-50 border border-amber-300">
-            <div className="text-5xl mb-3 animate-bounce">🤪💸</div><h2 className="text-base font-black mb-2 text-amber-950 uppercase">KOSONG!</h2>
-            <p className="text-xs mb-4 font-semibold text-amber-800">{message}</p>
-            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-white font-extrabold text-xs bg-amber-600">Oke Bos!</button>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className={`relative w-full max-w-xs rounded-[28px] p-6 text-center shadow-2xl border transform hover:scale-[1.03] transition-all ${bg}`}>
+            <div className="text-5xl mb-3 animate-bounce">🤪💸🎒</div>
+            <h2 className={`text-base font-black mb-2 uppercase ${textTitle}`}>ASTAGA, KOSONG!</h2>
+            <p className={`text-xs mb-4 font-semibold opacity-95 leading-relaxed ${textDesc}`}>{message}</p>
+            <button onClick={onClose} className={`w-full py-2.5 rounded-xl text-white font-extrabold text-xs shadow-md active:scale-95 transition-transform ${btn}`}>Oke Siap Bos! 🫡</button>
           </div>
         </div>
       );
@@ -121,42 +192,73 @@
 
     function FunnyPopup({ show, type, msgIndex, onClose }) {
       if (!show) return null;
-      const msg = type === 'success' ? SUCCESS_LOGIN_MSGS[0] : ERROR_LOGIN_MSGS[0];
+      const msg = type === 'success' ? SUCCESS_LOGIN_MSGS[msgIndex % SUCCESS_LOGIN_MSGS.length] : ERROR_LOGIN_MSGS[msgIndex % ERROR_LOGIN_MSGS.length];
       const bg = type === 'success' ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300';
       const text = type === 'success' ? 'text-emerald-900' : 'text-rose-900';
-      const btn = type === 'success' ? 'bg-emerald-600' : 'bg-rose-600';
+      const btn = type === 'success' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700';
+
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className={`w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl border ${bg}`}>
-            <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div><h2 className={`text-base font-black mb-1 ${text}`}>{msg.title}</h2><p className={`text-[11px] mb-4 font-semibold ${text}`}>{msg.desc}</p>
-            <button onClick={onClose} className={`w-full py-2 rounded-xl text-white font-bold text-[11px] ${btn}`}>Oke Siap!</button>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className={`relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl border transform hover:scale-[1.03] active:scale-95 transition-all ${bg}`}>
+            <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div>
+            <h2 className={`text-base font-black mb-1 ${text}`}>{msg.title}</h2>
+            <p className={`text-[11px] mb-4 font-semibold ${text} opacity-90`}>{msg.desc}</p>
+            <button onClick={onClose} className={`w-full py-2 rounded-xl text-white font-bold text-[11px] shadow-sm active:scale-95 transition-transform ${btn}`}>Oke Siap Bos!</button>
           </div>
         </div>
       );
     }
 
-    function SwitchPopup({ show, msgIndex, onConfirm, onCancel, targetAssign }) {
-      if (!show || !targetAssign) return null;
-      const msg = SWITCH_CLASS_MSGS[0];
+    function RemediPopup({ show, msgIndex, onClose }) {
+      if (!show) return null;
+      const msg = ROMANTIC_REMEDI_MSGS[msgIndex % ROMANTIC_REMEDI_MSGS.length];
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl bg-indigo-50 border border-indigo-200">
-            <div className="text-4xl mb-2 animate-bounce">{msg.emoji}</div><h2 className="text-base font-black mb-1 text-indigo-950">{msg.title}</h2><p className="text-[11px] mb-4 font-semibold text-indigo-800">{msg.desc}</p>
-            <div className="flex gap-2"><button onClick={onCancel} className="flex-1 py-2 rounded-xl bg-white border text-indigo-700 font-bold text-[11px]">Batal</button><button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold text-[11px]">Pindah! 🚀</button></div>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform transition-all duration-300 hover:scale-[1.03] active:scale-95">
+            <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div>
+            <h2 className="text-base font-black mb-1 tracking-tight text-rose-900">{msg.title}</h2>
+            <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90 leading-relaxed">{msg.desc}</p>
+            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm bg-rose-600 hover:bg-rose-700 active:scale-95 transition-transform">Siapp, aku rapiin dulu! 💕</button>
+          </div>
+        </div>
+      );
+    }
+
+    // DIMODIFIKASI AGAR MENERIMA THEME SEMESTER
+    function SwitchPopup({ show, msgIndex, onConfirm, onCancel, targetAssign, isSAS = true }) {
+      if (!show || !targetAssign) return null;
+      const msg = SWITCH_CLASS_MSGS[msgIndex % SWITCH_CLASS_MSGS.length];
+      
+      const bg = isSAS ? 'bg-indigo-50 border-indigo-200' : 'bg-rose-50 border-rose-200';
+      const textTitle = isSAS ? 'text-indigo-950' : 'text-rose-950';
+      const textDesc = isSAS ? 'text-indigo-800' : 'text-rose-800';
+      const btnCancel = isSAS ? 'text-indigo-700 border-indigo-200 hover:bg-indigo-100' : 'text-rose-700 border-rose-200 hover:bg-rose-100';
+      const btnConfirm = isSAS ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700';
+
+      return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className={`relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl border transform transition-all hover:scale-[1.03] active:scale-95 ${bg}`}>
+            <div className="text-4xl mb-2 animate-bounce">{msg.emoji}</div>
+            <h2 className={`text-base font-black mb-1 tracking-tight ${textTitle}`}>{msg.title}</h2>
+            <p className={`text-[11px] mb-4 font-semibold opacity-90 leading-relaxed ${textDesc}`}>{msg.desc}</p>
+            <div className="flex gap-2">
+              <button onClick={onCancel} className={`flex-1 py-2 rounded-xl bg-white border font-bold text-[11px] shadow-sm active:scale-95 transition-transform ${btnCancel}`}>Bentar, Cek Dulu!</button>
+              <button onClick={onConfirm} className={`flex-1 py-2 rounded-xl text-white font-bold text-[11px] shadow-sm active:scale-95 transition-transform ${btnConfirm}`}>Aman, Pindah! 🚀</button>
+            </div>
           </div>
         </div>
       );
     }
 
     // =========================================================================
-    // MAIN APP
+    // --- 4. KOMPONEN INDUK APLIKASI ---
     // =========================================================================
     function App() {
       const [masterData, setMasterData] = useState(DEFAULT_MASTER_DATA);
       const [currentUser, setCurrentUser] = useState(null);
       const [activeAssignment, setActiveAssignment] = useState(null);
       const [popup, setPopup] = useState({ show: false, type: 'success', index: 0 });
-      const [kocakPopup, setKocakPopup] = useState({ show: false, message: '' });
+      const [kocakPopup, setKocakPopup] = useState({ show: false, message: '', isSAS: true });
       const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
       const [isLoading, setIsLoading] = useState(true);
 
@@ -165,8 +267,10 @@
         try {
           const response = await fetch(SCRIPT_URL);
           const data = await response.json();
+          // STRICT SYNC: Hanya menggunakan data yang ada di server.
           setMasterData(data);
         } catch (err) {
+          console.warn("Gagal mendapatkan data cloud.", err);
           showToast("Gagal memuat data dari server.", "error");
         } finally {
           if (!silent) setIsLoading(false);
@@ -192,15 +296,22 @@
       return (
         <div className="min-h-screen max-h-screen h-screen bg-slate-50 flex flex-col overflow-hidden text-xs">
           {!currentUser ? (
-            <LoginScreen masterData={masterData} onLogin={(user, assignment) => { setCurrentUser(user); setActiveAssignment(assignment); if(user !== 'ADMIN') setPopup({ show: true, type: 'success', index: 0 }); }} onLoginFail={() => setPopup({ show: true, type: 'error', index: 0 })} />
+            <LoginScreen 
+              masterData={masterData} 
+              onLogin={(user, assignment) => { 
+                setCurrentUser(user); setActiveAssignment(assignment); 
+                if(user !== 'ADMIN') setPopup({ show: true, type: 'success', index: Math.floor(Math.random() * 10) }); 
+              }} 
+              onLoginFail={() => setPopup({ show: true, type: 'error', index: Math.floor(Math.random() * 10) })} 
+            />
           ) : currentUser === 'ADMIN' ? (
-            <AdminDashboard masterData={masterData} setMasterData={setMasterData} onLogout={() => setCurrentUser(null)} showToast={showToast} onRefreshData={() => fetchCloudMasterData(true)} />
+            <AdminDashboard masterData={masterData} setMasterData={setMasterData} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onRefreshData={() => fetchCloudMasterData(true)} />
           ) : (
-            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} onLogout={() => setCurrentUser(null)} showToast={showToast} onUpdateSuccess={() => fetchCloudMasterData(true)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg) => setKocakPopup({show: true, message: msg})} />
+            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={(silent) => fetchCloudMasterData(silent)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} />
           )}
           
           <FunnyPopup show={popup.show} type={popup.type} msgIndex={popup.index} onClose={() => setPopup({ ...popup, show: false })} />
-          <FunnyKocakPopup show={kocakPopup.show} message={kocakPopup.message} onClose={() => setKocakPopup({ show: false, message: '' })} />
+          <FunnyKocakPopup show={kocakPopup.show} message={kocakPopup.message} isSAS={kocakPopup.isSAS} onClose={() => setKocakPopup({ show: false, message: '', isSAS: true })} />
           
           {toast.show && (
             <div className="fixed bottom-4 right-4 z-[9999] animate-in slide-in-from-bottom-2">
@@ -215,7 +326,7 @@
     }
 
     // =========================================================================
-    // LOGIN
+    // --- 5. KOMPONEN LAYAR LOGIN ---
     // =========================================================================
     function LoginScreen({ masterData, onLogin, onLoginFail }) {
       const [mode, setMode] = useState('guru'); 
@@ -244,13 +355,13 @@
 
       return (
         <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] w-full">
-          <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl border border-slate-200 relative animate-in fade-in duration-300">
+          <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl border border-slate-200 relative animate-in fade-in duration-300 hover:shadow-2xl transition-all">
             <div className={`p-6 text-center transition-colors duration-500 ${mode === 'admin' ? 'bg-slate-900' : 'bg-indigo-600'}`}>
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner">
                 {mode === 'admin' ? <IconSettings className="text-white w-7 h-7 animate-[spin_4s_linear_infinite]" /> : <IconGraduationCap className="text-white w-7 h-7" />}
               </div>
               <h1 className="text-2xl font-black text-white tracking-widest leading-none animate-pulse">ASTAGA</h1>
-              <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru'}</p>
+              <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru Al Kautsar'}</p>
             </div>
             
             <div className="p-6">
@@ -258,21 +369,21 @@
                 {mode === 'guru' && (
                   <React.Fragment>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">Pilih Nama Guru</label>
-                      <div className="relative">
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Pilih Nama Guru</label>
+                      <div className="relative hover:scale-[1.02] active:scale-95 transition-all duration-300">
                         <IconUser className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
                         <select className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 font-bold bg-slate-50 focus:outline-none focus:border-indigo-500 cursor-pointer" value={selectedGuru} onChange={(e) => { setSelectedGuru(e.target.value); setSelectedAssign(''); }} required>
-                          <option value="">-- Klik untuk memilih --</option>
+                          <option value="" className="text-slate-400">-- Klik untuk memilih --</option>
                           {sortedTeachersForLogin.map((t, i) => <option key={i} value={t.name}>{t.name}</option>)}
                         </select>
                       </div>
                     </div>
                     {guruObj && (
                       <div className="animate-in fade-in slide-in-from-top-2">
-                        <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">Pilih Kelas & Mapel</label>
-                        <div className="relative">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Pilih Kelas & Mata Pelajaran</label>
+                        <div className="relative hover:scale-[1.02] active:scale-95 transition-all duration-300">
                           <IconBookOpen className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                          <select className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-indigo-500 cursor-pointer bg-slate-50" value={selectedAssign} onChange={(e) => setSelectedAssign(e.target.value)} required>
+                          <select className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-bold appearance-none cursor-pointer bg-slate-50 hover:bg-indigo-50 transition-colors" value={selectedAssign} onChange={(e) => setSelectedAssign(e.target.value)} required>
                             <option value="">-- Pilih Kelas --</option>
                             {guruObj.assignments.map((a, i) => <option key={i} value={`${a.classId}|${a.mapel}`}>Kelas {a.classId} - {a.mapel}</option>)}
                           </select>
@@ -282,21 +393,21 @@
                   </React.Fragment>
                 )}
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">{mode==='admin' ? 'Kode Admin' : 'Password'}</label>
-                  <div className="relative">
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{mode==='admin' ? 'Akses Admin' : 'Password / PIN'}</label>
+                  <div className="relative hover:scale-[1.02] active:scale-95 transition-all duration-300">
                     <IconLock className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                    <input type="password" placeholder="Password" value={mode==='admin'?adminPass:password} onChange={(e) => mode==='admin'?setAdminPass(e.target.value):setPassword(e.target.value)} className={`pl-9 w-full rounded-xl border-2 py-2.5 px-3 text-xs font-bold bg-slate-50 focus:outline-none ${mode==='admin'?'border-slate-300 focus:border-slate-800':'border-slate-200 focus:border-indigo-500'}`} required />
+                    <input type="password" placeholder="Masukkan password" value={mode==='admin'?adminPass:password} onChange={(e) => mode==='admin'?setAdminPass(e.target.value):setPassword(e.target.value)} className={`pl-9 w-full rounded-xl border-2 py-2.5 px-3 text-xs text-slate-800 font-bold bg-slate-50 focus:outline-none ${mode==='admin'?'border-slate-300 focus:border-slate-800':'border-slate-200 focus:border-indigo-500'}`} required />
                   </div>
                 </div>
-                <button type="submit" className={`w-full text-white font-extrabold rounded-xl py-2.5 shadow-md mt-2 text-xs tracking-wide active:scale-95 transition-all ${mode==='admin'?'bg-slate-900':'bg-indigo-600'}`}>
+                <button type="submit" className={`w-full text-white font-extrabold rounded-xl py-2.5 shadow-md mt-2 text-xs tracking-wide hover:-translate-y-1 active:scale-95 transition-all duration-300 ${mode==='admin'?'bg-slate-900 hover:bg-slate-800':'bg-indigo-600 hover:bg-indigo-700'}`}>
                   {mode==='admin' ? 'BUKA PANEL ADMIN 🗝️' : 'GAS MASUK! 🚀'}
                 </button>
               </form>
             </div>
             
             <div className="bg-slate-50 border-t border-slate-200 p-4 text-center">
-              <button type="button" onClick={() => { setMode(mode === 'guru' ? 'admin' : 'guru'); setPassword(''); setAdminPass(''); }} className="text-[11px] font-extrabold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-wider">
-                {mode === 'guru' ? '🛠️ Masuk Admin?' : '👨‍🏫 Kembali ke Login Guru'}
+              <button onClick={() => { setMode(mode === 'guru' ? 'admin' : 'guru'); setPassword(''); setAdminPass(''); }} className="text-[11px] font-extrabold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-wider">
+                {mode === 'guru' ? '🛠️ Masuk sebagai Admin?' : '👨‍🏫 Kembali ke Login Guru'}
               </button>
             </div>
           </div>
@@ -305,10 +416,11 @@
     }
 
     // =========================================================================
-    // ADMIN DASHBOARD
+    // --- 6. KOMPONEN PANEL ADMIN UTAMA ---
     // =========================================================================
-    function AdminDashboard({ masterData, setMasterData, onLogout, showToast, onRefreshData }) {
+    function AdminDashboard({ masterData, setMasterData, onLogout, showToast, toast, onRefreshData }) {
       const [activeTab, setActiveTab] = useState('overview'); 
+      const [selectedSemester, setSelectedSemester] = useState('S'); // S = SAS, T = SAT
       const [isSyncing, setIsSyncing] = useState(false);
       const [expandedGuru, setExpandedGuru] = useState({});
       const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -321,7 +433,8 @@
         let totalCellsExpected = 0, totalCellsFilled = 0;
         const list = (masterData.teachers || []).flatMap(t => 
           t.assignments.map(a => {
-            const key = `${a.classId}|${a.mapel}|${t.name}`;
+            const sheetName = `${a.classId}-${selectedSemester}`;
+            const key = `${sheetName}|${a.mapel}|${t.name}`;
             const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
             const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
             const filled = sum.uhCount + sum.stsCount + sum.sasCount;
@@ -332,7 +445,7 @@
         );
         const globalProgress = totalCellsExpected === 0 ? 0 : Math.round((totalCellsFilled / totalCellsExpected) * 100);
         return { list, globalProgress };
-      }, [masterData]);
+      }, [masterData, selectedSemester]);
 
       const teachersProgress = useMemo(() => {
         const map = {};
@@ -346,12 +459,26 @@
         return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
       }, [masterData, trackingData]);
 
+      const toggleGuru = (name) => { setExpandedGuru(prev => ({ ...prev, [name]: !prev[name] })); };
+
+      const downloadTemplateGuru = () => {
+        const header = ["No", "Nama Guru", "Password", "Mapel 1", "Kelas Mapel 1 (Pisahkan dgn koma)", "Mapel 2", "Kelas Mapel 2", "Mapel 3", "Kelas Mapel 3", "Mapel 4", "Kelas Mapel 4", "Mapel 5", "Kelas Mapel 5"];
+        const ws = window.XLSX.utils.aoa_to_sheet([header, [1, "Pak Budi", "123", "MATEMATIKA", "10A, 10B", "", "", "", "", "", "", "", ""]]);
+        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterGuru"); window.XLSX.writeFile(wb, "Template_Master_Guru.xlsx");
+      };
+
+      const downloadTemplateSiswa = () => {
+        const header = ["Kelas", "No Presensi", "Nama Siswa"];
+        const ws = window.XLSX.utils.aoa_to_sheet([header, ["10A", "1", "Agus Contoh"]]);
+        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterSiswa"); window.XLSX.writeFile(wb, "Template_Master_Siswa.xlsx");
+      };
+
       const syncToCloud = async (action, payloadKey, payloadData, successMsg) => {
         setIsSyncing(true);
         try {
           await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, [payloadKey]: payloadData }) });
           showToast(successMsg, "success");
-        } catch (err) { showToast("Koneksi gagal", "error"); } finally { setIsSyncing(false); }
+        } catch (err) { showToast("Koneksi gagal, tidak tersimpan ke server.", "error"); } finally { setIsSyncing(false); }
       };
 
       const handleResetGrades = async () => {
@@ -359,7 +486,63 @@
         try {
           await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "resetGrades" }) });
           showToast("Berhasil! Semua rekap nilai di-reset.", "success"); onRefreshData();
-        } catch (err) { showToast("Gagal reset", "error"); } finally { setIsSyncing(false); }
+        } catch (err) { showToast("Gagal reset. Cek koneksi!", "error"); } finally { setIsSyncing(false); }
+      };
+
+      const handleUploadGuru = (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
+            if (!workbook.SheetNames.length) { showToast("File Excel kosong!", "error"); return; }
+            const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+            const teachersMap = {};
+            rows.slice(1).forEach(parts => {
+              if(parts.length > 1 && parts[1]) {
+                const nama = parts[1].toString().trim(); const pass = parts[2] !== "" ? String(parts[2]).trim() : "123";
+                if(nama) {
+                  if(!teachersMap[nama]) teachersMap[nama] = { name: nama, password: pass, assignments: [] };
+                  for(let i = 0; i < 5; i++) {
+                    const mIdx = 3 + (i * 2); const kIdx = 4 + (i * 2);
+                    if (parts[mIdx] !== undefined && parts[kIdx] !== undefined) {
+                       const mName = parts[mIdx].toString().trim();
+                       const kArr = String(parts[kIdx]).split(',').map(k => k.trim()).filter(k => k);
+                       if (mName && kArr.length > 0) {
+                         kArr.forEach(k => { if(!teachersMap[nama].assignments.find(a => a.classId === k && a.mapel === mName)) teachersMap[nama].assignments.push({ classId: k, mapel: mName }); });
+                       }
+                    }
+                  }
+                }
+              }
+            });
+            const newTeachers = Object.values(teachersMap).filter(t => t.assignments.length > 0);
+            if(newTeachers.length > 0) { setMasterData(p => ({ ...p, teachers: newTeachers })); syncToCloud("saveMasterGuru", "teachers", newTeachers, "Data Guru tersimpan ke Cloud!"); } 
+            else showToast(`Format Excel salah!`, 'error');
+          } catch(err) { showToast(`Gagal baca Excel Guru.`, 'error'); }
+        }; reader.readAsArrayBuffer(file); e.target.value = ''; 
+      };
+
+      const handleUploadSiswa = (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
+            if (!workbook.SheetNames.length) { showToast("File Excel kosong!", "error"); return; }
+            const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+            const studentsMap = { ...masterData.students }; 
+            for (let k in studentsMap) { if (k !== "__MAPELS__") delete studentsMap[k]; }
+            rows.slice(1).forEach((parts, idx) => {
+              if(parts.length >= 3 && parts[0]) {
+                const kelas = String(parts[0]).trim().toUpperCase(); const idSiswa = parts[1] !== "" ? String(parts[1]).trim() : String(idx + 1); const namaSiswa = parts[2].toString().trim();
+                if(kelas && namaSiswa) { if(!studentsMap[kelas]) studentsMap[kelas] = []; studentsMap[kelas].push({ id: idSiswa, name: namaSiswa }); }
+              }
+            });
+            if(Object.keys(studentsMap).length > 0) { setMasterData(p => ({ ...p, students: studentsMap })); syncToCloud("saveMasterSiswa", "students", studentsMap, "Data Siswa tersimpan ke Cloud!"); } 
+            else showToast(`Format Excel salah!`, 'error');
+          } catch(err) { showToast(`Gagal baca Excel Siswa.`, 'error'); }
+        }; reader.readAsArrayBuffer(file); e.target.value = ''; 
       };
 
       return (
@@ -367,28 +550,34 @@
           <FunnyDeletePopup show={showResetConfirm} targetName="Seluruh Rekap Nilai" type="class" onConfirm={handleResetGrades} onCancel={() => setShowResetConfirm(false)} />
 
           <header className="flex-none bg-slate-900 text-white shadow-xl h-12 flex items-center justify-between px-4 z-20">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer">
               <div className="bg-indigo-500 p-1 rounded-lg"><IconSettings className="w-4 h-4 text-white" /></div>
               <h1 className="font-extrabold text-[13px] tracking-widest flex items-center gap-1.5">ASTAGA <span className="bg-indigo-700 px-1.5 py-0.5 rounded text-[8px]">ADMIN</span></h1>
             </div>
             <div className="flex space-x-1 border border-slate-700 bg-slate-800 rounded-lg p-0.5 shadow-inner">
-              <button onClick={() => setActiveTab('overview')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'overview' ? 'bg-indigo-500 shadow' : 'text-slate-400'}`}>Progres</button>
-              <button onClick={() => setActiveTab('database')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'database' ? 'bg-indigo-500 shadow' : 'text-slate-400'}`}>Database</button>
-              <button onClick={() => setActiveTab('settings')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'settings' ? 'bg-indigo-500 shadow' : 'text-slate-400'}`}>Setting</button>
+              <button onClick={() => setActiveTab('overview')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all hover:scale-[1.03] ${activeTab === 'overview' ? 'bg-indigo-500 shadow' : 'text-slate-400 hover:text-white'}`}>Progres</button>
+              <button onClick={() => setActiveTab('database')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all hover:scale-[1.03] ${activeTab === 'database' ? 'bg-indigo-500 shadow' : 'text-slate-400 hover:text-white'}`}>Database</button>
+              <button onClick={() => setActiveTab('settings')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all hover:scale-[1.03] ${activeTab === 'settings' ? 'bg-indigo-500 shadow' : 'text-slate-400 hover:text-white'}`}>Setting</button>
             </div>
-            <button onClick={onLogout} className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg"><IconLogOut className="w-4 h-4" /></button>
+            <button onClick={onLogout} className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg transition-all hover:scale-[1.03] hover:bg-slate-800"><IconLogOut className="w-4 h-4" /></button>
           </header>
 
           <main className="flex-1 overflow-y-auto scrollbar-hide p-3 sm:p-4 pb-10 max-w-5xl mx-auto w-full">
             {isSyncing && <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl flex justify-center space-x-2 font-bold animate-pulse mb-3"><div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data...</span></div>}
 
             {activeTab === 'overview' && (
-              <div className="space-y-4">
+              <div className="space-y-4 animate-in fade-in">
+                {/* TOGGLE SEMESTER ADMIN */}
+                <div className="flex bg-slate-200/70 p-1 rounded-xl w-full max-w-sm mx-auto mb-4">
+                   <button onClick={() => setSelectedSemester('S')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'S' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 1 (SAS)</button>
+                   <button onClick={() => setSelectedSemester('T')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'T' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 2 (SAT)</button>
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                  <div className="bg-gradient-to-br from-sky-100 to-sky-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconUsers className="w-6 h-6 text-sky-600 p-1 bg-white rounded-lg" /><div><p className="text-[9px] text-sky-700 font-bold uppercase">Guru Aktif</p><h3 className="text-sm font-black text-slate-800">{totalGuru}</h3></div></div>
-                  <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconGraduationCap className="w-6 h-6 text-emerald-600 p-1 bg-white rounded-lg" /><div><p className="text-[9px] text-emerald-700 font-bold uppercase">Siswa</p><h3 className="text-sm font-black text-slate-800">{totalSiswa}</h3></div></div>
-                  <div className="bg-gradient-to-br from-amber-100 to-amber-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconBookOpen className="w-6 h-6 text-amber-600 p-1 bg-white rounded-lg" /><div><p className="text-[9px] text-amber-700 font-bold uppercase">Kelas</p><h3 className="text-sm font-black text-slate-800">{totalKelas}</h3></div></div>
-                  <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 relative overflow-hidden"><IconActivity className="w-6 h-6 text-indigo-600 p-1 bg-white rounded-lg z-10" /><div className="z-10"><p className="text-[9px] text-indigo-700 font-bold uppercase">Global</p><h3 className="text-sm font-black text-indigo-800">{trackingData.globalProgress}%</h3></div><div className="absolute bottom-0 left-0 h-1 bg-indigo-400" style={{width: `${trackingData.globalProgress}%`}}></div></div>
+                  <div className="bg-gradient-to-br from-sky-100 to-sky-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconUsers className="w-6 h-6 text-sky-600 p-1 bg-white rounded-lg shadow-inner" /><div><p className="text-[9px] text-sky-700 font-bold uppercase">Guru Aktif</p><h3 className="text-sm font-black text-slate-800">{totalGuru}</h3></div></div>
+                  <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconGraduationCap className="w-6 h-6 text-emerald-600 p-1 bg-white rounded-lg shadow-inner" /><div><p className="text-[9px] text-emerald-700 font-bold uppercase">Siswa</p><h3 className="text-sm font-black text-slate-800">{totalSiswa}</h3></div></div>
+                  <div className="bg-gradient-to-br from-amber-100 to-amber-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconBookOpen className="w-6 h-6 text-amber-600 p-1 bg-white rounded-lg shadow-inner" /><div><p className="text-[9px] text-amber-700 font-bold uppercase">Kelas</p><h3 className="text-sm font-black text-slate-800">{totalKelas}</h3></div></div>
+                  <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 relative overflow-hidden"><IconActivity className="w-6 h-6 text-indigo-600 p-1 bg-white rounded-lg shadow-inner z-10" /><div className="z-10"><p className="text-[9px] text-indigo-700 font-bold uppercase">Global {selectedSemester === 'S' ? '(SAS)' : '(SAT)'}</p><h3 className="text-sm font-black text-indigo-800">{trackingData.globalProgress}%</h3></div><div className="absolute bottom-0 left-0 h-1 bg-indigo-400" style={{width: `${trackingData.globalProgress}%`}}></div></div>
                 </div>
 
                 <div className="space-y-2">
@@ -401,7 +590,7 @@
                     const pct = g.total === 0 ? 0 : Math.round((g.completed / g.total) * 100);
                     const isExpanded = !!expandedGuru[g.name];
                     return (
-                      <div key={idx} className={`rounded-xl border overflow-hidden shadow-sm ${TEACHER_CARD_COLORS[idx%TEACHER_CARD_COLORS.length]}`}>
+                      <div key={idx} className={`rounded-xl border overflow-hidden shadow-sm hover:scale-[1.01] transition-all ${TEACHER_CARD_COLORS[idx%TEACHER_CARD_COLORS.length]}`}>
                         <div onClick={() => setExpandedGuru(p => ({...p, [g.name]: !p[g.name]}))} className="p-3 flex items-center justify-between cursor-pointer hover:bg-white/40">
                           <div className="flex items-center space-x-3">
                             <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-bold text-base shadow-sm ${AVATAR_COLORS[idx%AVATAR_COLORS.length]}`}>{g.name.charAt(0)}</div>
@@ -439,9 +628,10 @@
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2"><IconUser className="w-5 h-5 text-indigo-500 bg-white p-1 rounded-lg shadow-inner"/><h2 className="text-sm font-black text-slate-800">Master Guru</h2></div>
                   </div>
-                  <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 text-center bg-white/80 cursor-pointer">
-                    <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1" />
-                    <span className="text-[10px] font-extrabold text-slate-600">Fitur Upload Via Web Nonaktif</span>
+                  <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 text-center bg-white/80 cursor-pointer group hover:bg-white" onClick={e=>{if(e.target.tagName!=='INPUT') e.currentTarget.querySelector('input').click()}}>
+                    <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1 group-hover:text-indigo-600" />
+                    <span className="text-[10px] font-extrabold text-slate-600 group-hover:text-indigo-800">Klik & Pilih Excel Guru</span>
+                    <input type="file" accept=".xls,.xlsx" className="hidden" onChange={handleUploadGuru} />
                   </div>
                 </div>
                 
@@ -449,16 +639,17 @@
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2"><IconGraduationCap className="w-5 h-5 text-emerald-500 bg-white p-1 rounded-lg shadow-inner"/><h2 className="text-sm font-black text-slate-800">Master Siswa</h2></div>
                   </div>
-                  <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 text-center bg-white/80 cursor-pointer">
-                    <IconFileText className="w-7 h-7 text-emerald-400 mx-auto mb-1" />
-                    <span className="text-[10px] font-extrabold text-slate-600">Fitur Upload Via Web Nonaktif</span>
+                  <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 text-center bg-white/80 cursor-pointer group hover:bg-white" onClick={e=>{if(e.target.tagName!=='INPUT') e.currentTarget.querySelector('input').click()}}>
+                    <IconFileText className="w-7 h-7 text-emerald-400 mx-auto mb-1 group-hover:text-emerald-600" />
+                    <span className="text-[10px] font-extrabold text-slate-600 group-hover:text-emerald-800">Klik & Pilih Excel Siswa</span>
+                    <input type="file" accept=".xls,.xlsx" className="hidden" onChange={handleUploadSiswa} />
                   </div>
                 </div>
 
-                <div className="bg-rose-50 border border-rose-300 rounded-2xl p-5 col-span-1 md:col-span-2 shadow-sm">
+                <div className="bg-rose-50 border border-rose-300 rounded-2xl p-5 col-span-1 md:col-span-2 shadow-sm hover:scale-[1.01] transition-all">
                   <div className="flex items-center gap-2 mb-2"><IconAlertCircle className="w-4 h-4 text-rose-500 bg-white p-0.5 rounded shadow-inner" /><h2 className="text-sm font-black text-rose-950">Zona Bahaya</h2></div>
                   <p className="text-rose-800 text-[10px] mb-3 font-bold">Hapus semua tab nilai di Google Sheets. Master guru/siswa aman.</p>
-                  <button onClick={()=>setShowResetConfirm(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md">Reset Semua Rekap Nilai Siswa</button>
+                  <button onClick={()=>setShowResetConfirm(true)} className="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md active:scale-95 transition-all">Reset Semua Rekap Nilai Siswa</button>
                 </div>
               </div>
             )}
@@ -781,9 +972,10 @@
     }
 
     // =========================================================================
-    // --- 8. DASHBOARD GURU (SUPER RESPONSIVE & KHUSUS MAPEL) ---
+    // --- 8. DASHBOARD GURU (SUPER RESPONSIVE, STICKY & THEME MAPEL) ---
     // =========================================================================
     function Dashboard({ user, activeAssignment, masterData, onLogout, showToast, onUpdateSuccess, triggerKocakPopup, setActiveAssignment }) {
+      const [selectedSemester, setSelectedSemester] = useState('S'); 
       const [students, setStudents] = useState([]);
       const [grades, setGrades] = useState({});
       const [isSaving, setIsSaving] = useState(false);
@@ -801,11 +993,38 @@
       const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel), [activeAssignment]);
       const fileUploadRef = useRef(null);
 
+      // --- TEMA DINAMIS SEMESTER ---
+      const isSAS = selectedSemester === 'S';
+      const theme = {
+        bg: isSAS ? 'bg-indigo-50/40' : 'bg-orange-50/50',
+        headerBg: isSAS ? 'bg-indigo-600' : 'bg-rose-600',
+        gradient: isSAS ? 'from-indigo-600 via-blue-500 to-cyan-500' : 'from-rose-600 via-orange-500 to-amber-500',
+        focusRing: isSAS ? 'focus:ring-indigo-500' : 'focus:ring-rose-500',
+        border: isSAS ? 'border-indigo-200' : 'border-rose-200',
+        activeBtn: isSAS ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-rose-600 border-rose-700 text-white shadow-md',
+        inactiveBtn: isSAS ? 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 shadow-sm' : 'bg-white border-orange-200 text-rose-800 hover:bg-orange-50 shadow-sm',
+        tableHover: isSAS ? 'hover:bg-indigo-50/50' : 'hover:bg-orange-100/60',
+        rowBg: isSAS ? 'bg-white' : 'bg-[#fffcf8]',
+        inputBg: isSAS ? 'bg-indigo-50/30' : 'bg-orange-50/50',
+        inputBorder: isSAS ? 'border-indigo-200' : 'border-orange-200',
+        stickyHeader: isSAS ? 'bg-slate-200 text-slate-700' : 'bg-orange-200 text-rose-900',
+        stickyColBg: isSAS ? 'bg-white group-hover:bg-indigo-50/50' : 'bg-[#fffcf8] group-hover:bg-orange-100/60',
+        modalBg: isSAS ? 'bg-indigo-50 border-indigo-200' : 'bg-rose-50 border-rose-200',
+        modalTextH2: isSAS ? 'text-indigo-950' : 'text-rose-950',
+        modalTextP: isSAS ? 'text-indigo-800' : 'text-rose-800',
+        modalBtnCancel: isSAS ? 'hover:bg-indigo-100 text-indigo-700 border-indigo-200' : 'hover:bg-rose-100 text-rose-700 border-rose-200',
+        modalBtnConfirm: isSAS ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700',
+      };
+
+      const labelSTS = isSAS ? 'STS 1' : 'STS 2';
+      const labelSAS = isSAS ? 'SAS' : 'SAT';
+
       const teacherProgress = useMemo(() => {
         let totalExpected = 0, totalFilled = 0;
         let assignmentsProgress = [];
         user.assignments.forEach(a => {
-          const key = `${a.classId}|${a.mapel}|${user.name}`;
+          const sheetName = `${a.classId}-${selectedSemester}`;
+          const key = `${sheetName}|${a.mapel}|${user.name}`;
           const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
           const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
           const filled = sum.uhCount + sum.stsCount + sum.sasCount;
@@ -813,15 +1032,14 @@
           assignmentsProgress.push({ ...a, pct: expected === 0 ? 0 : Math.round((filled / expected) * 100) });
         });
         return { globalPct: totalExpected === 0 ? 0 : Math.round((totalFilled / totalExpected) * 100), assignmentsProgress };
-      }, [user.assignments, masterData.gradesSummary]);
+      }, [user.assignments, masterData.gradesSummary, selectedSemester]);
 
       useEffect(() => {
         if (activeAssignment && masterData.students) {
           const classStudents = [...(masterData.students[activeAssignment.classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
           setStudents(classStudents);
           
-          // SINGLE SOURCE OF TRUTH: Ambil nilai asli dari data server
-          const serverKey = `${activeAssignment.classId}|${activeAssignment.mapel.toUpperCase()}`;
+          const serverKey = `${activeAssignment.classId}-${selectedSemester}|${activeAssignment.mapel.toUpperCase()}`;
           const serverGradesRaw = masterData.gradesData?.[serverKey] || {};
 
           const initialGrades = {};
@@ -829,20 +1047,16 @@
             const rawData = serverGradesRaw[s.id];
             if (rawData && rawData.length > 0) {
                const mapped = {};
-               colData.keys.forEach((key, idx) => {
-                  mapped[key] = rawData[idx] !== undefined ? rawData[idx] : "";
-               });
+               colData.keys.forEach((key, idx) => { mapped[key] = rawData[idx] !== undefined ? rawData[idx] : ""; });
                initialGrades[s.id] = mapped;
             } else {
                initialGrades[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); 
             }
           });
           
-          setGrades(initialGrades); 
-          setGradesHistory([initialGrades]); 
-          setHistoryIndex(0);
+          setGrades(initialGrades); setGradesHistory([initialGrades]); setHistoryIndex(0);
         }
-      }, [activeAssignment, colData.keys, user.name, masterData]);
+      }, [activeAssignment, colData.keys, user.name, masterData, selectedSemester]);
 
       const isGradesEmpty = () => {
         if (!students.length) return true;
@@ -855,145 +1069,73 @@
       };
 
       const handleGradeChange = (studentId, columnKey, value) => {
-        if (columnKey === 'penguji') {
-           updateGrades({ ...grades, [studentId]: { ...grades[studentId], [columnKey]: value } });
-           return;
-        }
-        
-        // Anti huruf: Hanya biarkan angka murni untuk nilai
+        if (columnKey === 'penguji') { updateGrades({ ...grades, [studentId]: { ...grades[studentId], [columnKey]: value } }); return; }
         const numericVal = value.replace(/[^0-9]/g, '');
-        if (numericVal === '') {
-           updateGrades({ ...grades, [studentId]: { ...grades[studentId], [columnKey]: '' } });
-           return;
-        }
-        
+        if (numericVal === '') { updateGrades({ ...grades, [studentId]: { ...grades[studentId], [columnKey]: '' } }); return; }
         const num = Number(numericVal);
-        if (num >= 0 && num <= 100) {
-          updateGrades({ ...grades, [studentId]: { ...grades[studentId], [columnKey]: num.toString() } });
-        }
+        if (num >= 0 && num <= 100) { updateGrades({ ...grades, [studentId]: { ...grades[studentId], [columnKey]: num.toString() } }); }
       };
 
-      // FUNGSI CERDAS NAVIGASI KEYBOARD MENCEGAH TAMBAH NILAI (EXCEL MODE)
       const handleKeyDown = (e, rowIdx, colIdx) => {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab'].includes(e.key)) {
-          
-          // Mencegah behavior asli panah atas/bawah/enter di dalam text input
           if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') e.preventDefault(); 
-
-          let nextRow = rowIdx;
-          let nextCol = colIdx;
+          let nextRow = rowIdx; let nextCol = colIdx;
           
-          if (e.key === 'ArrowUp') {
-            nextRow = Math.max(0, rowIdx - 1);
-          }
-          else if (e.key === 'ArrowDown' || e.key === 'Enter') {
-            nextRow = Math.min(students.length - 1, rowIdx + 1);
-          }
-          else if (e.key === 'ArrowLeft') {
-            if (e.target.selectionStart === 0) {
-              e.preventDefault();
-              nextCol = Math.max(0, colIdx - 1);
-            }
-          }
-          else if (e.key === 'ArrowRight') {
-            if (e.target.selectionEnd === e.target.value.length) {
-              e.preventDefault();
-              nextCol = Math.min(colData.keys.length - 1, colIdx + 1);
-            }
-          }
-          else if (e.key === 'Tab') {
-             e.preventDefault();
-             if (e.shiftKey) {
-                nextCol = colIdx - 1;
-                if (nextCol < 0) { nextCol = colData.keys.length - 1; nextRow = Math.max(0, rowIdx - 1); }
-             } else {
-                nextCol = colIdx + 1;
-                if (nextCol >= colData.keys.length) { nextCol = 0; nextRow = Math.min(students.length - 1, rowIdx + 1); }
-             }
-          }
+          if (e.key === 'ArrowUp') nextRow = Math.max(0, rowIdx - 1);
+          else if (e.key === 'ArrowDown' || e.key === 'Enter') nextRow = Math.min(students.length - 1, rowIdx + 1);
+          else if (e.key === 'ArrowLeft') { if (e.target.selectionStart === 0) { e.preventDefault(); nextCol = Math.max(0, colIdx - 1); } }
+          else if (e.key === 'ArrowRight') { if (e.target.selectionEnd === e.target.value.length) { e.preventDefault(); nextCol = Math.min(colData.keys.length - 1, colIdx + 1); } }
+          else if (e.key === 'Tab') { e.preventDefault(); if (e.shiftKey) { nextCol = colIdx - 1; if (nextCol < 0) { nextCol = colData.keys.length - 1; nextRow = Math.max(0, rowIdx - 1); } } else { nextCol = colIdx + 1; if (nextCol >= colData.keys.length) { nextCol = 0; nextRow = Math.min(students.length - 1, rowIdx + 1); } } }
           
-          if (nextRow !== rowIdx || nextCol !== colIdx) {
-            e.preventDefault();
-            const nextInput = document.getElementById(`input-${nextRow}-${nextCol}`);
-            if (nextInput) {
-              nextInput.focus();
-              setTimeout(() => nextInput.select(), 10);
-            }
-          }
+          if (nextRow !== rowIdx || nextCol !== colIdx) { e.preventDefault(); const nextInput = document.getElementById(`input-${nextRow}-${nextCol}`); if (nextInput) { nextInput.focus(); setTimeout(() => nextInput.select(), 10); } }
         }
       };
 
-      // FUNGSI CERDAS PASTE VIA MODAL (MENGABAIKAN PENGUJI)
       const handlePasteBlock = () => {
         if (!pasteText.trim()) return;
         const rows = pasteText.split('\n').map(row => row.split('\t'));
         let newGrades = { ...grades }; let pasteCount = 0;
-        
-        // Cerdas: Jika mapel khusus, mulai paste di indeks 1 (mengabaikan kolom penguji)
         const startColIdx = colData.type === 'special' ? 1 : 0; 
-
         rows.forEach((row, i) => {
           const student = students[i]; if (!student) return;
           let studentGrades = { ...newGrades[student.id] };
-          
           row.forEach((val, j) => {
             const colKey = colData.keys[startColIdx + j]; if (!colKey) return;
             const cleanVal = val.replace(/\r/g, '').trim();
-            if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { 
-              studentGrades[colKey] = cleanVal; pasteCount++; 
-            }
+            if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { studentGrades[colKey] = cleanVal; pasteCount++; }
           });
           newGrades[student.id] = studentGrades;
         });
         updateGrades(newGrades); setShowPasteModal(false); setPasteText(''); showToast(`Tertempel ${pasteCount} nilai!`, "success");
       };
 
-      // FUNGSI CERDAS CTRL+V DI KOTAK MANA SAJA
       const handlePaste = (e, startRowIdx, startColIdx) => {
         e.preventDefault();
         const pasteData = e.clipboardData.getData('Text'); if (!pasteData) return;
         const rows = pasteData.split('\n').map(row => row.split('\t'));
         let newGrades = { ...grades }; let pasteCount = 0;
-        
         rows.forEach((row, i) => {
           const student = students[startRowIdx + i]; if (!student) return;
           let studentGrades = { ...newGrades[student.id] };
-          
           row.forEach((val, j) => {
             const colKey = colData.keys[startColIdx + j]; if (!colKey) return;
             const cleanVal = val.replace(/\r/g, '').trim();
-            if (colKey === 'penguji') {
-              if (cleanVal !== '') { studentGrades[colKey] = cleanVal; pasteCount++; }
-            } else {
-              if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { 
-                 studentGrades[colKey] = cleanVal; pasteCount++; 
-              }
-            }
+            if (colKey === 'penguji') { if (cleanVal !== '') { studentGrades[colKey] = cleanVal; pasteCount++; } } 
+            else { if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { studentGrades[colKey] = cleanVal; pasteCount++; } }
           });
           newGrades[student.id] = studentGrades;
         });
         updateGrades(newGrades); showToast(`Berhasil menempelkan ${pasteCount} data!`, 'success');
       };
 
-      const handleUndo = () => {
-        if (historyIndex > 0) {
-          const prevIndex = historyIndex - 1;
-          setHistoryIndex(prevIndex); setGrades(gradesHistory[prevIndex]); showToast("Undo berhasil!", "success");
-        }
-      };
-
-      const handleRedo = () => {
-        if (historyIndex < gradesHistory.length - 1) {
-          const nextIndex = historyIndex + 1;
-          setHistoryIndex(nextIndex); setGrades(gradesHistory[nextIndex]); showToast("Redo berhasil!", "success");
-        }
-      };
+      const handleUndo = () => { if (historyIndex > 0) { const prevIndex = historyIndex - 1; setHistoryIndex(prevIndex); setGrades(gradesHistory[prevIndex]); showToast("Undo berhasil!", "success"); } };
+      const handleRedo = () => { if (historyIndex < gradesHistory.length - 1) { const nextIndex = historyIndex + 1; setHistoryIndex(nextIndex); setGrades(gradesHistory[nextIndex]); showToast("Redo berhasil!", "success"); } };
 
       const handleSaveToSpreadsheet = async () => {
-        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[Math.floor(Math.random() * KOCAK_EMPTY_WARNINGS.length)]); return; }
+        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[0], isSAS); return; }
         setIsSaving(true);
         const dataToSubmit = { 
-          action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, mapel: activeAssignment.mapel, 
+          action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, semester: selectedSemester, mapel: activeAssignment.mapel, 
           isSpecial: colData.type === 'special', schema: colData.schema, keys: colData.keys,
           grades: students.map(student => ({ id: student.id, nama: student.name, ...grades[student.id] })) 
         };
@@ -1004,49 +1146,39 @@
       };
 
       const executeResetServer = async () => {
-        setShowConfirmReset(false);
-        setIsSaving(true);
+        setShowConfirmReset(false); setIsSaving(true);
         const emptyGrades = {};
-        students.forEach(s => {
-          emptyGrades[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {});
-        });
+        students.forEach(s => { emptyGrades[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); });
         const dataToSubmit = { 
-          action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, mapel: activeAssignment.mapel, 
+          action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, semester: selectedSemester, mapel: activeAssignment.mapel, 
           isSpecial: colData.type === 'special', schema: colData.schema, keys: colData.keys,
           grades: students.map(student => ({ id: student.id, nama: student.name, ...emptyGrades[student.id] })) 
         };
         try {
           await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) });
-          showToast('Berhasil! Data di GAS dikosongkan ☁️', 'success'); 
-          updateGrades(emptyGrades);
-          setTimeout(() => { onUpdateSuccess(true); }, 1000);
+          showToast('Berhasil! Data di GAS dikosongkan ☁️', 'success'); updateGrades(emptyGrades); setTimeout(() => { onUpdateSuccess(true); }, 1000);
         } catch (error) { showToast('Gagal mereset ke GAS.', 'error'); } finally { setIsSaving(false); }
       };
 
       const requestSwitchClass = (assignment) => {
         if (assignment.classId === activeAssignment.classId && assignment.mapel === activeAssignment.mapel) return;
-        setSwitchIndex(Math.floor(Math.random() * SWITCH_CLASS_MSGS.length));
-        setTargetAssignment(assignment); 
-        setShowSwitchPopup(true);
+        setSwitchIndex(Math.floor(Math.random() * SWITCH_CLASS_MSGS.length)); setTargetAssignment(assignment); setShowSwitchPopup(true);
       };
 
-      const confirmSwitchClass = () => { 
-        setActiveAssignment(targetAssignment); 
-        setShowSwitchPopup(false); 
-      };
+      const confirmSwitchClass = () => { setActiveAssignment(targetAssignment); setShowSwitchPopup(false); };
 
       const downloadDetailedGradesExcel = () => {
-        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[Math.floor(Math.random() * KOCAK_EMPTY_WARNINGS.length)]); return; }
+        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[0], isSAS); return; }
         const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const now = new Date(); const timeString = `${days[now.getDay()]} , ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} - Jam ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
 
         const theKeys = colData.keys;
         const rowsData = [
-          [`REKAP NILAI MATA PELAJARAN ${activeAssignment.mapel.toUpperCase()}`],
+          [`REKAP NILAI MATA PELAJARAN ${activeAssignment.mapel.toUpperCase()} - SEMESTER ${isSAS ? '1 (SAS)' : '2 (SAT)'}`],
           [`Kelas: ${activeAssignment.classId}`],
           [`Guru Pengajar: ${user.name}`],
           [`Waktu Diunduh: ${timeString}`],
-          [], ["No", "ID Siswa", "Nama Siswa", ...theKeys] 
+          [], ["No", "ID Siswa", "Nama Siswa", ...theKeys.map(k => k==='STS'?labelSTS:k==='SAS'?labelSAS:k)] 
         ];
 
         students.forEach((s, idx) => {
@@ -1058,7 +1190,7 @@
         const ws = window.XLSX.utils.aoa_to_sheet(rowsData);
         ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
         const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "Rekap_Nilai");
-        window.XLSX.writeFile(wb, `Laporan_Nilai_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`); showToast("Rekap Nilai diekspor!", "success");
+        window.XLSX.writeFile(wb, `Laporan_Nilai_${isSAS ? 'SAS' : 'SAT'}_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`); showToast("Rekap Nilai diekspor!", "success");
       };
 
       const handleUploadExcelGrades = (e) => {
@@ -1078,11 +1210,8 @@
                     const valIndex = 3 + idx;
                     if (parts[valIndex] !== undefined) {
                         const cleanVal = String(parts[valIndex]).trim();
-                        if (col === 'penguji') {
-                           if(cleanVal !== '') studentGrades[col] = cleanVal;
-                        } else if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { 
-                           studentGrades[col] = cleanVal; imported++; 
-                        }
+                        if (col === 'penguji') { if(cleanVal !== '') studentGrades[col] = cleanVal; } 
+                        else if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { studentGrades[col] = cleanVal; imported++; }
                     }
                  });
                  newGrades[idSiswa] = studentGrades;
@@ -1094,40 +1223,53 @@
       };
 
       return (
-        <div className="h-screen max-h-screen flex flex-col font-sans text-xs overflow-hidden bg-slate-50">
+        <div className={`h-screen max-h-screen flex flex-col font-sans text-xs overflow-hidden transition-colors duration-500 ${isSAS ? 'theme-sas' : 'theme-sat'} ${theme.bg}`}>
           
-          {/* MODAL PINDAH KELAS */}
-          <SwitchPopup show={showSwitchPopup} msgIndex={switchIndex} onConfirm={confirmSwitchClass} onCancel={() => setShowSwitchPopup(false)} targetAssign={targetAssignment} />
+          <SwitchPopup show={showSwitchPopup} msgIndex={switchIndex} onConfirm={confirmSwitchClass} onCancel={() => setShowSwitchPopup(false)} targetAssign={targetAssignment} isSAS={isSAS} />
 
-          {/* MODAL TEMPEL NILAI EXCEL */}
           {showPasteModal && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in"><div className="w-full max-w-sm rounded-[28px] p-5 bg-white border border-slate-200 shadow-2xl transform hover:scale-[1.02] transition-all"><div className="text-4xl mb-2 text-center animate-bounce">📋</div><h2 className="text-sm font-black mb-1.5 text-center">Tempel Data Excel</h2><p className="text-[10px] text-slate-500 font-semibold mb-3 text-center">Salin baris nilai dari Excel (Ctrl+C), lalu paste (Ctrl+V) di kotak ini.</p><textarea rows="5" className="w-full border border-slate-300 rounded-xl p-2.5 text-[10px] focus:ring-2 focus:ring-indigo-500 mb-4 bg-slate-50" placeholder="Paste (Ctrl+V) di sini..." value={pasteText} onChange={(e) => setPasteText(e.target.value)} /><div className="flex gap-2"><button onClick={() => { setShowPasteModal(false); setPasteText(''); }} className="flex-1 py-2 rounded-xl bg-slate-100 font-bold text-[10px] hover:scale-105 active:scale-95 border border-slate-200 shadow-sm">Batal</button><button onClick={handlePasteBlock} className="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold text-[10px] shadow-md hover:scale-105 active:scale-95">Tempel Nilai</button></div></div></div>
-          )}
-
-          {/* MODAL RESET SERVER */}
-          {showConfirmReset && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-              <div className="relative w-full max-w-sm rounded-[28px] p-6 text-center shadow-2xl bg-rose-50 border border-rose-200 transform hover:scale-[1.02] transition-all">
-                <div className="text-4xl mb-2 animate-bounce">⚠️</div>
-                <h2 className="text-sm font-black mb-1.5 text-rose-950 text-center">RESET DATA SERVER?</h2>
-                <p className="text-[10px] text-rose-800 font-semibold mb-4 text-center leading-relaxed">Tindakan ini akan mengosongkan semua nilai <strong>{activeAssignment?.mapel}</strong> Kelas <strong>{activeAssignment?.classId}</strong> secara permanen di Google Sheets!</p>
+              <div className={`w-full max-w-sm rounded-[28px] p-5 border shadow-2xl transform hover:scale-[1.02] transition-all ${theme.modalBg}`}>
+                <div className="text-4xl mb-2 text-center animate-bounce">📋</div>
+                <h2 className={`text-sm font-black mb-1.5 text-center ${theme.modalTextH2}`}>Tempel Data Excel</h2>
+                <p className={`text-[10px] font-semibold mb-3 text-center ${theme.modalTextP}`}>Salin baris nilai dari Excel (Ctrl+C), lalu paste (Ctrl+V) di kotak ini.</p>
+                <textarea rows="5" className={`w-full border rounded-xl p-2.5 text-[10px] ${theme.focusRing} mb-4 bg-white/80 ${theme.inputBorder}`} placeholder="Paste (Ctrl+V) di sini..." value={pasteText} onChange={(e) => setPasteText(e.target.value)} />
                 <div className="flex gap-2">
-                  <button onClick={() => setShowConfirmReset(false)} className="flex-1 py-2.5 rounded-xl bg-white border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-[10px] shadow-sm active:scale-95 transition-all">Batal</button>
-                  <button onClick={executeResetServer} className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] shadow-md active:scale-95 transition-all">Ya, Kosongkan GAS!</button>
+                  <button onClick={() => { setShowPasteModal(false); setPasteText(''); }} className={`flex-1 py-2 rounded-xl bg-white border font-bold text-[10px] hover:scale-105 active:scale-95 shadow-sm ${theme.modalBtnCancel}`}>Batal</button>
+                  <button onClick={handlePasteBlock} className={`flex-1 py-2 rounded-xl text-white font-bold text-[10px] shadow-md hover:scale-105 active:scale-95 ${theme.modalBtnConfirm}`}>Tempel Nilai</button>
                 </div>
               </div>
             </div>
           )}
 
-          <header className="flex-none bg-indigo-600 text-white shadow-md h-12 flex items-center justify-between px-4 z-30">
-            <div className="flex items-center space-x-2"><IconGraduationCap className="w-6 h-6 opacity-85" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none">KELAS {activeAssignment?.classId}</h1><p className="text-[9px] text-indigo-200 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div></div>
-            <div className="flex items-center space-x-3"><div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-indigo-700 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
+          {showConfirmReset && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+              <div className={`relative w-full max-w-sm rounded-[28px] p-6 border shadow-2xl transform hover:scale-[1.02] transition-all ${theme.modalBg}`}>
+                <div className="text-4xl mb-2 animate-bounce">⚠️</div>
+                <h2 className={`text-sm font-black mb-1.5 text-center ${theme.modalTextH2}`}>RESET DATA SERVER?</h2>
+                <p className={`text-[10px] font-semibold mb-4 text-center leading-relaxed ${theme.modalTextP}`}>Tindakan ini akan mengosongkan semua nilai <strong>{activeAssignment?.mapel}</strong> Kelas <strong>{activeAssignment?.classId}</strong> pada Semester {isSAS ? '1 (SAS)' : '2 (SAT)'} secara permanen di Google Sheets!</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowConfirmReset(false)} className={`flex-1 py-2.5 rounded-xl bg-white border font-bold text-[10px] shadow-sm active:scale-95 transition-all ${theme.modalBtnCancel}`}>Batal</button>
+                  <button onClick={executeResetServer} className={`flex-1 py-2.5 rounded-xl text-white font-bold text-[10px] shadow-md active:scale-95 transition-all ${theme.modalBtnConfirm}`}>Ya, Kosongkan GAS!</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <header className={`flex-none text-white shadow-md h-12 flex items-center justify-between px-4 z-30 transition-colors duration-500 ${theme.headerBg}`}>
+            <div className="flex items-center space-x-2"><IconGraduationCap className="w-6 h-6 opacity-85" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none">KELAS {activeAssignment?.classId}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div></div>
+            <div className="flex items-center space-x-3"><div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
           </header>
 
           <main className="flex-1 flex flex-col overflow-hidden w-full">
             <div className="flex-none space-y-3 p-2 sm:p-4 pb-0">
               
-              <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 rounded-xl p-3 shadow-md relative overflow-hidden flex items-center justify-between hover:scale-[1.01] transition-all">
+              <div className={`flex p-1.5 rounded-xl w-full max-w-sm mx-auto shadow-inner transition-colors duration-500 ${isSAS ? 'bg-indigo-200/50' : 'bg-rose-200/50'}`}>
+                 <button onClick={() => setSelectedSemester('S')} className={`flex-1 py-2.5 text-[11px] font-black uppercase rounded-lg transition-all duration-300 ${isSAS ? 'bg-indigo-600 shadow-md text-white scale-105' : 'text-indigo-800 hover:bg-indigo-100/50'}`}>Semester 1 (SAS)</button>
+                 <button onClick={() => setSelectedSemester('T')} className={`flex-1 py-2.5 text-[11px] font-black uppercase rounded-lg transition-all duration-300 ${!isSAS ? 'bg-rose-600 shadow-md text-white scale-105' : 'text-rose-800 hover:bg-rose-100/50'}`}>Semester 2 (SAT)</button>
+              </div>
+
+              <div className={`bg-gradient-to-r ${theme.gradient} rounded-xl p-3 shadow-md relative overflow-hidden flex items-center justify-between hover:scale-[1.01] transition-all mt-2 duration-500`}>
                 <div className="absolute top-0 left-0 w-full h-full bg-white opacity-5 pointer-events-none transform -skew-x-12 scale-150"></div>
                 <div className="relative z-10 flex items-center gap-1.5"><IconActivity className="w-4 h-4 text-white animate-pulse"/><h2 className="text-white font-black text-[11px] uppercase tracking-widest hidden sm:block">Progres Kerjamu</h2><h2 className="text-white font-black text-[11px] uppercase tracking-widest sm:hidden">Progres</h2></div>
                 <div className="relative z-10 flex-1 ml-4 sm:ml-8 max-w-sm bg-white/10 p-1.5 rounded-xl border border-white/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-inner"><span className="text-white font-black text-[9px] bg-black/20 px-2 py-0.5 rounded border border-white/10">{teacherProgress.globalPct}%</span><div className="flex-1 bg-black/20 rounded-full h-1.5 overflow-hidden"><div className="h-1.5 rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-rose-400 via-amber-400 via-emerald-400 to-cyan-300 shadow-[0_0_8px_rgba(255,255,255,0.8)]" style={{ width: `${teacherProgress.globalPct}%` }}></div></div></div>
@@ -1138,9 +1280,9 @@
                   {teacherProgress.assignmentsProgress.map((assign, idx) => {
                     const isActive = assign.classId === activeAssignment?.classId && assign.mapel === activeAssignment?.mapel;
                     return (
-                      <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isActive ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 shadow-sm'}`}>
-                        <div className="text-left"><span className={`block text-[11px] font-black ${isActive?'text-white':'text-slate-800'}`}>{assign.mapel}</span><span className={`block text-[9px] font-bold uppercase tracking-wider ${isActive?'text-indigo-200':'text-slate-400'}`}>Kls {assign.classId}</span></div>
-                        <div className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg shadow-inner ${isActive ? 'bg-white/20 text-white border border-white/30' : assign.pct===100?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'}`}>{assign.pct}%</div>
+                      <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isActive ? theme.activeBtn : theme.inactiveBtn}`}>
+                        <div className="text-left"><span className={`block text-[11px] font-black ${isActive?'text-white':isSAS?'text-slate-800':'text-rose-950'}`}>{assign.mapel}</span><span className={`block text-[9px] font-bold uppercase tracking-wider ${isActive?'text-white/70':isSAS?'text-slate-400':'text-rose-700/70'}`}>Kls {assign.classId}</span></div>
+                        <div className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg shadow-inner ${isActive ? 'bg-white/20 text-white border border-white/30' : assign.pct===100?'bg-emerald-100 text-emerald-700':(isSAS?'bg-slate-100 text-slate-500':'bg-orange-100 text-orange-600')}`}>{assign.pct}%</div>
                       </button>
                     );
                   })}
@@ -1148,16 +1290,16 @@
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border border-slate-200 mt-3 min-h-0 mx-2 sm:mx-4 mb-2">
+            <div className={`flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border mt-3 min-h-0 mx-2 sm:mx-4 mb-2 transition-colors duration-500 ${theme.border}`}>
               <div className="flex-none flex items-center justify-between bg-slate-50 p-2 border-b border-slate-200">
                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
-                   <button onClick={downloadDetailedGradesExcel} className="flex items-center gap-1 bg-fuchsia-50 border border-fuchsia-200 text-fuchsia-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-fuchsia-100 active:scale-95 shadow-sm whitespace-nowrap"><IconDownload className="w-3 h-3"/> Unduh</button>
+                   <button onClick={downloadDetailedGradesExcel} className={`flex items-center gap-1 bg-white border border-slate-300 ${isSAS ? 'text-indigo-700 hover:bg-indigo-50' : 'text-rose-700 hover:bg-rose-50'} px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95 shadow-sm whitespace-nowrap transition-colors`}><IconDownload className="w-3 h-3"/> Unduh</button>
                    <button onClick={() => fileUploadRef.current.click()} className="flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-emerald-100 active:scale-95 shadow-sm whitespace-nowrap"><IconUploadCloud className="w-3 h-3"/> Upload</button>
                    <input type="file" accept=".xls,.xlsx" ref={fileUploadRef} onChange={handleUploadExcelGrades} className="hidden" />
                    
                    <div className="w-px h-5 bg-slate-300 mx-1"></div>
                    
-                   <button onClick={() => setShowPasteModal(true)} className="flex items-center gap-1 bg-white border border-slate-300 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-indigo-50 active:scale-95 shadow-sm whitespace-nowrap"><IconFileText className="w-3 h-3"/> Paste</button>
+                   <button onClick={() => setShowPasteModal(true)} className="flex items-center gap-1 bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-100 active:scale-95 shadow-sm whitespace-nowrap"><IconFileText className="w-3 h-3"/> Paste</button>
                    <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↩️ Undo</button>
                    <button onClick={handleRedo} disabled={historyIndex >= gradesHistory.length - 1} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↪️ Redo</button>
                  </div>
@@ -1170,7 +1312,7 @@
                    <button onClick={() => { const r = {}; students.forEach(s => r[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {})); updateGrades(r); showToast("Layar Dikosongkan!", "success"); }} className="flex items-center gap-1 bg-slate-100 border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-200 active:scale-95 shadow-sm whitespace-nowrap">🗑️ Kosong Layar</button>
                    <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-1 bg-rose-100 border border-rose-300 text-rose-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-rose-200 active:scale-95 shadow-sm whitespace-nowrap">⚠️ Reset GAS</button>
 
-                   <button onClick={handleSaveToSpreadsheet} disabled={isSaving || students.length === 0} className="flex items-center justify-center space-x-1 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-4 py-1.5 rounded-lg transition-all shadow-md disabled:opacity-50 font-black text-[10px] whitespace-nowrap">
+                   <button onClick={handleSaveToSpreadsheet} disabled={isSaving || students.length === 0} className={`flex items-center justify-center space-x-1 active:scale-95 text-white px-4 py-1.5 rounded-lg transition-colors shadow-md disabled:opacity-50 font-black text-[10px] whitespace-nowrap ${theme.headerBg} hover:opacity-90`}>
                     {isSaving ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <IconSend className="w-3 h-3" />}
                     <span>Kirim</span>
                    </button>
@@ -1181,32 +1323,37 @@
               <div className="flex-1 overflow-auto relative bg-slate-50/50">
                 <div className="min-w-max bg-white">
                   <table className="w-full text-xs text-left text-slate-600 whitespace-nowrap border-separate" style={{ borderSpacing: 0 }}>
-                    <thead className="text-[10px] text-slate-700 font-extrabold uppercase tracking-wider">
+                    <thead className="text-[10px] font-extrabold uppercase tracking-wider">
                       {colData.type === 'normal' ? (
                         <tr>
-                          <th className="px-2 py-3 text-center sticky-no sticky-header-no border-b border-r border-slate-300 shadow-sm">No</th>
-                          <th className="px-3 py-3 sticky-nama sticky-header-nama border-b border-r border-slate-300 shadow-sm">Nama Siswa</th>
-                          {colData.headers.map(h => <th key={h} className="px-2 py-3 text-center min-w-[50px] border-b border-r border-slate-300 sticky-top-row bg-slate-200">{h}</th>)}
+                          <th className={`px-2 py-3 text-center sticky-no sticky-header-no border-b border-r border-slate-300 shadow-sm ${theme.stickyHeader}`}>No</th>
+                          <th className={`px-3 py-3 sticky-nama sticky-header-nama border-b border-r border-slate-300 shadow-sm ${theme.stickyHeader}`}>Nama Siswa</th>
+                          {colData.headers.map(h => {
+                             let displayName = h;
+                             if (h === 'STS') displayName = labelSTS;
+                             if (h === 'SAS') displayName = labelSAS;
+                             return <th key={h} className={`px-2 py-3 text-center min-w-[50px] border-b border-r border-slate-300 sticky-top-row ${theme.stickyHeader}`}>{displayName}</th>
+                          })}
                         </tr>
                       ) : (
                         <>
                           <tr>
-                            <th rowSpan="3" className="px-2 py-2 text-center sticky-no sticky-header-no border-b border-r border-slate-300 align-middle shadow-sm">No</th>
-                            <th rowSpan="3" className="px-3 py-2 sticky-nama sticky-header-nama border-b border-r border-slate-300 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Nama Siswa</th>
-                            <th rowSpan="3" className="px-2 py-2 min-w-[130px] border-b border-r border-slate-300 text-center align-middle sticky-top-row bg-slate-200 text-indigo-700">Penguji</th>
-                            {colData.schema.categories.map(cat => <th key={cat.name} colSpan={cat.items.length * 3} className="px-2 py-2 text-center border-b border-r border-slate-300 text-slate-900 font-black text-[11px] sticky-top-row" style={{backgroundColor: cat.color}}>{cat.name}</th>)}
+                            <th rowSpan="3" className={`px-2 py-2 text-center sticky-no sticky-header-no border-b border-r border-slate-300 align-middle shadow-sm ${theme.stickyHeader}`}>No</th>
+                            <th rowSpan="3" className={`px-3 py-2 sticky-nama sticky-header-nama border-b border-r border-slate-300 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${theme.stickyHeader}`}>Nama Siswa</th>
+                            <th rowSpan="3" className={`px-2 py-2 min-w-[130px] border-b border-r border-slate-300 text-center align-middle sticky-top-row ${theme.stickyHeader}`}>Penguji</th>
+                            {colData.schema.categories.map(cat => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 py-2 text-center border-b border-r border-slate-300 font-black text-[11px] sticky-top-row ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
                           </tr>
                           <tr>
                             {colData.schema.categories.map((cat) => cat.items.map((item, iIdx) => (
-                              <th key={item} colSpan="3" className={`px-2 py-2 text-center border-b border-r border-slate-300 text-[10px] font-black text-slate-900 sticky-top-2 ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
+                              <th key={item} colSpan="3" className={`px-2 py-2 text-center border-b border-r border-slate-300 text-[10px] font-black sticky-top-2 ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
                             )))}
                           </tr>
                           <tr>
                             {colData.schema.categories.map((cat) => cat.items.map((item, iIdx) => (
                               <React.Fragment key={`${cat.name}-${item}-sub`}>
-                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold text-slate-800 sticky-top-3 ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>UH</th>
-                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold text-slate-800 sticky-top-3 ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>STS</th>
-                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold text-slate-800 sticky-top-3 ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>SAT</th>
+                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky-top-3 ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>UH</th>
+                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky-top-3 ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{labelSTS}</th>
+                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky-top-3 ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{labelSAS}</th>
                               </React.Fragment>
                             )))}
                           </tr>
@@ -1217,14 +1364,14 @@
                       {students.length === 0 ? (
                         <tr><td colSpan={colData.keys.length + 2} className="text-center py-8 font-bold text-slate-400 text-sm bg-white border-b border-slate-100">Siswa kosong. Hubungi Admin!</td></tr>
                       ) : students.map((student, rowIdx) => (
-                        <tr key={student.id} className="hover:bg-indigo-50/80 group bg-white">
-                          <td className="px-2 py-2 font-black text-slate-500 text-center sticky-no border-b border-r border-slate-200">{rowIdx + 1}</td>
-                          <td className="px-3 py-2 font-bold text-slate-800 sticky-nama truncate max-w-[180px] border-b border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">{student.name}</td>
+                        <tr key={student.id} className={`transition-colors duration-200 group ${theme.tableHover} ${theme.rowBg}`}>
+                          <td className={`px-2 py-2 font-black text-slate-500 text-center sticky-no border-b border-r border-slate-200 transition-colors ${theme.stickyColBg}`}>{rowIdx + 1}</td>
+                          <td className={`px-3 py-2 font-bold text-slate-800 sticky-nama truncate max-w-[180px] border-b border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors ${theme.stickyColBg}`}>{student.name}</td>
                           {colData.keys.map((colKey, colIdx) => {
                             const val = grades[student.id]?.[colKey];
                             
                             if (colKey === 'penguji') {
-                              return <td key={colKey} className="px-1.5 py-1 border-b border-r border-slate-200 bg-white group-hover:bg-indigo-50"><input id={`input-${rowIdx}-${colIdx}`} type="text" value={val||''} onChange={e=>handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)} className="w-full min-w-[110px] px-2 py-1.5 rounded-lg border border-slate-300 text-[10px] font-bold focus:ring-2 focus:ring-indigo-500 transition-all bg-slate-50 text-center shadow-inner"/></td>;
+                              return <td key={colKey} className={`px-1.5 py-1 border-b border-r border-slate-200 transition-colors ${theme.stickyColBg}`}><input id={`input-${rowIdx}-${colIdx}`} type="text" value={val||''} onChange={e=>handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)} className={`w-full min-w-[110px] px-2 py-1.5 rounded-lg border text-[10px] font-bold ${theme.focusRing} focus:ring-2 transition-all text-center shadow-inner ${theme.inputBorder} ${theme.inputBg} ${isSAS ? 'text-slate-800' : 'text-rose-950'}`}/></td>;
                             }
                             
                             const isRemedi = val !== '' && Number(val) < 70;
@@ -1232,16 +1379,17 @@
 
                             const parts = colKey.split('_');
                             const itemIdx = parts.length > 1 ? parseInt(parts[1]) : 0;
-                            const bgClass = colData.type === 'special' ? ITEM_BG_COLORS[itemIdx % ITEM_BG_COLORS.length] : 'bg-white';
+                            const bgClass = colData.type === 'special' ? ITEM_BG_COLORS[itemIdx % ITEM_BG_COLORS.length] : theme.inputBg;
 
                             return (
                               <td key={colKey} className={`px-1 py-1.5 border-b border-r border-slate-200 ${bgClass}`}>
                                 <input id={`input-${rowIdx}-${colIdx}`} type="text" inputMode="numeric" placeholder="-" value={val || ''} 
                                   onChange={(e) => handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)}
-                                  className={`w-12 mx-auto block text-center rounded border border-slate-300 h-8 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-black text-[11px] shadow-sm bg-white
+                                  className={`w-12 mx-auto block text-center rounded border h-8 focus:outline-none focus:ring-2 ${theme.focusRing} transition-all font-black text-[11px] shadow-sm 
+                                    ${theme.rowBg} ${theme.inputBorder}
                                     ${isRemedi ? 'text-rose-600 shadow-[inset_0_1px_3px_rgba(225,29,72,0.3)]' 
                                     : isSuccess ? 'text-emerald-700 shadow-[inset_0_1px_3px_rgba(16,185,129,0.3)]' 
-                                    : 'text-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]'}
+                                    : (isSAS ? 'text-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]' : 'text-rose-950 shadow-[inset_0_1px_2px_rgba(234,88,12,0.1)]')}
                                   `} 
                                 />
                               </td>
