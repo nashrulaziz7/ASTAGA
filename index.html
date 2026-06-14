@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ASTAGA - Asisten Sistem Terpadu Guru Al Kautsar</title>
   
-  <!-- SCRIPT PEMBERSIH SERVICE WORKER LAMA YANG BIKIN ERROR CSS -->
+  <!-- SCRIPT PEMBERSIH & PENANGKAP EVENT PWA SECARA GLOBAL -->
   <script>
+    window.deferredPWA = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPWA = e;
+    });
+
     try {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -19,11 +25,16 @@
   <!-- MANIFEST PWA BASE64 (DITANAM LANGSUNG AGAR VALID DI BROWSER HP) -->
   <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQVNUQUdBIC0gQXNpc3RlbiBHdXJ1Iiwic2hvcnRfbmFtZSI6IkFTVEFHQSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2Y4ZmFmYyIsInRoZW1lX2NvbG9yIjoiIzRmNDZlNSIsImljb25zIjpbeyJzcmMiOiJpY29uLnBuZyIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9wbmciLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn0seyJzcmMiOiJpY29uLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmciLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==" />
   
+  <!-- CSS Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- ENGINE EXCEL PREMIUM (Mendukung Styling Penuh) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -46,15 +57,17 @@
     // =========================================================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    const APP_VERSION = "2.2.0-Premium";
+    const APP_VERSION = "2.5.0-Premium";
     const APP_CHANGELOG = [
+      "🎨 Export Excel Super Premium: File Excel (.xlsx) yang diunduh kini tampil sangat mewah, full warna, baris lebih longgar, dan nilai di bawah 70 otomatis berwarna merah!",
+      "🎯 Perbaikan UI Tabel: Kolom STS dan SAS kini disatukan rapi tanpa duplikasi atas-bawah, tampilan makin profesional.",
       "⚡ Loading Layar Instan: Tidak ada lagi layar loading putih lama, sinkronisasi kini berjalan diam-diam di balik layar!",
-      "📲 PWA Super Engine: Aplikasi sekarang akan memaksa penginstalan Icon ke layar HP/Laptop dengan sistem Fallback Anti-Error.",
+      "📲 PWA Super Engine: Jaring Penangkap Event ditambahkan! Aplikasi sekarang dijamin 100% bisa terinstall langsung ke layar HP/Laptop.",
       "✅ Sinkronisasi Indikator GAS: Frontend sekarang tegas meminta data menggunakan indikator -S (SAS) dan -T (SAT) pada nama Sheet.",
       "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi.",
       "👨‍🏫 Fitur Super Guru Mapel: Tersedia fitur Paste nilai dari Excel (Ctrl+V), Undo/Redo jika salah ketik.",
       "👑 Dashboard Eksklusif Wali Kelas: Pantau seluruh nilai dari semua Mata Pelajaran kelas Anda dalam satu layar komprehensif.",
-      "📋 Salin Nilai Instan: Tombol 'COPY NILAI' khusus untuk menyalin blok nilai secara otomatis ke aplikasi Rapor.",
+      "📋 Salin Nilai Instan: Tombol 'COPY NILAI' khusus untuk menyalin blok nilai secara otomatis ke aplikasi Rapor."
     ];
 
     const DEFAULT_MAPELS = [
@@ -159,6 +172,29 @@
     function IconEdit({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;}
     function IconTrash({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;}
     function IconPlus({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;}
+
+    // =========================================================================
+    // --- FUNGSI HELPER: EXCEL PREMIUM STYLING ---
+    // =========================================================================
+    function applyAdminExcelStyle(ws) {
+       const range = XLSX.utils.decode_range(ws['!ref']);
+       for(let R = range.s.r; R <= range.e.r; ++R) {
+          for(let C = range.s.c; C <= range.e.c; ++C) {
+             const cellRef = XLSX.utils.encode_cell({c:C, r:R});
+             if(!ws[cellRef]) continue;
+             const cell = ws[cellRef];
+             if (R === 0) {
+                 cell.s = { fill: { fgColor: { rgb: "1E3A8A" } }, font: { bold: true, color: { rgb: "FFFFFF" } }, alignment: { horizontal: "center", vertical: "center" }, border: { top: {style:"thin", color:{rgb:"94A3B8"}}, bottom: {style:"thin", color:{rgb:"94A3B8"}}, left: {style:"thin", color:{rgb:"94A3B8"}}, right: {style:"thin", color:{rgb:"94A3B8"}} } };
+             } else {
+                 cell.s = { fill: { fgColor: { rgb: R % 2 === 0 ? "F8FAFC" : "FFFFFF" } }, alignment: { horizontal: "left", vertical: "center" }, border: { top: {style:"thin", color:{rgb:"E2E8F0"}}, bottom: {style:"thin", color:{rgb:"E2E8F0"}}, left: {style:"thin", color:{rgb:"E2E8F0"}}, right: {style:"thin", color:{rgb:"E2E8F0"}} } };
+             }
+          }
+       }
+       ws['!cols'] = Array(range.e.c + 1).fill({wch: 25});
+       const rows = [];
+       for(let R = range.s.r; R <= range.e.r; ++R) rows.push({hpx: 25});
+       ws['!rows'] = rows;
+    }
 
     // =========================================================================
     // --- 3. KOMPONEN POPUP GLOBAL ---
@@ -277,7 +313,6 @@
        );
     }
 
-    // KOMPONEN INSTALL POPUP CERDAS DENGAN FALLBACK MANUAL
     function InstallPromptPopup({ show, onInstall }) {
        const [step, setStep] = useState('prompt');
 
@@ -318,7 +353,7 @@
     // --- 4. KOMPONEN INDUK APLIKASI ---
     // =========================================================================
     function App() {
-      // MASTER DATA INSTAN DARI CACHE (Mencegah Layar Putih)
+      // MASTER DATA INSTAN DARI CACHE (Mencegah Layar Putih Lama)
       const [masterData, setMasterData] = useState(() => {
           try {
              const cached = localStorage.getItem('astaga_master_cache');
@@ -334,12 +369,9 @@
       
       const [isFetchingData, setIsFetchingData] = useState(false);
 
-      // PWA Install & Update States
-      const [installPromptEvent, setInstallPromptEvent] = useState(null);
       const [showInstallPopup, setShowInstallPopup] = useState(false);
       const [showUpdatePopup, setShowUpdatePopup] = useState(false);
 
-      // MENCEGAH PWA MUNCUL SAAT DI DALAM IFRAME PREVIEW
       useEffect(() => {
          const isIframe = window.self !== window.top;
          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
@@ -348,14 +380,9 @@
              localStorage.setItem('astaga_installed', 'true');
          }
 
-         const handleBeforeInstall = (e) => {
-            e.preventDefault();
-            setInstallPromptEvent(e);
-            if (!isIframe && localStorage.getItem('astaga_installed') !== 'true') {
-               setTimeout(() => setShowInstallPopup(true), 1500); 
-            }
-         };
-         window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+         if (!isIframe && !isStandalone && localStorage.getItem('astaga_installed') !== 'true') {
+            setTimeout(() => setShowInstallPopup(true), 1500); 
+         }
 
          window.addEventListener('appinstalled', () => {
             localStorage.setItem('astaga_installed', 'true');
@@ -363,20 +390,20 @@
             showToast("Aplikasi berhasil diinstall!", "success");
          });
 
-         // Version Check
-         const savedVer = localStorage.getItem('astaga_version');
-         if (savedVer !== APP_VERSION) {
-            setShowUpdatePopup(true);
-            localStorage.setItem('astaga_version', APP_VERSION);
+         if (isStandalone || localStorage.getItem('astaga_installed') === 'true') {
+             const savedVer = localStorage.getItem('astaga_version');
+             if (savedVer !== APP_VERSION) {
+                setTimeout(() => setShowUpdatePopup(true), 1000);
+                localStorage.setItem('astaga_version', APP_VERSION);
+             }
          }
-
-         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       }, []);
 
       const executeInstall = async (setStep) => {
-         if (installPromptEvent) {
-            installPromptEvent.prompt();
-            const { outcome } = await installPromptEvent.userChoice;
+         const promptEvent = window.deferredPWA;
+         if (promptEvent) {
+            promptEvent.prompt();
+            const { outcome } = await promptEvent.userChoice;
             if (outcome === 'accepted') {
                 showToast("Makasih bosku udah install! 🎉", "success");
                 localStorage.setItem('astaga_installed', 'true');
@@ -384,13 +411,12 @@
             } else {
                 showToast("Kamu membatalkan! Silakan reload (refresh) halaman untuk mengulang install.", "error");
             }
-            setInstallPromptEvent(null);
+            window.deferredPWA = null;
          } else {
              setStep('manual');
          }
       };
 
-      // TARIK DATA DARI GAS KE LOCALSTORAGE DIAM-DIAM DI BACKGROUND
       const fetchCloudMasterData = async (silent = false) => {
         setIsFetchingData(true);
         try {
@@ -405,7 +431,6 @@
         }
       };
 
-      // Tarik data cuma 1x saat baru buka aplikasi, supaya tidak me-reset inputan guru yang sedang mengetik nilai.
       useEffect(() => { 
           fetchCloudMasterData(masterData.teachers && masterData.teachers.length > 0); 
       }, []);
@@ -596,14 +621,18 @@
 
       const downloadTemplateGuru = () => {
         const header = ["No", "Nama Guru", "Password", "Wali Kelas", "Mapel 1", "Kelas Mapel 1 (Pisahkan dgn koma)", "Mapel 2", "Kelas Mapel 2", "Mapel 3", "Kelas Mapel 3", "Mapel 4", "Kelas Mapel 4", "Mapel 5", "Kelas Mapel 5"];
-        const ws = window.XLSX.utils.aoa_to_sheet([header, [1, "Pak Budi", "123", "", "MATEMATIKA", "10A, 10B", "", "", "", "", "", "", "", ""]]);
-        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterGuru"); window.XLSX.writeFile(wb, "Template_Master_Guru.xlsx");
+        const ws = XLSX.utils.aoa_to_sheet([header, [1, "Pak Budi", "123", "", "MATEMATIKA", "10A, 10B", "", "", "", "", "", "", "", ""]]);
+        applyAdminExcelStyle(ws);
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "MasterGuru"); XLSX.writeFile(wb, "Template_Master_Guru.xlsx");
+        showToast("Template Master Guru Premium Berhasil Diunduh!", "success");
       };
 
       const downloadTemplateSiswa = () => {
         const header = ["Kelas", "No Presensi", "Nama Siswa"];
-        const ws = window.XLSX.utils.aoa_to_sheet([header, ["10A", "1", "Agus Contoh"]]);
-        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterSiswa"); window.XLSX.writeFile(wb, "Template_Master_Siswa.xlsx");
+        const ws = XLSX.utils.aoa_to_sheet([header, ["10A", "1", "Agus Contoh"]]);
+        applyAdminExcelStyle(ws);
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "MasterSiswa"); XLSX.writeFile(wb, "Template_Master_Siswa.xlsx");
+        showToast("Template Master Siswa Premium Berhasil Diunduh!", "success");
       };
 
       const syncToCloud = async (action, payloadKey, payloadData, successMsg) => {
@@ -627,9 +656,9 @@
         const reader = new FileReader();
         reader.onload = (evt) => {
           try {
-            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
+            const data = new Uint8Array(evt.target.result); const workbook = XLSX.read(data, {type: 'array'});
             if (!workbook.SheetNames.length) { showToast("File Excel kosong!", "error"); return; }
-            const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
             const teachersMap = {};
             rows.slice(1).forEach(parts => {
               if(parts.length > 2 && parts[1]) {
@@ -666,9 +695,9 @@
         const reader = new FileReader();
         reader.onload = (evt) => {
           try {
-            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
+            const data = new Uint8Array(evt.target.result); const workbook = XLSX.read(data, {type: 'array'});
             if (!workbook.SheetNames.length) { showToast("File Excel kosong!", "error"); return; }
-            const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
             const studentsMap = { ...masterData.students }; 
             for (let k in studentsMap) { if (k !== "__MAPELS__" && k !== "__SCHEMA__" && k !== "__ADMIN__") delete studentsMap[k]; }
             rows.slice(1).forEach((parts, idx) => {
@@ -699,11 +728,14 @@
               <button onClick={() => setActiveTab('database')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all hover:scale-[1.03] ${activeTab === 'database' ? 'bg-indigo-500 shadow' : 'text-slate-400 hover:text-white'}`}>Database</button>
               <button onClick={() => setActiveTab('settings')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all hover:scale-[1.03] ${activeTab === 'settings' ? 'bg-indigo-500 shadow' : 'text-slate-400 hover:text-white'}`}>Setting</button>
             </div>
-            <button onClick={onLogout} className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg transition-all hover:scale-[1.03] hover:bg-slate-800"><IconLogOut className="w-4 h-4" /></button>
+            <div className="flex items-center gap-3">
+               {isFetchingData && <div className="text-right hidden sm:block"><p className="text-[10px] font-bold text-white/80 animate-pulse">Sedang menyinkronkan...</p></div>}
+               <button onClick={onLogout} className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg transition-all hover:scale-[1.03] hover:bg-slate-800"><IconLogOut className="w-4 h-4" /></button>
+            </div>
           </header>
 
           <main className="flex-1 overflow-y-auto scrollbar-hide p-3 sm:p-4 pb-10 max-w-5xl mx-auto w-full">
-            {(isSyncing || isFetchingData) && <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl flex justify-center space-x-2 font-bold animate-pulse mb-3"><div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data...</span></div>}
+            {isSyncing && <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl flex justify-center space-x-2 font-bold animate-pulse mb-3"><div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data...</span></div>}
 
             {activeTab === 'overview' && (
               <div className="space-y-4 animate-in fade-in">
@@ -828,7 +860,6 @@
       const [editMapelName, setEditMapelName] = useState('');
       const [deletePrompt, setDeletePrompt] = useState({ show: false, type: '', target: null });
 
-      // Premium Schema Editor State
       const [selRubrikMapel, setSelRubrikMapel] = useState('NORMAL');
       const [rubrikForm, setRubrikForm] = useState(JSON.parse(JSON.stringify(schemas)));
       
@@ -845,7 +876,6 @@
         return [...masterData.students[selClass]].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
       }, [masterData.students, selClass]);
 
-      // Schema actions
       const getNorm = (key, defaultVal) => rubrikForm.NORMAL[key] !== undefined ? rubrikForm.NORMAL[key] : defaultVal;
 
       const handleRubrikNormalChange = (idx, val) => {
@@ -1290,13 +1320,11 @@
       const [switchIndex, setSwitchIndex] = useState(0);
       const [targetAssignment, setTargetAssignment] = useState(null);
 
-      // ANTI OVERWRITE: Menyimpan status inisialisasi agar data tidak tertimpa saat background sync
       const [initializedAssignment, setInitializedAssignment] = useState(null);
 
       const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas, selectedSemester === 'SAS'), [activeAssignment, schemas, selectedSemester]);
       const fileUploadRef = useRef(null);
 
-      // --- TEMA DINAMIS SEMESTER ---
       const isSAS = selectedSemester === 'SAS';
       const semCode = isSAS ? 'S' : 'T';
 
@@ -1321,7 +1349,6 @@
         modalBtnConfirm: isSAS ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700',
       };
 
-      // Dinamis Label dr Skema Normal (Premium)
       const labelSTS = isSAS ? (schemas.NORMAL.sts_sas || schemas.NORMAL.headers[7] || 'STS') : (schemas.NORMAL.sts_sat || 'STS');
       const labelSAS = isSAS ? (schemas.NORMAL.sas_sas || schemas.NORMAL.headers[8] || 'SAS') : (schemas.NORMAL.sas_sat || 'SAT');
       const tfHeaders = schemas.NORMAL.headers.slice(0, 7);
@@ -1344,7 +1371,6 @@
         return { globalPct: totalExpected === 0 ? 0 : Math.round((totalFilled / totalExpected) * 100), assignmentsProgress };
       }, [user.assignments, masterData.gradesSummary, semCode]);
 
-      // Reset inisialisasi jika pindah kelas/semester agar ter-refresh
       useEffect(() => {
           setInitializedAssignment(null);
       }, [activeAssignment, selectedSemester]);
@@ -1487,98 +1513,213 @@
 
       const confirmSwitchClass = () => { setActiveAssignment(targetAssignment); setShowSwitchPopup(false); };
 
+      // =========================================================================
+      // --- EXPORT EXCEL SUPER PREMIUM ---
+      // =========================================================================
       const downloadDetailedGradesExcel = () => {
-        const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const now = new Date(); const timeString = `${days[now.getDay()]} , ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} - Jam ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+        const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; 
+        const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const now = new Date(); 
+        const timeString = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} - Jam ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
 
-        if (isWaliMode) {
-           const classId = activeAssignment.classId;
-           const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
-           const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m, schemas, isSAS) }));
+        const classId = activeAssignment.classId;
+        const mapelsToExport = isWaliMode 
+            ? DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m, schemas, isSAS) }))
+            : [{ name: activeAssignment.mapel, ...colData }];
 
-           const rowsData = [
-             [`REKAP NILAI MATA PELAJARAN WALI KELAS - SEMESTER ${isSAS ? '1 (SAS)' : '2 (SAT)'}`],
-             [`Kelas: ${classId}`],
-             [`Guru Pengajar: ${user.name}`],
-             [`Waktu Diunduh: ${timeString}`],
-             []
-           ];
+        const targetStudents = isWaliMode 
+            ? [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}))
+            : students;
 
-           const headerRow1 = ["No", "ID Siswa", "Nama Siswa"];
-           const headerRow2 = ["", "", ""];
-           const headerRow3 = ["", "", ""];
-           const headerRow4 = ["", "", ""];
+        const aoa = [];
+        const merges = [];
+        const cols = [{wch: 5}, {wch: 15}, {wch: 35}]; 
+        const rowsHeights = [];
+        for(let i=0; i<500; i++) rowsHeights.push({hpx: 25});
 
-           allMapelsSchema.forEach(m => {
-               headerRow1.push(m.name);
-               for(let i=1; i<m.keys.length; i++) headerRow1.push("");
-               
-               if (m.type === 'normal') {
-                   headerRow2.push("FORMATIF (UH)", "", "", "", "", "", "", labelSTS, labelSAS);
-                   headerRow3.push(...tfHeaders, "", "");
-                   headerRow4.push("","","","","","","","","");
-               } else {
-                   headerRow2.push("Penguji");
-                   m.schema.categories.forEach(cat => {
-                       headerRow2.push(cat.name);
-                       for(let i=1; i<cat.items.length*3; i++) headerRow2.push("");
-                   });
-                   headerRow3.push(""); // empty for penguji
-                   m.schema.categories.forEach(cat => {
-                       cat.items.forEach(item => {
-                           headerRow3.push(item, "", "");
-                       });
-                   });
-                   headerRow4.push(""); // empty for penguji
-                   m.schema.categories.forEach(cat => {
-                       cat.items.forEach(item => {
-                           headerRow4.push(firstUhLabel, labelSTS, labelSAS);
-                       });
-                   });
-               }
-           });
+        const borderAll = {
+            top: {style: 'thin', color: {auto: 1}},
+            bottom: {style: 'thin', color: {auto: 1}},
+            left: {style: 'thin', color: {auto: 1}},
+            right: {style: 'thin', color: {auto: 1}}
+        };
 
-           rowsData.push(headerRow1, headerRow2, headerRow3, headerRow4);
+        const setCell = (r, c, val, style) => {
+            while(aoa.length <= r) aoa.push([]);
+            while(aoa[r].length <= c) aoa[r].push({v:'', s:{}});
+            aoa[r][c] = { v: val, t: (val !== "" && !isNaN(val)) ? 'n' : 's', s: style || {} };
+        };
 
-           waliStudents.forEach((s, idx) => {
-               const row = [idx + 1, s.id, s.name];
-               allMapelsSchema.forEach(m => {
-                   const serverKey = `${classId}-${semCode}|${m.name.toUpperCase()}`;
-                   const rawData = masterData.gradesData?.[serverKey]?.[s.id] || [];
-                   m.keys.forEach((k, i) => {
-                       row.push(rawData[i] || "");
-                   });
-               });
-               rowsData.push(row);
-           });
+        const addMerge = (r1, c1, r2, c2, style) => {
+            merges.push({s:{r:r1, c:c1}, e:{r:r2, c:c2}});
+            for(let r = r1; r <= r2; r++) {
+                for(let c = c1; c <= c2; c++) {
+                    if(r===r1 && c===c1) continue; 
+                    setCell(r, c, "", style);
+                }
+            }
+        };
 
-           const ws = window.XLSX.utils.aoa_to_sheet(rowsData);
-           const wb = window.XLSX.utils.book_new(); 
-           window.XLSX.utils.book_append_sheet(wb, ws, "Rekap_Wali");
-           window.XLSX.writeFile(wb, `Rekap_Wali_Kls_${classId}_${isSAS ? 'SAS' : 'SAT'}.xlsx`);
-           showToast("Template/Rekap Wali Kelas diekspor!", "success");
-           return;
-        }
+        const titleStr = isWaliMode ? `REKAP NILAI WALI KELAS - KELAS ${classId} (${selectedSemester})` : `REKAP NILAI ${activeAssignment.mapel.toUpperCase()} - KELAS ${classId} (${selectedSemester})`;
+        setCell(0, 0, titleStr, { font: { bold: true, sz: 14, color: { rgb: "1E3A8A" } }});
+        setCell(1, 0, `Waktu Diunduh: ${timeString}`, { font: { bold: true, italic: true }});
+        setCell(2, 0, `Guru: ${user.name}`, { font: { bold: true }});
+        
+        const R_HEAD = 4;
+        const hStyleBase = { font: {bold:true, color:{rgb:"000000"}}, alignment:{horizontal:"center", vertical:"center", wrapText:true}, border: borderAll };
+        const hStyleMain = { ...hStyleBase, fill: {fgColor:{rgb:"5EEAD4"}} };
 
-        const theKeys = colData.keys;
-        const rowsData = [
-          [`REKAP NILAI MATA PELAJARAN ${activeAssignment.mapel.toUpperCase()} - SEMESTER ${isSAS ? '1 (SAS)' : '2 (SAT)'}`],
-          [`Kelas: ${activeAssignment.classId}`],
-          [`Guru Pengajar: ${user.name}`],
-          [`Waktu Diunduh: ${timeString}`],
-          [], ["No", "ID Siswa", "Nama Siswa", ...theKeys.map((k,i) => colData.type === 'normal' ? colData.headers[i] : k)] 
-        ];
+        setCell(R_HEAD, 0, "No.", hStyleMain); addMerge(R_HEAD, 0, R_HEAD+3, 0, hStyleMain);
+        setCell(R_HEAD, 1, "ID Siswa", hStyleMain); addMerge(R_HEAD, 1, R_HEAD+3, 1, hStyleMain);
+        setCell(R_HEAD, 2, "Nama Siswa", hStyleMain); addMerge(R_HEAD, 2, R_HEAD+3, 2, hStyleMain);
 
-        students.forEach((s, idx) => {
-          const studentRow = [idx + 1, s.id, s.name];
-          theKeys.forEach(col => studentRow.push(grades[s.id]?.[col] || ""));
-          rowsData.push(studentRow);
+        let cIdx = 3;
+        
+        const findGuruForMapel = (mapel) => {
+            const t = masterData.teachers.find(tch => tch.assignments.some(a => a.classId === classId && a.mapel === mapel));
+            return t ? t.name : "BELUM DITETAPKAN";
+        };
+
+        mapelsToExport.forEach(m => {
+            const theme = MAPEL_THEMES[m.name] || MAPEL_THEMES["KODING"];
+            const guru = isWaliMode ? findGuruForMapel(m.name) : user.name;
+            const cColor = theme.bg.replace("#", "");
+            const cLight = theme.light.replace("#", "");
+            
+            const hStyleMapel = { ...hStyleBase, fill: {fgColor:{rgb:cColor}}, font:{bold:true, color:{rgb:"FFFFFF"}} };
+            const hStyleSub = { ...hStyleBase, fill: {fgColor:{rgb:cLight}} };
+
+            if (m.type === 'normal') {
+                const w = m.keys.length; 
+                for(let i=0; i<w; i++) cols.push({wch: 7});
+                
+                setCell(R_HEAD, cIdx, `GURU: ${guru}`, { ...hStyleBase, fill:{fgColor:{rgb:"CBD5E1"}} });
+                addMerge(R_HEAD, cIdx, R_HEAD, cIdx+w-1, { ...hStyleBase, fill:{fgColor:{rgb:"CBD5E1"}} });
+                
+                setCell(R_HEAD+1, cIdx, m.name, hStyleMapel);
+                addMerge(R_HEAD+1, cIdx, R_HEAD+1, cIdx+w-1, hStyleMapel);
+                
+                setCell(R_HEAD+2, cIdx, "FORMATIF (UH)", hStyleMapel);
+                addMerge(R_HEAD+2, cIdx, R_HEAD+2, cIdx+6, hStyleMapel);
+                
+                for(let i=0; i<7; i++) {
+                    setCell(R_HEAD+3, cIdx+i, m.headers[i] || `UH${i+1}`, hStyleSub);
+                }
+                
+                const stsCol = cIdx + 7;
+                const sasCol = cIdx + 8;
+                setCell(R_HEAD+2, stsCol, labelSTS, { ...hStyleBase, fill: {fgColor:{rgb:"F9A8D4"}} });
+                addMerge(R_HEAD+2, stsCol, R_HEAD+3, stsCol, { ...hStyleBase, fill: {fgColor:{rgb:"F9A8D4"}} });
+                
+                setCell(R_HEAD+2, sasCol, labelSAS, { ...hStyleBase, fill: {fgColor:{rgb:"F97316"}} });
+                addMerge(R_HEAD+2, sasCol, R_HEAD+3, sasCol, { ...hStyleBase, fill: {fgColor:{rgb:"F97316"}} });
+                
+                cIdx += w;
+            } else {
+                const w = m.keys.length; 
+                cols.push({wch: 15}); 
+                for(let i=1; i<w; i++) cols.push({wch: 6});
+
+                setCell(R_HEAD, cIdx, m.name, hStyleMapel);
+                addMerge(R_HEAD, cIdx, R_HEAD, cIdx+w-1, hStyleMapel);
+
+                setCell(R_HEAD+1, cIdx, "PENGUJI", { ...hStyleBase, fill:{fgColor:{rgb:"E2E8F0"}} });
+                addMerge(R_HEAD+1, cIdx, R_HEAD+3, cIdx, { ...hStyleBase, fill:{fgColor:{rgb:"E2E8F0"}} });
+
+                let subCol = cIdx + 1;
+                m.schema.categories.forEach((cat) => {
+                    const catColor = cat.color.replace('#','');
+                    const catStyle = { ...hStyleBase, fill: {fgColor:{rgb:catColor}}, font: {bold:true, color:{rgb:"FFFFFF"}} };
+                    
+                    setCell(R_HEAD+1, subCol, cat.name, catStyle);
+                    addMerge(R_HEAD+1, subCol, R_HEAD+1, subCol + (cat.items.length*3) - 1, catStyle);
+
+                    cat.items.forEach(item => {
+                        setCell(R_HEAD+2, subCol, item, hStyleSub);
+                        addMerge(R_HEAD+2, subCol, R_HEAD+2, subCol+2, hStyleSub);
+                        
+                        setCell(R_HEAD+3, subCol, firstUhLabel, { ...hStyleBase, fill:{fgColor:{rgb:"F8FAFC"}} });
+                        setCell(R_HEAD+3, subCol+1, labelSTS, { ...hStyleBase, fill:{fgColor:{rgb:"F8FAFC"}} });
+                        setCell(R_HEAD+3, subCol+2, labelSAS, { ...hStyleBase, fill:{fgColor:{rgb:"F8FAFC"}} });
+
+                        subCol += 3;
+                    });
+                });
+
+                cIdx += w;
+            }
+            
+            cols.push({wch: 2});
+            setCell(R_HEAD, cIdx, "", {fill:{fgColor:{rgb:"000000"}}, border:borderAll});
+            addMerge(R_HEAD, cIdx, R_HEAD+3, cIdx, {fill:{fgColor:{rgb:"000000"}}, border:borderAll});
+            cIdx += 1;
         });
 
-        const ws = window.XLSX.utils.aoa_to_sheet(rowsData);
-        ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-        const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "Rekap_Nilai");
-        window.XLSX.writeFile(wb, `Laporan_Nilai_${isSAS ? 'SAS' : 'SAT'}_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`); showToast("Template/Rekap Nilai diekspor!", "success");
+        let R_DATA = R_HEAD + 4;
+        
+        targetStudents.forEach((student, rIdx) => {
+            const styleData = { alignment:{horizontal:"center", vertical:"center"}, border: borderAll };
+            const styleName = { alignment:{horizontal:"left", vertical:"center"}, border: borderAll, font:{bold:true} };
+
+            setCell(R_DATA, 0, rIdx + 1, styleData);
+            setCell(R_DATA, 1, student.id, styleData);
+            setCell(R_DATA, 2, student.name, { ...styleName, fill: {fgColor:{rgb:"E0F2FE"}} }); 
+            
+            let cIdxData = 3;
+            mapelsToExport.forEach(m => {
+                const serverKey = `${classId}-${semCode}|${m.name.toUpperCase()}`;
+                const rawData = isWaliMode ? (masterData.gradesData?.[serverKey]?.[student.id] || []) : (grades[student.id] || {});
+                
+                const theme = MAPEL_THEMES[m.name] || MAPEL_THEMES["KODING"];
+                const cLight = theme.light.replace("#", "");
+                
+                m.keys.forEach((key, keyIdx) => {
+                    const val = isWaliMode ? (rawData[keyIdx] || "") : (rawData[key] || "");
+                    let bgHex = cLight;
+                    
+                    if (m.type === 'normal') {
+                        if (keyIdx === 7) bgHex = "FCE7F3";
+                        if (keyIdx === 8) bgHex = "FFEDD5";
+                    } else {
+                        if (key === 'penguji') bgHex = "F1F5F9";
+                        else if (key.includes('_STS')) bgHex = "FCE7F3";
+                        else if (key.includes('_SAT')) bgHex = "FFEDD5";
+                    }
+                    
+                    const cellStyle = { fill: {fgColor: {rgb: bgHex}}, alignment: {horizontal: "center", vertical: "center"}, border: borderAll, font: {bold: true, color: {rgb:"000000"}} };
+                    
+                    if (val !== "" && !isNaN(val)) {
+                        const num = Number(val);
+                        if (num < 70) {
+                            cellStyle.font = {color: {rgb: "DC2626"}, bold: true}; 
+                            cellStyle.fill = {fgColor: {rgb: "FEE2E2"}};
+                        } else {
+                            cellStyle.font = {color: {rgb: "059669"}, bold: true}; 
+                        }
+                    }
+                    
+                    setCell(R_DATA, cIdxData, val, cellStyle);
+                    cIdxData++;
+                });
+                
+                setCell(R_DATA, cIdxData, "", { fill: {fgColor:{rgb:"000000"}}, border:borderAll });
+                cIdxData++;
+            });
+            R_DATA++;
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!merges'] = merges;
+        ws['!cols'] = cols;
+        ws['!rows'] = rowsHeights;
+        ws['!views'] = [{state: 'frozen', xSplit: 3, ySplit: R_HEAD + 4}]; 
+
+        const wb = XLSX.utils.book_new(); 
+        XLSX.utils.book_append_sheet(wb, ws, "Rekap_Nilai");
+        
+        const fileNamePrefix = isWaliMode ? "Rekap_Wali_Kls_" : `Laporan_${activeAssignment.mapel}_Kls_`;
+        XLSX.writeFile(wb, `${fileNamePrefix}${classId}_${selectedSemester}.xlsx`);
+        showToast("Excel Premium Berhasil Diunduh! 🎨", "success");
       };
 
       const handleUploadExcelGrades = (e) => {
@@ -1586,27 +1727,29 @@
         const reader = new FileReader();
         reader.onload = (evt) => {
           try {
-            const data = new Uint8Array(evt.target.result); const workbook = window.XLSX.read(data, {type: 'array'});
-            const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+            const data = new Uint8Array(evt.target.result); const workbook = XLSX.read(data, {type: 'array'});
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
             let newGrades = { ...grades }; let imported = 0;
             const theKeys = colData.keys;
-            rows.slice(1).forEach(parts => {
-              const idSiswa = parts[1] !== undefined ? String(parts[1]).trim() : "";
-              if (students.find(s => s.id === idSiswa)) {
-                 let studentGrades = { ...newGrades[idSiswa] };
-                 theKeys.forEach((col, idx) => {
-                    const valIndex = 3 + idx;
-                    if (parts[valIndex] !== undefined) {
-                        const cleanVal = String(parts[valIndex]).trim();
-                        if (col === 'penguji') { if(cleanVal !== '') studentGrades[col] = cleanVal; } 
-                        else if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { studentGrades[col] = cleanVal; imported++; }
-                    }
-                 });
-                 newGrades[idSiswa] = studentGrades;
+            rows.forEach(parts => {
+              if (parts.length > 2) {
+                  const idSiswa = parts[1] !== undefined ? String(parts[1]).trim() : "";
+                  if (students.find(s => s.id === idSiswa)) {
+                     let studentGrades = { ...newGrades[idSiswa] };
+                     theKeys.forEach((col, idx) => {
+                        const valIndex = 3 + idx;
+                        if (parts[valIndex] !== undefined) {
+                            const cleanVal = String(parts[valIndex]).trim();
+                            if (col === 'penguji') { if(cleanVal !== '') studentGrades[col] = cleanVal; } 
+                            else if (cleanVal === '' || (!isNaN(cleanVal) && Number(cleanVal) >= 0 && Number(cleanVal) <= 100)) { studentGrades[col] = cleanVal; imported++; }
+                        }
+                     });
+                     newGrades[idSiswa] = studentGrades;
+                  }
               }
             });
             if (imported === 0) {
-               triggerKocakPopup("Tidak ada nilai yang berhasil dibaca dari file Excel! Pastikan Anda sudah mengisi angkanya ya.", isSAS);
+               triggerKocakPopup("Tidak ada nilai yang berhasil dibaca dari file Excel! Pastikan format baris dan urutan tidak diubah bosku.", isSAS);
             } else {
                updateGrades(newGrades); showToast(`Berhasil mengunggah ${imported} baris nilai!`, 'success');
             }
@@ -1664,82 +1807,65 @@
                 <div className="min-w-max bg-white">
                   <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
                     <thead className="text-[10px] font-extrabold uppercase tracking-wider">
-                      <tr className="h-[60px]">
+                      <tr className="h-[40px]">
                         <th rowSpan="4" className={`w-[45px] min-w-[45px] max-w-[45px] p-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
                         <th rowSpan="4" className={`w-[180px] min-w-[180px] max-w-[180px] p-3 sticky left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
-                        {allMapelsSchema.map(m => {
-                          if (m.type === 'normal') {
-                             return (
-                                <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
-                                   <div className="flex flex-col items-center justify-center gap-1">
-                                      <span className="font-bold text-[11px] uppercase tracking-widest">{m.name}</span>
+                        {allMapelsSchema.map(m => (
+                            <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
+                               <div className="flex flex-col items-center justify-center gap-1 h-full py-1">
+                                  <span className="font-bold text-[11px] uppercase tracking-widest">{m.name}</span>
+                                  {m.type === 'normal' && (
                                       <button onClick={() => copyMapelGrades(m.name, m.keys)} className="flex items-center justify-center gap-1 bg-black/20 hover:bg-black/40 text-white active:scale-95 transition-all px-2 py-0.5 rounded shadow-sm text-[9px] font-black border border-white/20">
                                          <IconFileText className="w-3 h-3" /> COPY NILAI
                                       </button>
-                                   </div>
-                                </th>
-                             );
-                          } else {
-                             return (
-                                <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
-                                   <div className="flex flex-col items-center justify-center h-full">
-                                      <span className="font-bold text-[11px] uppercase tracking-widest">{m.name}</span>
-                                   </div>
-                                </th>
-                             );
-                          }
-                        })}
+                                  )}
+                               </div>
+                            </th>
+                        ))}
                       </tr>
-                      <tr className="h-[50px]">
+                      <tr className="h-[30px]">
                         {allMapelsSchema.map(m => {
                            if (m.type === 'normal') {
                               return (
                                 <React.Fragment key={m.name}>
-                                  <th colSpan="7" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>FORMATIF (UH)</th>
-                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{labelSTS}</th>
-                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{labelSAS}</th>
+                                  <th colSpan="7" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>FORMATIF (UH)</th>
+                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-pink-200 text-slate-900">{labelSTS}</th>
+                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-orange-200 text-slate-900">{labelSAS}</th>
                                 </React.Fragment>
                               );
                            } else {
                               return (
                                 <React.Fragment key={m.name}>
-                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>Penguji</th>
-                                  {m.schema.categories.map((cat, cIdx) => {
-                                     const catKeys = [];
-                                     cat.items.forEach((item, iIdx) => { catKeys.push(`${cIdx}_${iIdx}_UH`, `${cIdx}_${iIdx}_STS`, `${cIdx}_${iIdx}_SAT`); });
-                                     return (
-                                        <th key={cat.name} colSpan={cat.items.length * 3} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-[60px] z-[40]" style={{backgroundColor: cat.color, color: "#fff"}}>
-                                           <div className="flex flex-col items-center justify-center gap-1">
-                                              <span>{cat.name}</span>
-                                              <button onClick={() => copyMapelGrades(cat.name, catKeys)} className="flex items-center justify-center gap-1 bg-black/20 hover:bg-black/40 text-white active:scale-95 transition-all px-2 py-0.5 rounded shadow-sm text-[9px] font-black border border-white/20">
-                                                 <IconFileText className="w-3 h-3" /> COPY NILAI
-                                              </button>
-                                           </div>
-                                        </th>
-                                     )
-                                  })}
+                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-slate-200 text-slate-900">Penguji</th>
+                                  {m.schema.categories.map((cat, cIdx) => (
+                                      <th key={cat.name} colSpan={cat.items.length * 3} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-[40px] z-[40]" style={{backgroundColor: cat.color, color: "#fff"}}>
+                                         <div className="flex flex-col items-center justify-center gap-1">
+                                            <span>{cat.name}</span>
+                                         </div>
+                                      </th>
+                                  ))}
                                 </React.Fragment>
                               );
                            }
                         })}
                       </tr>
-                      <tr className="h-[40px]">
+                      <tr className="h-[30px]">
                         {allMapelsSchema.map(m => {
                            if (m.type === 'normal') {
-                              return tfHeaders.map((tf, idx) => <th key={`${m.name}-${tf}`} rowSpan="2" className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[110px] z-[40]`} style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{tf}</th>);
+                              return tfHeaders.map((tf, idx) => <th key={`${m.name}-${tf}`} rowSpan="2" className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[70px] z-[40]`} style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{tf}</th>);
                            } else {
-                              return m.schema.categories.flatMap((cat, iIdx) => cat.items.map((item, itemIdx) => <th key={`${m.name}-${item}`} colSpan="3" className={`px-2 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[110px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{item}</th>));
+                              return m.schema.categories.flatMap((cat, iIdx) => cat.items.map((item, itemIdx) => <th key={`${m.name}-${item}`} colSpan="3" className={`px-2 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[70px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{item}</th>));
                            }
                         })}
                       </tr>
-                      <tr className="h-[40px]">
+                      <tr className="h-[30px]">
                         {allMapelsSchema.map(m => {
                            if (m.type === 'normal') return null; 
                            return m.schema.categories.flatMap((cat, iIdx) => cat.items.flatMap((item, itemIdx) => (
                               <React.Fragment key={`${m.name}-${item}-uhstssat`}>
-                                <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[150px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{firstUhLabel}</th>
-                                <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[150px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{labelSTS}</th>
-                                <th className={`px-1 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[150px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{labelSAS}</th>
+                                <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[100px] z-[40] bg-slate-50 text-slate-800`}>{firstUhLabel}</th>
+                                <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[100px] z-[40] bg-slate-50 text-slate-800`}>{labelSTS}</th>
+                                <th className={`px-1 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[100px] z-[40] bg-slate-50 text-slate-800`}>{labelSAS}</th>
                               </React.Fragment>
                            )));
                         })}
@@ -1815,7 +1941,6 @@
                <div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div>
             </div>
             <div className="flex items-center space-x-3">
-               {isFetchingData && <div className="text-right hidden sm:block"><p className="text-[10px] font-bold text-white/80 animate-pulse">Sedang menyinkronkan...</p></div>}
                <div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div>
                <button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button>
             </div>
@@ -1860,7 +1985,7 @@
               <div className={`flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border mt-3 min-h-0 mx-2 sm:mx-4 mb-2 transition-colors duration-500 ${theme.border}`}>
                 <div className="flex-none flex items-center justify-between bg-slate-50 p-2 border-b border-slate-200">
                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
-                     <button onClick={downloadDetailedGradesExcel} className={`flex items-center gap-1 bg-white border border-slate-300 ${isSAS ? 'text-indigo-700 hover:bg-indigo-50' : 'text-rose-700 hover:bg-rose-50'} px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95 shadow-sm whitespace-nowrap transition-colors`}><IconDownload className="w-3 h-3"/> Unduh</button>
+                     <button onClick={downloadDetailedGradesExcel} className={`flex items-center gap-1 bg-white border border-slate-300 ${isSAS ? 'text-indigo-700 hover:bg-indigo-50' : 'text-rose-700 hover:bg-rose-50'} px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95 shadow-sm whitespace-nowrap transition-colors`}><IconDownload className="w-3 h-3"/> Unduh Excel</button>
                      
                      {!isWaliMode && (
                        <React.Fragment>
@@ -1901,37 +2026,48 @@
                     <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
                       <thead className="text-[10px] text-slate-700 font-extrabold uppercase tracking-wider">
                       {colData.type === 'normal' ? (
-                        <tr className="h-[50px]">
-                          <th className={`w-[45px] min-w-[45px] max-w-[45px] px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
-                          <th className={`w-[180px] min-w-[180px] max-w-[180px] px-3 sticky left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
-                          {colData.headers.map((h, idx) => {
-                               const tBorder = getThickBorderClass(h, colData.type, idx === colData.headers.length - 1);
-                               return <th key={h} className={`px-2 text-center min-w-[50px] border-b ${tBorder} sticky top-0 z-[40] ${theme.stickyHeader}`}>{h}</th>
-                            })}
-                          </tr>
+                        <React.Fragment>
+                        <tr className="h-[40px]">
+                          <th rowSpan="4" className={`w-[45px] min-w-[45px] max-w-[45px] px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
+                          <th rowSpan="4" className={`w-[180px] min-w-[180px] max-w-[180px] px-3 sticky left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
+                          <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40] ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
+                        </tr>
+                        <tr className="h-[30px]">
+                           <th colSpan="7" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-slate-100 text-slate-800">FORMATIF (UH)</th>
+                           <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-pink-200 text-slate-900">{labelSTS}</th>
+                           <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-orange-200 text-slate-900">{labelSAS}</th>
+                        </tr>
+                        <tr className="h-[30px]">
+                           {tfHeaders.map((tf, idx) => <th key={tf} rowSpan="2" className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[70px] z-[40] bg-white text-slate-800`}>{tf}</th>)}
+                        </tr>
+                        <tr className="h-[30px]"></tr>
+                        </React.Fragment>
                         ) : (
-                          <>
-                          <tr className="h-[50px]">
-                            <th rowSpan="3" className={`w-[45px] min-w-[45px] max-w-[45px] px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 align-middle shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
-                            <th rowSpan="3" className={`w-[180px] min-w-[180px] max-w-[180px] px-3 sticky left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
-                            <th rowSpan="3" className={`px-2 min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle sticky top-0 z-[40] ${isSAS ? 'bg-slate-200 text-indigo-700' : 'bg-orange-200 text-rose-800'}`}>Penguji</th>
-                              {colData.schema.categories.map((cat, cIdx) => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-0 z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
-                            </tr>
-                            <tr className="h-[40px]">
-                              {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
-                                <th key={item} colSpan="3" className={`px-2 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[50px] z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
-                              )))}
-                            </tr>
-                            <tr className="h-[40px]">
-                              {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
+                          <React.Fragment>
+                          <tr className="h-[40px]">
+                            <th rowSpan="4" className={`w-[45px] min-w-[45px] max-w-[45px] px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 align-middle shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
+                            <th rowSpan="4" className={`w-[180px] min-w-[180px] max-w-[180px] px-3 sticky left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
+                            <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40] ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
+                          </tr>
+                          <tr className="h-[30px]">
+                            <th rowSpan="3" className={`px-2 min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle sticky top-[40px] z-[40] bg-slate-200 text-slate-900`}>Penguji</th>
+                            {colData.schema.categories.map((cat, cIdx) => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-[40px] z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
+                          </tr>
+                          <tr className="h-[30px]">
+                            {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
+                                <th key={item} colSpan="3" className={`px-2 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[70px] z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
+                            )))}
+                          </tr>
+                          <tr className="h-[30px]">
+                            {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
                                 <React.Fragment key={`${cat.name}-${item}-sub`}>
-                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{firstUhLabel}</th>
-                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{labelSTS}</th>
-                                  <th className={`px-1 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{labelSAS}</th>
+                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[100px] z-[40] bg-slate-50 text-slate-800`}>{firstUhLabel}</th>
+                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[100px] z-[40] bg-slate-50 text-slate-800`}>{labelSTS}</th>
+                                  <th className={`px-1 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[100px] z-[40] bg-slate-50 text-slate-800`}>{labelSAS}</th>
                                 </React.Fragment>
-                              )))}
-                            </tr>
-                          </>
+                            )))}
+                          </tr>
+                          </React.Fragment>
                         )}
                       </thead>
                       <tbody>
