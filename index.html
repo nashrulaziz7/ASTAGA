@@ -5,56 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ASTAGA - Asisten Sistem Terpadu Guru Al Kautsar</title>
   
-  <!-- Memuat Tailwind CSS untuk Desain -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Memuat React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Memuat Babel untuk mentranspilasi React (JSX) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Memuat SheetJS untuk membaca dan membuat file Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- Pengaturan Font Inter untuk estetika yang lebih modern & jelas -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body, html, #root { 
-      font-family: 'Inter', sans-serif; 
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    body, html, #root { font-family: 'Inter', sans-serif; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #f8fafc; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* CSS STICKY PAKU BUMI (TIDAK ADA BACKGROUND DI SINI, DIATUR FULL OLEH TAILWIND) */
-    .sticky-no { 
-      position: sticky; left: 0; width: 40px; min-width: 40px; max-width: 40px; 
-      z-index: 40 !important; border-right: 1px solid #e2e8f0; 
-      background-clip: padding-box; 
-    }
-    .sticky-nama { 
-      position: sticky; left: 40px; width: 180px; min-width: 180px; max-width: 180px; 
-      z-index: 40 !important; border-right: 2px solid #94a3b8; 
-      box-shadow: 2px 0 5px -2px rgba(0,0,0,0.15); background-clip: padding-box; 
-    }
     
-    .sticky-header-no { z-index: 50 !important; top: 0; }
-    .sticky-header-nama { z-index: 50 !important; top: 0; border-right: 2px solid #94a3b8; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.15); }
-
-    .sticky-top-row { position: sticky; top: 0; z-index: 30; }
-    .sticky-top-2 { position: sticky; top: 31px; z-index: 30; }
-    .sticky-top-3 { position: sticky; top: 62px; z-index: 30; }
+    /* Utility Class: Cegah outline tebal pada input */
+    input:focus { outline: none !important; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-900 antialiased text-xs">
+<body class="text-slate-900 antialiased text-xs">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -63,7 +32,6 @@
     // =========================================================================
     // --- 1. DEKLARASI KONSTAN GLOBAL & LINK GAS ---
     // =========================================================================
-    // 🔥 LINK GAS TERBARU BOSKU 🔥
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
 
     const GRADE_COLUMNS_NORMAL = ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'];
@@ -76,10 +44,26 @@
       "TAHFIDZ", "IQRA'"
     ];
 
-    // WARNA PASTEL BACKGROUND UNTUK SUB-BAB MAPEL KHUSUS
     const ITEM_BG_COLORS = ['bg-sky-100', 'bg-emerald-100', 'bg-amber-100', 'bg-violet-100', 'bg-pink-100', 'bg-teal-100', 'bg-orange-100', 'bg-indigo-100'];
 
-    // --- SKEMA MAPEL KHUSUS ---
+    const MAPEL_THEMES = {
+      "PENDIDIKAN AGAMA ISLAM": { bg: "#22c55e", light: "#f0fdf4", text: "#ffffff", textDark: "#14532d" },
+      "KEMUHAMMADIYAHAN": { bg: "#06b6d4", light: "#ecfeff", text: "#ffffff", textDark: "#164e63" },
+      "PENDIDIKAN PANCASILA": { bg: "#3b82f6", light: "#eff6ff", text: "#ffffff", textDark: "#1e3a8a" },
+      "BAHASA INDONESIA": { bg: "#ef4444", light: "#fef2f2", text: "#ffffff", textDark: "#7f1d1d" },
+      "ILMU PENGETAHUAN ALAM DAN SOSIAL": { bg: "#eab308", light: "#fefce8", text: "#ffffff", textDark: "#713f12" },
+      "MATEMATIKA": { bg: "#a855f7", light: "#faf5ff", text: "#ffffff", textDark: "#581c87" },
+      "PENDIDIKAN JASMANI, OLAHRAGA DAN KESEHATAN": { bg: "#84cc16", light: "#f7fee7", text: "#ffffff", textDark: "#3f6212" },
+      "BAHASA INGGRIS": { bg: "#6366f1", light: "#eef2ff", text: "#ffffff", textDark: "#312e81" },
+      "KESENIAN": { bg: "#ec4899", light: "#fdf2f8", text: "#ffffff", textDark: "#831843" },
+      "KODING": { bg: "#64748b", light: "#f8fafc", text: "#ffffff", textDark: "#0f172a" },
+      "BAHASA JAWA": { bg: "#f97316", light: "#fff7ed", text: "#ffffff", textDark: "#7c2d12" },
+      "BAHASA ARAB": { bg: "#14b8a6", light: "#f0fdfa", text: "#ffffff", textDark: "#134e4a" },
+      "IBADAH (WUDHU, TAYAMUM, SHALAT)": { bg: "#475569", light: "#f8fafc", text: "#ffffff", textDark: "#0f172a" },
+      "TAHFIDZ": { bg: "#0ea5e9", light: "#f0f9ff", text: "#ffffff", textDark: "#0c4a6e" },
+      "IQRA'": { bg: "#ea580c", light: "#fff7ed", text: "#ffffff", textDark: "#7c2d12" }
+    };
+
     const SPECIAL_MAPELS = {
       "IBADAH (WUDHU, TAYAMUM, SHALAT)": {
         categories: [
@@ -88,19 +72,12 @@
           { name: "Shalat", color: "#c4b5fd", items: ["Takbiratul Ihram", "Bersedekap", "Bacaan Do'a Iftitah", "Bacaan Surat Al-Fatihah", "Gerakan Ruku'", "Do'a Ruku'", "Gerakan I'tidal", "Do'a I'tidal", "Gerakan Sujud", "Do'a Sujud", "Gerakan Duduk Diantara Dua Sujud", "Do'a Diantara Dua Sujud", "Gerakan Duduk Tahiyat Akhir", "Bacaan Attahiyat & Shalawat", "Salam"] }
         ]
       },
-      "TAHFIDZ": {
-        categories: [
-          { name: "Tahfidz", color: "#38bdf8", items: ["Kelancaran", "Tajwid", "Makharijul Huruf", "S-1", "S-2", "S-3", "S-4", "S-5", "S-6", "S-7"] }
-        ]
-      },
-      "IQRA'": {
-        categories: [
-          { name: "Iqra'", color: "#fdba74", items: ["Ta'awudz & Basmalah", "Kesepatan Membaca", "Kelancaran Membaca", "Suara", "Hal-1", "Hal-2", "Hal-3", "Hal-4", "Hal-5", "Hal-6"] }
-        ]
-      }
+      "TAHFIDZ": { categories: [{ name: "Tahfidz", color: "#38bdf8", items: ["Kelancaran", "Tajwid", "Makharijul Huruf", "S-1", "S-2", "S-3", "S-4", "S-5", "S-6", "S-7"] }] },
+      "IQRA'": { categories: [{ name: "Iqra'", color: "#fdba74", items: ["Ta'awudz & Basmalah", "Kesepatan Membaca", "Kelancaran Membaca", "Suara", "Hal-1", "Hal-2", "Hal-3", "Hal-4", "Hal-5", "Hal-6"] }] }
     };
 
     const getMapelSchema = (mapelName) => {
+      if (mapelName === 'WALI KELAS') return { type: 'wali', keys: [] }; 
       const special = SPECIAL_MAPELS[mapelName.toUpperCase().trim()];
       if (!special) return { type: 'normal', keys: GRADE_COLUMNS_NORMAL, headers: GRADE_COLUMNS_NORMAL };
       
@@ -116,20 +93,18 @@
     const DEFAULT_MASTER_DATA = { teachers: [], students: {}, gradesSummary: {}, gradesData: {} };
 
     const AVATAR_COLORS = ['bg-indigo-200 border-indigo-400 text-indigo-900', 'bg-emerald-200 border-emerald-400 text-emerald-900', 'bg-amber-200 border-amber-400 text-amber-900', 'bg-fuchsia-200 border-fuchsia-400 text-fuchsia-900', 'bg-sky-200 border-sky-400 text-sky-900', 'bg-rose-200 border-rose-400 text-rose-900'];
-    const TEACHER_CARD_COLORS = ['bg-gradient-to-br from-indigo-100/95 via-indigo-50/50 to-white border-indigo-300/80 shadow-md shadow-indigo-100/40 hover:border-indigo-500 hover:shadow-lg', 'bg-gradient-to-br from-emerald-100/95 via-emerald-50/50 to-white border-emerald-300/80 shadow-md shadow-emerald-100/40 hover:border-emerald-500 hover:shadow-lg', 'bg-gradient-to-br from-amber-100/95 via-amber-50/50 to-white border-amber-300/80 shadow-md shadow-amber-100/40 hover:border-amber-500 hover:shadow-lg', 'bg-gradient-to-br from-fuchsia-100/95 via-fuchsia-50/50 to-white border-fuchsia-300/80 shadow-md shadow-fuchsia-100/40 hover:border-fuchsia-500 hover:shadow-lg', 'bg-gradient-to-br from-sky-100/95 via-sky-50/50 to-white border-sky-300/80 shadow-md shadow-sky-100/40 hover:border-sky-500 hover:shadow-lg', 'bg-gradient-to-br from-rose-100/95 via-rose-50/50 to-white border-rose-300/80 shadow-md shadow-rose-100/40 hover:border-rose-500 hover:shadow-lg'];
+    const TEACHER_CARD_COLORS = ['bg-gradient-to-br from-indigo-100/95 via-indigo-50/50 border-indigo-300/80', 'bg-gradient-to-br from-emerald-100/95 via-emerald-50/50 border-emerald-300/80', 'bg-gradient-to-br from-amber-100/95 via-amber-50/50 border-amber-300/80', 'bg-gradient-to-br from-fuchsia-100/95 via-fuchsia-50/50 border-fuchsia-300/80', 'bg-gradient-to-br from-sky-100/95 via-sky-50/50 border-sky-300/80', 'bg-gradient-to-br from-rose-100/95 via-rose-50/50 border-rose-300/80'];
 
     const SUCCESS_LOGIN_MSGS = [{ emoji: '🥳🎉', title: 'WUIH MANTAP!', desc: 'Berhasil masuk Suhu! Sini saya bantu ketikin nilainya~ ❤️' }];
     const ERROR_LOGIN_MSGS = [{ emoji: '🤦‍♂️🤪', title: 'GAGAL FOKUS!', desc: 'Aduh gagal! Passwordnya salah atau kurang kopi nih? ☕' }];
-    const ROMANTIC_REMEDI_MSGS = [{ emoji: '🥺🌹', title: 'Tunggu Dulu Guru Keren...', desc: 'Masih ada nilai anak-anak di bawah KKM tuh. Masa depannya jangan dimerahkan ya... 🥺' }];
     const SWITCH_CLASS_MSGS = [{ emoji: '🫣💔', title: 'YAKIN SIAP BERPALING?', desc: 'Pastikan nilai di kelas ini udah kamu Kirim ya biar aman! 🥺' }];
-    const KOCAK_EMPTY_WARNINGS = ["Wandeeeh bos! Nilainya masih kosong melompong gini mau dikirim? Isinya jangan kosong kayak dompet tanggal tua dong! 🤪💸", "Astaga naga! Nilainya masih kosong bersih gini mau diunduh? Masa ngunduh angin puyuh sih? Isi dulu minimal satu nilai siswa ya bos! 👻🔥"];
-
+    
+    // ICON COMPONENTS
     function IconLock({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;}
     function IconUser({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;}
     function IconLogOut({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;}
     function IconBookOpen({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>;}
     function IconGraduationCap({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>;}
-    function IconSave({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>;}
     function IconSettings({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 1 0 5.66 5.66"></path></svg>;}
     function IconCheckCircle({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;}
     function IconAlertCircle({className}){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>;}
@@ -156,8 +131,8 @@
       if (type === 'mapel') desc = `Hapus Mata Pelajaran ${targetName} dari sekolah? Nanti anak-anak belajar apa dong... 📚`;
 
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className="relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform animate-[scale_0.2s_ease-out] hover:scale-[1.03] active:scale-95 transition-all">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform hover:scale-[1.03] transition-all">
             <div className="text-4xl mb-2 animate-bounce">😭💔</div>
             <h2 className="text-base font-black mb-1 tracking-tight text-rose-950">YAKIN MAU HAPUS?</h2>
             <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90">{desc}</p>
@@ -170,20 +145,19 @@
       );
     }
 
-    // DIMODIFIKASI AGAR MENERIMA THEME SEMESTER
     function FunnyKocakPopup({ show, message, onClose, isSAS = true }) {
       if (!show) return null;
-      const bg = isSAS ? 'bg-indigo-50 border-indigo-300' : 'bg-orange-50 border-orange-300';
-      const textTitle = isSAS ? 'text-indigo-950' : 'text-orange-950';
-      const textDesc = isSAS ? 'text-indigo-800' : 'text-orange-800';
-      const btn = isSAS ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-orange-600 hover:bg-orange-700';
+      const bg = isSAS ? 'bg-sky-50 border-sky-300' : 'bg-orange-50 border-orange-300';
+      const textTitle = isSAS ? 'text-sky-950' : 'text-orange-950';
+      const textDesc = isSAS ? 'text-sky-800' : 'text-orange-800';
+      const btn = isSAS ? 'bg-sky-600 hover:bg-sky-700' : 'bg-orange-600 hover:bg-orange-700';
 
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className={`relative w-full max-w-xs rounded-[28px] p-6 text-center shadow-2xl border transform hover:scale-[1.03] transition-all ${bg}`}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className={`w-full max-w-xs rounded-[28px] p-6 text-center shadow-2xl border transform hover:scale-[1.03] transition-all ${bg}`}>
             <div className="text-5xl mb-3 animate-bounce">🤪💸🎒</div>
-            <h2 className={`text-base font-black mb-2 uppercase ${textTitle}`}>ASTAGA, KOSONG!</h2>
-            <p className={`text-xs mb-4 font-semibold opacity-95 leading-relaxed ${textDesc}`}>{message}</p>
+            <h2 className={`text-base font-black mb-2 uppercase ${textTitle}`}>ASTAGA!</h2>
+            <p className={`text-[11px] mb-4 font-semibold opacity-95 leading-relaxed ${textDesc}`}>{message}</p>
             <button onClick={onClose} className={`w-full py-2.5 rounded-xl text-white font-extrabold text-xs shadow-md active:scale-95 transition-transform ${btn}`}>Oke Siap Bos! 🫡</button>
           </div>
         </div>
@@ -198,8 +172,8 @@
       const btn = type === 'success' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700';
 
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className={`relative w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl border transform hover:scale-[1.03] active:scale-95 transition-all ${bg}`}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className={`w-full max-w-xs rounded-3xl p-5 text-center shadow-2xl border transform hover:scale-[1.03] active:scale-95 transition-all ${bg}`}>
             <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div>
             <h2 className={`text-base font-black mb-1 ${text}`}>{msg.title}</h2>
             <p className={`text-[11px] mb-4 font-semibold ${text} opacity-90`}>{msg.desc}</p>
@@ -209,35 +183,18 @@
       );
     }
 
-    function RemediPopup({ show, msgIndex, onClose }) {
-      if (!show) return null;
-      const msg = ROMANTIC_REMEDI_MSGS[msgIndex % ROMANTIC_REMEDI_MSGS.length];
-      return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className="relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl bg-rose-50 border border-rose-200 transform transition-all duration-300 hover:scale-[1.03] active:scale-95">
-            <div className="text-4xl mb-2 animate-pulse">{msg.emoji}</div>
-            <h2 className="text-base font-black mb-1 tracking-tight text-rose-900">{msg.title}</h2>
-            <p className="text-[11px] mb-4 font-semibold text-rose-800 opacity-90 leading-relaxed">{msg.desc}</p>
-            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-white font-bold text-[11px] shadow-sm bg-rose-600 hover:bg-rose-700 active:scale-95 transition-transform">Siapp, aku rapiin dulu! 💕</button>
-          </div>
-        </div>
-      );
-    }
-
-    // DIMODIFIKASI AGAR MENERIMA THEME SEMESTER
     function SwitchPopup({ show, msgIndex, onConfirm, onCancel, targetAssign, isSAS = true }) {
       if (!show || !targetAssign) return null;
       const msg = SWITCH_CLASS_MSGS[msgIndex % SWITCH_CLASS_MSGS.length];
-      
-      const bg = isSAS ? 'bg-indigo-50 border-indigo-200' : 'bg-rose-50 border-rose-200';
-      const textTitle = isSAS ? 'text-indigo-950' : 'text-rose-950';
-      const textDesc = isSAS ? 'text-indigo-800' : 'text-rose-800';
-      const btnCancel = isSAS ? 'text-indigo-700 border-indigo-200 hover:bg-indigo-100' : 'text-rose-700 border-rose-200 hover:bg-rose-100';
-      const btnConfirm = isSAS ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700';
+      const bg = isSAS ? 'bg-sky-50 border-sky-200' : 'bg-orange-50 border-orange-200';
+      const textTitle = isSAS ? 'text-sky-950' : 'text-orange-950';
+      const textDesc = isSAS ? 'text-sky-800' : 'text-orange-800';
+      const btnCancel = isSAS ? 'text-sky-700 border-sky-200 hover:bg-sky-100' : 'text-orange-700 border-orange-200 hover:bg-orange-100';
+      const btnConfirm = isSAS ? 'bg-sky-600 hover:bg-sky-700' : 'bg-orange-600 hover:bg-orange-700';
 
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
-          <div className={`relative w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl border transform transition-all hover:scale-[1.03] active:scale-95 ${bg}`}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className={`w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl border transform transition-all hover:scale-[1.03] active:scale-95 ${bg}`}>
             <div className="text-4xl mb-2 animate-bounce">{msg.emoji}</div>
             <h2 className={`text-base font-black mb-1 tracking-tight ${textTitle}`}>{msg.title}</h2>
             <p className={`text-[11px] mb-4 font-semibold opacity-90 leading-relaxed ${textDesc}`}>{msg.desc}</p>
@@ -314,7 +271,7 @@
           <FunnyKocakPopup show={kocakPopup.show} message={kocakPopup.message} isSAS={kocakPopup.isSAS} onClose={() => setKocakPopup({ show: false, message: '', isSAS: true })} />
           
           {toast.show && (
-            <div className="fixed bottom-4 right-4 z-[9999] animate-in slide-in-from-bottom-2">
+            <div className="fixed bottom-4 right-4 z-[99999] animate-in slide-in-from-bottom-2">
               <div className={`rounded-xl shadow-lg px-4 py-2.5 flex items-center space-x-2 text-white font-bold text-xs ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`}>
                 {toast.type === 'success' ? <IconCheckCircle className="w-4 h-4" /> : <IconAlertCircle className="w-4 h-4" />}
                 <span>{toast.message}</span>
@@ -347,8 +304,12 @@
           if (adminPass === 'admin123') onLogin('ADMIN', null); else onLoginFail();
         } else {
           if (guruObj && guruObj.password === password && selectedAssign) {
-            const [kelas, mapel] = selectedAssign.split('|');
-            onLogin(guruObj, { classId: kelas, mapel: mapel });
+            if (selectedAssign.startsWith('WALI|')) {
+              onLogin(guruObj, { type: 'WALI', classId: selectedAssign.split('|')[1], mapel: 'WALI KELAS' });
+            } else {
+              const [kelas, mapel] = selectedAssign.split('|');
+              onLogin(guruObj, { classId: kelas, mapel: mapel });
+            }
           } else onLoginFail();
         }
       };
@@ -385,7 +346,10 @@
                           <IconBookOpen className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
                           <select className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-bold appearance-none cursor-pointer bg-slate-50 hover:bg-indigo-50 transition-colors" value={selectedAssign} onChange={(e) => setSelectedAssign(e.target.value)} required>
                             <option value="">-- Pilih Kelas --</option>
-                            {guruObj.assignments.map((a, i) => <option key={i} value={`${a.classId}|${a.mapel}`}>Kelas {a.classId} - {a.mapel}</option>)}
+                            {guruObj.assignments.map((a, i) => {
+                              if (a.type === 'WALI') return <option key={`wali-${i}`} value={`WALI|${a.classId}`}>👑 WALI KELAS - {a.classId}</option>;
+                              return <option key={i} value={`${a.classId}|${a.mapel}`}>Kelas {a.classId} - {a.mapel}</option>;
+                            })}
                           </select>
                         </div>
                       </div>
@@ -432,7 +396,7 @@
       const trackingData = useMemo(() => {
         let totalCellsExpected = 0, totalCellsFilled = 0;
         const list = (masterData.teachers || []).flatMap(t => 
-          t.assignments.map(a => {
+          t.assignments.filter(a => a.type !== 'WALI').map(a => {
             const sheetName = `${a.classId}-${selectedSemester}`;
             const key = `${sheetName}|${a.mapel}|${t.name}`;
             const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
@@ -462,8 +426,8 @@
       const toggleGuru = (name) => { setExpandedGuru(prev => ({ ...prev, [name]: !prev[name] })); };
 
       const downloadTemplateGuru = () => {
-        const header = ["No", "Nama Guru", "Password", "Mapel 1", "Kelas Mapel 1 (Pisahkan dgn koma)", "Mapel 2", "Kelas Mapel 2", "Mapel 3", "Kelas Mapel 3", "Mapel 4", "Kelas Mapel 4", "Mapel 5", "Kelas Mapel 5"];
-        const ws = window.XLSX.utils.aoa_to_sheet([header, [1, "Pak Budi", "123", "MATEMATIKA", "10A, 10B", "", "", "", "", "", "", "", ""]]);
+        const header = ["No", "Nama Guru", "Password", "Wali Kelas", "Mapel 1", "Kelas Mapel 1 (Pisahkan dgn koma)", "Mapel 2", "Kelas Mapel 2", "Mapel 3", "Kelas Mapel 3", "Mapel 4", "Kelas Mapel 4", "Mapel 5", "Kelas Mapel 5"];
+        const ws = window.XLSX.utils.aoa_to_sheet([header, [1, "Pak Budi", "123", "", "MATEMATIKA", "10A, 10B", "", "", "", "", "", "", "", ""]]);
         const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "MasterGuru"); window.XLSX.writeFile(wb, "Template_Master_Guru.xlsx");
       };
 
@@ -499,12 +463,17 @@
             const rows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
             const teachersMap = {};
             rows.slice(1).forEach(parts => {
-              if(parts.length > 1 && parts[1]) {
+              if(parts.length > 2 && parts[1]) {
                 const nama = parts[1].toString().trim(); const pass = parts[2] !== "" ? String(parts[2]).trim() : "123";
+                const wali = parts[3] ? String(parts[3]).trim().toUpperCase() : "";
                 if(nama) {
-                  if(!teachersMap[nama]) teachersMap[nama] = { name: nama, password: pass, assignments: [] };
+                  if(!teachersMap[nama]) {
+                     const assigns = [];
+                     if (wali) assigns.push({ type: 'WALI', classId: wali, mapel: 'WALI KELAS' });
+                     teachersMap[nama] = { name: nama, password: pass, assignments: assigns };
+                  }
                   for(let i = 0; i < 5; i++) {
-                    const mIdx = 3 + (i * 2); const kIdx = 4 + (i * 2);
+                    const mIdx = 4 + (i * 2); const kIdx = 5 + (i * 2);
                     if (parts[mIdx] !== undefined && parts[kIdx] !== undefined) {
                        const mName = parts[mIdx].toString().trim();
                        const kArr = String(parts[kIdx]).split(',').map(k => k.trim()).filter(k => k);
@@ -567,7 +536,6 @@
 
             {activeTab === 'overview' && (
               <div className="space-y-4 animate-in fade-in">
-                {/* TOGGLE SEMESTER ADMIN */}
                 <div className="flex bg-slate-200/70 p-1 rounded-xl w-full max-w-sm mx-auto mb-4">
                    <button onClick={() => setSelectedSemester('S')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'S' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 1 (SAS)</button>
                    <button onClick={() => setSelectedSemester('T')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'T' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 2 (SAT)</button>
@@ -607,7 +575,7 @@
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {g.assignments.map((a, i) => (
                                   <div key={i} className="bg-white/80 p-2 rounded-lg border border-slate-200/60 flex items-center justify-between shadow-sm">
-                                    <div><p className="font-extrabold text-slate-800 text-[11px]">{a.mapel}</p><span className="inline-block mt-0.5 bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded text-[9px]">Kls {a.kelas}</span></div>
+                                    <div><p className="font-extrabold text-slate-800 text-[11px]">{a.mapel}</p><span className="inline-block mt-0.5 bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded text-[9px]">Kls {a.classId}</span></div>
                                     <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold border ${a.progress===100?'bg-teal-100 text-teal-800 border-teal-300':a.progress>0?'bg-amber-100 text-amber-800 border-amber-300 animate-pulse':'bg-slate-50 text-slate-400'}`}>{a.progress}% DONE</span>
                                   </div>
                                 ))}
@@ -627,22 +595,24 @@
                 <div className="bg-gradient-to-br from-indigo-50/60 to-indigo-50/10 rounded-2xl shadow-sm border border-indigo-200 flex flex-col p-5">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2"><IconUser className="w-5 h-5 text-indigo-500 bg-white p-1 rounded-lg shadow-inner"/><h2 className="text-sm font-black text-slate-800">Master Guru</h2></div>
+                    <button onClick={downloadTemplateGuru} className="bg-white border text-indigo-600 font-bold px-2 py-1 rounded text-[9px]">Template</button>
                   </div>
                   <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 text-center bg-white/80 cursor-pointer group hover:bg-white" onClick={e=>{if(e.target.tagName!=='INPUT') e.currentTarget.querySelector('input').click()}}>
                     <IconFileText className="w-7 h-7 text-indigo-400 mx-auto mb-1 group-hover:text-indigo-600" />
                     <span className="text-[10px] font-extrabold text-slate-600 group-hover:text-indigo-800">Klik & Pilih Excel Guru</span>
-                    <input type="file" accept=".xls,.xlsx" className="hidden" onChange={handleUploadGuru} />
+                    <input type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={handleUploadGuru} />
                   </div>
                 </div>
                 
                 <div className="bg-gradient-to-br from-emerald-50/60 to-emerald-50/10 rounded-2xl shadow-sm border border-emerald-200 flex flex-col p-5">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2"><IconGraduationCap className="w-5 h-5 text-emerald-500 bg-white p-1 rounded-lg shadow-inner"/><h2 className="text-sm font-black text-slate-800">Master Siswa</h2></div>
+                    <button onClick={downloadTemplateSiswa} className="bg-white border text-emerald-600 font-bold px-2 py-1 rounded text-[9px]">Template</button>
                   </div>
                   <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 text-center bg-white/80 cursor-pointer group hover:bg-white" onClick={e=>{if(e.target.tagName!=='INPUT') e.currentTarget.querySelector('input').click()}}>
                     <IconFileText className="w-7 h-7 text-emerald-400 mx-auto mb-1 group-hover:text-emerald-600" />
                     <span className="text-[10px] font-extrabold text-slate-600 group-hover:text-emerald-800">Klik & Pilih Excel Siswa</span>
-                    <input type="file" accept=".xls,.xlsx" className="hidden" onChange={handleUploadSiswa} />
+                    <input type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={handleUploadSiswa} />
                   </div>
                 </div>
 
@@ -669,6 +639,7 @@
       const [view, setView] = useState('guru'); 
       const [newTeacherName, setNewTeacherName] = useState('');
       const [newTeacherPass, setNewTeacherPass] = useState('123');
+      const [newTeacherWali, setNewTeacherWali] = useState('');
       const [selClass, setSelClass] = useState('');
       const [newClassName, setNewClassName] = useState('');
       const [newMapelName, setNewMapelName] = useState('');
@@ -676,6 +647,7 @@
       const [editingTeacherObj, setEditingTeacherObj] = useState(null);
       const [editingTeacherName, setEditingTeacherName] = useState('');
       const [editingTeacherPass, setEditingTeacherPass] = useState('');
+      const [editingTeacherWali, setEditingTeacherWali] = useState('');
 
       const [editingStudentObj, setEditingStudentObj] = useState(null);
       const [editStudentNumber, setEditStudentNumber] = useState('');
@@ -692,13 +664,20 @@
         return [...masterData.students[selClass]].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
       }, [masterData.students, selClass]);
 
-      // Modals Save Handlers
       const saveTeacher = () => {
         const n = editingTeacherName.trim(), p = editingTeacherPass.trim();
         if(!n || !p) return;
-        const newData = masterData.teachers.map(t => t.name === editingTeacherObj.name ? {...t, name:n, password:p} : t);
+        const newData = masterData.teachers.map(t => {
+          if(t.name === editingTeacherObj.name) {
+             const otherAssigns = t.assignments.filter(a => a.type !== 'WALI');
+             if (editingTeacherWali.trim()) otherAssigns.unshift({ type: 'WALI', classId: editingTeacherWali.trim().toUpperCase(), mapel: 'WALI KELAS' });
+             return {...t, name:n, password:p, assignments: otherAssigns};
+          }
+          return t;
+        });
         setMasterData(m => ({...m, teachers: newData})); syncGuru("saveMasterGuru", "teachers", newData, "Tersimpan."); setEditingTeacherObj(null);
       };
+      
       const saveStudent = () => {
         const i = editStudentNumber.trim(), n = editStudentName.trim();
         if(!i || !n) return;
@@ -706,6 +685,7 @@
         const newData = {...masterData.students, [selClass]: list};
         setMasterData(m => ({...m, students: newData})); syncSiswa("saveMasterSiswa", "students", newData, "Tersimpan."); setEditingStudentObj(null);
       };
+      
       const saveMapel = () => {
         const n = editMapelName.trim(); if(!n) return;
         const list = mapelsList.map(m => m === editingMapel ? n : m);
@@ -737,10 +717,12 @@
         const name = newTeacherName.trim(); const pass = newTeacherPass.trim();
         if(!name || !pass) return;
         if(masterData.teachers.find(t => t.name === name)) { showToast("Guru sudah ada!", "error"); return; }
-        const newData = [...masterData.teachers, { name, password: pass, assignments: [] }];
+        const assigns = [];
+        if (newTeacherWali.trim()) assigns.push({ type: 'WALI', classId: newTeacherWali.trim().toUpperCase(), mapel: 'WALI KELAS' });
+        const newData = [...masterData.teachers, { name, password: pass, assignments: assigns }];
         setMasterData(p => ({...p, teachers: newData}));
         syncGuru("saveMasterGuru", "teachers", newData, `Guru ditambahkan.`);
-        setNewTeacherName(''); setNewTeacherPass('123'); 
+        setNewTeacherName(''); setNewTeacherPass('123'); setNewTeacherWali('');
       };
 
       const handleDeleteAssign = (teacherName, assignIdx) => {
@@ -802,7 +784,7 @@
 
           {/* Centered Modals */}
           {editingMapel && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
               <div className="w-full max-w-sm rounded-[28px] bg-white border border-slate-200 shadow-2xl p-6 transform hover:scale-[1.01] transition-all">
                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                   <h3 className="font-black text-slate-800 text-sm">Edit Nama Mapel</h3>
@@ -823,11 +805,12 @@
           )}
 
           {editingTeacherObj && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
               <div className="w-full max-w-sm rounded-[28px] bg-white border border-slate-200 shadow-2xl p-6 transform hover:scale-[1.01] transition-all">
                 <h3 className="font-black mb-4">Edit Profil: {editingTeacherObj.name}</h3>
                 <input type="text" value={editingTeacherName} onChange={e=>setEditingTeacherName(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 mb-2" placeholder="Nama Guru"/>
-                <input type="text" value={editingTeacherPass} onChange={e=>setEditingTeacherPass(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 mb-4" placeholder="Password"/>
+                <input type="text" value={editingTeacherPass} onChange={e=>setEditingTeacherPass(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 mb-2" placeholder="Password"/>
+                <input type="text" value={editingTeacherWali} onChange={e=>setEditingTeacherWali(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 mb-4" placeholder="Wali Kelas (Opsional, cth: 5A)"/>
                 <div className="flex gap-2">
                   <button onClick={()=>setEditingTeacherObj(null)} className="flex-1 py-2 rounded-xl bg-slate-100 font-bold text-xs">Batal</button>
                   <button onClick={saveTeacher} className="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs">Simpan</button>
@@ -837,7 +820,7 @@
           )}
 
           {editingStudentObj && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
               <div className="w-full max-w-sm rounded-[28px] bg-white border border-slate-200 shadow-2xl p-6 transform hover:scale-[1.01] transition-all">
                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                   <h3 className="font-black text-slate-800 text-sm">Edit Profil Siswa</h3>
@@ -873,19 +856,24 @@
                 <form onSubmit={handleAddTeacher} className="flex flex-col sm:flex-row gap-2.5 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 hover:scale-[1.01] transition-all">
                   <input type="text" placeholder="Nama Guru Baru" value={newTeacherName} onChange={e=>setNewTeacherName(e.target.value)} className="flex-1 px-3 py-2 text-xs font-bold rounded-xl border" required />
                   <input type="text" placeholder="Pass (123)" value={newTeacherPass} onChange={e=>setNewTeacherPass(e.target.value)} className="w-24 px-3 py-2 text-xs font-bold rounded-xl border" />
+                  <input type="text" placeholder="Wali Kls (Opsional)" value={newTeacherWali} onChange={e=>setNewTeacherWali(e.target.value)} className="w-32 px-3 py-2 text-xs font-bold rounded-xl border" />
                   <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-[11px] font-black hover:bg-indigo-700 shadow-md">Tambah</button>
                 </form>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {sortedTeachers.map((t, idx) => {
                     const clr = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+                    const waliAssign = t.assignments.find(a => a.type === 'WALI');
                     return (
-                      <div key={t.name} className="flex justify-between items-center bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 hover:scale-[1.02] transition-all group">
-                        <div className="flex gap-2.5 items-center pr-2"><div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black ${clr}`}>{t.name.charAt(0)}</div><span className="font-bold text-[11px]">{t.name}</span></div>
-                        <div className="flex gap-1 flex-none opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingTeacherObj(t); setEditingTeacherName(t.name); setEditingTeacherPass(t.password); }} className="text-slate-400 hover:text-indigo-600 p-1.5 bg-white rounded-lg shadow-sm border"><IconEdit className="w-3.5 h-3.5"/></button>
-                          <button onClick={() => setDeletePrompt({show:true, type:'teacher', target:t.name})} className="text-slate-400 hover:text-rose-600 p-1.5 bg-white rounded-lg shadow-sm border"><IconTrash className="w-3.5 h-3.5"/></button>
+                      <div key={t.name} className="flex flex-col bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 hover:scale-[1.02] transition-all group">
+                        <div className="flex justify-between items-center w-full">
+                          <div className="flex gap-2.5 items-center pr-2"><div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black ${clr}`}>{t.name.charAt(0)}</div><span className="font-bold text-[11px]">{t.name}</span></div>
+                          <div className="flex gap-1 flex-none opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { setEditingTeacherObj(t); setEditingTeacherName(t.name); setEditingTeacherPass(t.password); setEditingTeacherWali(waliAssign?waliAssign.classId:''); }} className="text-slate-400 hover:text-indigo-600 p-1.5 bg-white rounded-lg shadow-sm border"><IconEdit className="w-3.5 h-3.5"/></button>
+                            <button onClick={() => setDeletePrompt({show:true, type:'teacher', target:t.name})} className="text-slate-400 hover:text-rose-600 p-1.5 bg-white rounded-lg shadow-sm border"><IconTrash className="w-3.5 h-3.5"/></button>
+                          </div>
                         </div>
+                        {waliAssign && <div className="mt-2 ml-11"><span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded">👑 WALI KELAS {waliAssign.classId}</span></div>}
                       </div>
                     );
                   })}
@@ -996,7 +984,7 @@
       // --- TEMA DINAMIS SEMESTER ---
       const isSAS = selectedSemester === 'S';
       const theme = {
-        bg: isSAS ? 'bg-indigo-50/40' : 'bg-orange-50/50',
+        bg: isSAS ? 'bg-[#f8faff]' : 'bg-[#fffcf8]',
         headerBg: isSAS ? 'bg-indigo-600' : 'bg-rose-600',
         gradient: isSAS ? 'from-indigo-600 via-blue-500 to-cyan-500' : 'from-rose-600 via-orange-500 to-amber-500',
         focusRing: isSAS ? 'focus:ring-indigo-500' : 'focus:ring-rose-500',
@@ -1005,10 +993,10 @@
         inactiveBtn: isSAS ? 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 shadow-sm' : 'bg-white border-orange-200 text-rose-800 hover:bg-orange-50 shadow-sm',
         tableHover: isSAS ? 'hover:bg-indigo-50/50' : 'hover:bg-orange-100/60',
         rowBg: isSAS ? 'bg-white' : 'bg-[#fffcf8]',
-        inputBg: isSAS ? 'bg-indigo-50/30' : 'bg-orange-50/50',
+        inputBg: isSAS ? 'bg-[#eef2ff]' : 'bg-[#fff7ed]',
         inputBorder: isSAS ? 'border-indigo-200' : 'border-orange-200',
-        stickyHeader: isSAS ? 'bg-slate-200 text-slate-700' : 'bg-orange-200 text-rose-900',
-        stickyColBg: isSAS ? 'bg-white group-hover:bg-indigo-50/50' : 'bg-[#fffcf8] group-hover:bg-orange-100/60',
+        stickyHeader: isSAS ? 'bg-[#e2e8f0] text-slate-700' : 'bg-[#fed7aa] text-rose-900',
+        stickyColBg: isSAS ? 'group-hover:bg-indigo-50/50' : 'group-hover:bg-orange-100/60',
         modalBg: isSAS ? 'bg-indigo-50 border-indigo-200' : 'bg-rose-50 border-rose-200',
         modalTextH2: isSAS ? 'text-indigo-950' : 'text-rose-950',
         modalTextP: isSAS ? 'text-indigo-800' : 'text-rose-800',
@@ -1019,10 +1007,12 @@
       const labelSTS = isSAS ? 'STS 1' : 'STS 2';
       const labelSAS = isSAS ? 'SAS' : 'SAT';
 
+      const isWaliMode = activeAssignment?.type === 'WALI';
+
       const teacherProgress = useMemo(() => {
         let totalExpected = 0, totalFilled = 0;
         let assignmentsProgress = [];
-        user.assignments.forEach(a => {
+        user.assignments.filter(a => a.type !== 'WALI').forEach(a => {
           const sheetName = `${a.classId}-${selectedSemester}`;
           const key = `${sheetName}|${a.mapel}|${user.name}`;
           const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
@@ -1035,7 +1025,7 @@
       }, [user.assignments, masterData.gradesSummary, selectedSemester]);
 
       useEffect(() => {
-        if (activeAssignment && masterData.students) {
+        if (activeAssignment && masterData.students && !isWaliMode) {
           const classStudents = [...(masterData.students[activeAssignment.classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
           setStudents(classStudents);
           
@@ -1056,7 +1046,7 @@
           
           setGrades(initialGrades); setGradesHistory([initialGrades]); setHistoryIndex(0);
         }
-      }, [activeAssignment, colData.keys, user.name, masterData, selectedSemester]);
+      }, [activeAssignment, colData.keys, user.name, masterData, selectedSemester, isWaliMode]);
 
       const isGradesEmpty = () => {
         if (!students.length) return true;
@@ -1168,9 +1158,77 @@
       const confirmSwitchClass = () => { setActiveAssignment(targetAssignment); setShowSwitchPopup(false); };
 
       const downloadDetailedGradesExcel = () => {
-        if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[0], isSAS); return; }
         const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const now = new Date(); const timeString = `${days[now.getDay()]} , ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} - Jam ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+
+        if (isWaliMode) {
+           const classId = activeAssignment.classId;
+           const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+           const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m) }));
+
+           const rowsData = [
+             [`REKAP NILAI MATA PELAJARAN WALI KELAS - SEMESTER ${isSAS ? '1 (SAS)' : '2 (SAT)'}`],
+             [`Kelas: ${classId}`],
+             [`Guru Pengajar: ${user.name}`],
+             [`Waktu Diunduh: ${timeString}`],
+             []
+           ];
+
+           const headerRow1 = ["No", "ID Siswa", "Nama Siswa"];
+           const headerRow2 = ["", "", ""];
+           const headerRow3 = ["", "", ""];
+           const headerRow4 = ["", "", ""];
+
+           allMapelsSchema.forEach(m => {
+               headerRow1.push(m.name);
+               for(let i=1; i<m.keys.length; i++) headerRow1.push("");
+               
+               if (m.type === 'normal') {
+                   headerRow2.push("FORMATIF (UH)", "", "", "", "", "", "", labelSTS, labelSAS);
+                   headerRow3.push("TF-1","TF-2","TF-3","TF-4","TF-5","TF-6","TF-7", "", "");
+                   headerRow4.push("","","","","","","","","");
+               } else {
+                   headerRow2.push("Penguji");
+                   m.schema.categories.forEach(cat => {
+                       headerRow2.push(cat.name);
+                       for(let i=1; i<cat.items.length*3; i++) headerRow2.push("");
+                   });
+                   headerRow3.push(""); // empty for penguji
+                   m.schema.categories.forEach(cat => {
+                       cat.items.forEach(item => {
+                           headerRow3.push(item, "", "");
+                       });
+                   });
+                   headerRow4.push(""); // empty for penguji
+                   m.schema.categories.forEach(cat => {
+                       cat.items.forEach(item => {
+                           headerRow4.push("UH", labelSTS, labelSAS);
+                       });
+                   });
+               }
+           });
+
+           rowsData.push(headerRow1, headerRow2, headerRow3, headerRow4);
+
+           waliStudents.forEach((s, idx) => {
+               const row = [idx + 1, s.id, s.name];
+               allMapelsSchema.forEach(m => {
+                   const serverKey = `${classId}-${selectedSemester}|${m.name.toUpperCase()}`;
+                   const rawData = masterData.gradesData?.[serverKey]?.[s.id] || [];
+                   m.keys.forEach((k, i) => {
+                       row.push(rawData[i] || "");
+                   });
+               });
+               rowsData.push(row);
+           });
+
+           const ws = window.XLSX.utils.aoa_to_sheet(rowsData);
+           const wb = window.XLSX.utils.book_new(); 
+           window.XLSX.utils.book_append_sheet(wb, ws, "Rekap_Wali");
+           window.XLSX.writeFile(wb, `Rekap_Wali_Kls_${classId}_${isSAS ? 'SAS' : 'SAT'}.xlsx`);
+           showToast("Template/Rekap Wali Kelas diekspor!", "success");
+           return;
+        }
 
         const theKeys = colData.keys;
         const rowsData = [
@@ -1190,7 +1248,7 @@
         const ws = window.XLSX.utils.aoa_to_sheet(rowsData);
         ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
         const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "Rekap_Nilai");
-        window.XLSX.writeFile(wb, `Laporan_Nilai_${isSAS ? 'SAS' : 'SAT'}_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`); showToast("Rekap Nilai diekspor!", "success");
+        window.XLSX.writeFile(wb, `Laporan_Nilai_${isSAS ? 'SAS' : 'SAT'}_${activeAssignment.mapel}_Kls_${activeAssignment.classId}.xlsx`); showToast("Template/Rekap Nilai diekspor!", "success");
       };
 
       const handleUploadExcelGrades = (e) => {
@@ -1217,9 +1275,174 @@
                  newGrades[idSiswa] = studentGrades;
               }
             });
-            updateGrades(newGrades); showToast(`Berhasil mengunggah ${imported} nilai!`, 'success');
+            if (imported === 0) {
+               triggerKocakPopup("Tidak ada nilai yang berhasil dibaca dari file Excel! Pastikan Anda sudah mengisi angkanya ya.", isSAS);
+            } else {
+               updateGrades(newGrades); showToast(`Berhasil mengunggah ${imported} baris nilai!`, 'success');
+            }
           } catch(err) { showToast(`Gagal membaca file Excel.`, 'error'); }
         }; reader.readAsArrayBuffer(file); e.target.value = ''; 
+      };
+
+      const copyMapelGrades = (mapelName, mapelKeys) => {
+          const classId = activeAssignment.classId;
+          const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+          const serverKey = `${classId}-${selectedSemester}|${activeAssignment.mapel === 'WALI KELAS' ? mapelName.toUpperCase() : activeAssignment.mapel.toUpperCase()}`;
+          
+          let copyText = "";
+          waliStudents.forEach(student => {
+              const rawData = masterData.gradesData?.[serverKey]?.[student.id] || [];
+              const rowValues = mapelKeys.map((key, idx) => rawData[idx] || "");
+              copyText += rowValues.join("\t") + "\n";
+          });
+
+          const textArea = document.createElement("textarea");
+          textArea.value = copyText;
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+              document.execCommand('copy');
+              showToast(`Data nilai ${mapelName} berhasil disalin! Siap dipaste ke Raport.`, 'success');
+          } catch (err) {
+              showToast(`Gagal menyalin data ${mapelName}.`, 'error');
+          }
+          document.body.removeChild(textArea);
+      };
+
+      const getThickBorderClass = (colKey, type, isLastCol = false) => {
+          const baseClass = "border-slate-300";
+          const thickClass = "border-r-[3px] !border-r-slate-400";
+          if (type === 'normal') { if (colKey === 'UH7' || colKey === 'STS' || colKey === 'SAS') return thickClass; } 
+          else { if (colKey === 'penguji' || colKey.endsWith('_SAT')) return thickClass; }
+          if (isLastCol) return thickClass;
+          return baseClass;
+      };
+
+      // Komponen View Wali Kelas
+      const renderWaliKelasView = () => {
+         const classId = activeAssignment.classId;
+         const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+         const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m) }));
+
+         return (
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden mt-3 mx-2 sm:mx-4 mb-2">
+              <div className="flex-none p-4 flex justify-between items-center border border-slate-200 bg-white rounded-t-2xl shadow-sm z-50">
+                <h2 className={`text-sm font-black ${theme.modalTextH2}`}>👑 REKAPITULASI WALI KELAS - KELAS {classId} ({isSAS ? 'SAS' : 'SAT'})</h2>
+                <button onClick={downloadDetailedGradesExcel} className={`flex items-center gap-1 bg-white border border-slate-300 ${isSAS ? 'text-indigo-700 hover:bg-indigo-50' : 'text-rose-700 hover:bg-rose-50'} px-4 py-2 rounded-lg text-xs font-black active:scale-95 shadow-sm whitespace-nowrap transition-colors`}><IconDownload className="w-4 h-4"/> Unduh Template / Rekap Kelas</button>
+              </div>
+              <div className={`flex-1 overflow-auto relative rounded-b-2xl border-x border-b border-slate-200 bg-white`}>
+                <div className="min-w-max bg-white">
+                  <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
+                    <thead className="text-[10px] font-extrabold uppercase tracking-wider">
+                      <tr className="h-[60px]">
+                        <th rowSpan="4" className={`w-[41px] min-w-[41px] max-w-[41px] p-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 box-border ${theme.stickyHeader}`}>No</th>
+                        <th rowSpan="4" className={`w-[180px] min-w-[180px] max-w-[180px] p-3 sticky left-[40px] z-[70] border-b border-r border-slate-300 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 box-border ${theme.stickyHeader}`}>Nama Siswa</th>
+                        {allMapelsSchema.map(m => {
+                          if (m.type === 'normal') {
+                             return (
+                                <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
+                                   <div className="flex flex-col items-center justify-center gap-1">
+                                      <span className="font-bold text-[11px] uppercase tracking-widest">{m.name}</span>
+                                      <button onClick={() => copyMapelGrades(m.name, m.keys)} className="flex items-center justify-center gap-1 bg-black/20 hover:bg-black/40 text-white active:scale-95 transition-all px-2 py-0.5 rounded shadow-sm text-[9px] font-black border border-white/20">
+                                         <IconFileText className="w-3 h-3" /> COPY NILAI
+                                      </button>
+                                   </div>
+                                </th>
+                             );
+                          } else {
+                             return (
+                                <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
+                                   <div className="flex flex-col items-center justify-center h-full">
+                                      <span className="font-bold text-[11px] uppercase tracking-widest">{m.name}</span>
+                                   </div>
+                                </th>
+                             );
+                          }
+                        })}
+                      </tr>
+                      <tr className="h-[50px]">
+                        {allMapelsSchema.map(m => {
+                           if (m.type === 'normal') {
+                              return (
+                                <React.Fragment key={m.name}>
+                                  <th colSpan="7" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>FORMATIF (UH)</th>
+                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{labelSTS}</th>
+                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{labelSAS}</th>
+                                </React.Fragment>
+                              );
+                           } else {
+                              return (
+                                <React.Fragment key={m.name}>
+                                  <th rowSpan="3" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[60px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>Penguji</th>
+                                  {m.schema.categories.map((cat, cIdx) => {
+                                     const catKeys = [];
+                                     cat.items.forEach((item, iIdx) => { catKeys.push(`${cIdx}_${iIdx}_UH`, `${cIdx}_${iIdx}_STS`, `${cIdx}_${iIdx}_SAT`); });
+                                     return (
+                                        <th key={cat.name} colSpan={cat.items.length * 3} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-[60px] z-[40]" style={{backgroundColor: cat.color, color: "#fff"}}>
+                                           <div className="flex flex-col items-center justify-center gap-1">
+                                              <span>{cat.name}</span>
+                                              <button onClick={() => copyMapelGrades(cat.name, catKeys)} className="flex items-center justify-center gap-1 bg-black/20 hover:bg-black/40 text-white active:scale-95 transition-all px-2 py-0.5 rounded shadow-sm text-[9px] font-black border border-white/20">
+                                                 <IconFileText className="w-3 h-3" /> COPY NILAI
+                                              </button>
+                                           </div>
+                                        </th>
+                                     )
+                                  })}
+                                </React.Fragment>
+                              );
+                           }
+                        })}
+                      </tr>
+                      <tr className="h-[40px]">
+                        {allMapelsSchema.map(m => {
+                           if (m.type === 'normal') {
+                              return ['TF-1','TF-2','TF-3','TF-4','TF-5','TF-6','TF-7'].map((tf, idx) => <th key={`${m.name}-${tf}`} rowSpan="2" className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[110px] z-[40]`} style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{tf}</th>);
+                           } else {
+                              return m.schema.categories.flatMap((cat, iIdx) => cat.items.map((item, itemIdx) => <th key={`${m.name}-${item}`} colSpan="3" className={`px-2 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[110px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{item}</th>));
+                           }
+                        })}
+                      </tr>
+                      <tr className="h-[40px]">
+                        {allMapelsSchema.map(m => {
+                           if (m.type === 'normal') return null; 
+                           return m.schema.categories.flatMap((cat, iIdx) => cat.items.flatMap((item, itemIdx) => (
+                              <React.Fragment key={`${m.name}-${item}-uhstssat`}>
+                                <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[150px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>UH</th>
+                                <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[150px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{labelSTS}</th>
+                                <th className={`px-1 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[150px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{labelSAS}</th>
+                              </React.Fragment>
+                           )));
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {waliStudents.length === 0 ? (
+                          <tr><td colSpan={100} className="text-center py-8 font-bold text-slate-400 text-sm bg-white border-b border-slate-100">Siswa kosong. Hubungi Admin!</td></tr>
+                      ) : waliStudents.map((student, rowIdx) => (
+                        <tr key={student.id} className={`transition-colors duration-200 group ${theme.tableHover} ${theme.rowBg}`}>
+                          <td className={`w-[41px] min-w-[41px] max-w-[41px] p-2 font-black text-slate-500 text-center align-middle sticky left-0 z-[50] border-b border-r border-slate-200 transition-colors box-border ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
+                          <td className={`w-[180px] min-w-[180px] max-w-[180px] p-3 font-bold text-slate-800 align-middle sticky left-[40px] z-[50] truncate border-b border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors box-border ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
+                          {allMapelsSchema.map(m => {
+                            const serverKey = `${classId}-${selectedSemester}|${m.name.toUpperCase()}`;
+                            const rawData = masterData.gradesData?.[serverKey]?.[student.id] || [];
+                            return m.keys.map((key, idx) => {
+                               const val = rawData[idx] || '';
+                               const tBorder = getThickBorderClass(key, m.type, idx === m.keys.length - 1);
+                               return (
+                                  <td key={`${m.name}-${key}`} className={`p-1 border-b align-middle ${tBorder}`} style={{backgroundColor: MAPEL_THEMES[m.name]?.light}}>
+                                     <div className={`w-11 h-8 flex items-center justify-center mx-auto rounded border border-white/40 text-center font-bold text-[11px] ${val ? 'text-indigo-900 bg-white/60' : 'text-slate-400 bg-white/30'}`}>{val || '-'}</div>
+                                  </td>
+                               );
+                            });
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+         );
       };
 
       return (
@@ -1228,7 +1451,7 @@
           <SwitchPopup show={showSwitchPopup} msgIndex={switchIndex} onConfirm={confirmSwitchClass} onCancel={() => setShowSwitchPopup(false)} targetAssign={targetAssignment} isSAS={isSAS} />
 
           {showPasteModal && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
               <div className={`w-full max-w-sm rounded-[28px] p-5 border shadow-2xl transform hover:scale-[1.02] transition-all ${theme.modalBg}`}>
                 <div className="text-4xl mb-2 text-center animate-bounce">📋</div>
                 <h2 className={`text-sm font-black mb-1.5 text-center ${theme.modalTextH2}`}>Tempel Data Excel</h2>
@@ -1243,7 +1466,7 @@
           )}
 
           {showConfirmReset && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
               <div className={`relative w-full max-w-sm rounded-[28px] p-6 border shadow-2xl transform hover:scale-[1.02] transition-all ${theme.modalBg}`}>
                 <div className="text-4xl mb-2 animate-bounce">⚠️</div>
                 <h2 className={`text-sm font-black mb-1.5 text-center ${theme.modalTextH2}`}>RESET DATA SERVER?</h2>
@@ -1257,7 +1480,7 @@
           )}
 
           <header className={`flex-none text-white shadow-md h-12 flex items-center justify-between px-4 z-30 transition-colors duration-500 ${theme.headerBg}`}>
-            <div className="flex items-center space-x-2"><IconGraduationCap className="w-6 h-6 opacity-85" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none">KELAS {activeAssignment?.classId}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div></div>
+            <div className="flex items-center space-x-2"><IconGraduationCap className="w-6 h-6 opacity-85" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div></div>
             <div className="flex items-center space-x-3"><div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
           </header>
 
@@ -1277,8 +1500,14 @@
 
               <div>
                 <div className="flex overflow-x-auto gap-1.5 pb-1 scrollbar-hide snap-x">
+                  {user.assignments.find(a => a.type === 'WALI') && (
+                     <button onClick={() => requestSwitchClass(user.assignments.find(a => a.type === 'WALI'))} className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isWaliMode ? 'bg-amber-500 border-amber-600 text-white shadow-md' : 'bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100 shadow-sm'}`}>
+                        <div className="text-left"><span className={`block text-[11px] font-black`}>👑 WALI KELAS {user.assignments.find(a => a.type === 'WALI').classId}</span></div>
+                     </button>
+                  )}
+
                   {teacherProgress.assignmentsProgress.map((assign, idx) => {
-                    const isActive = assign.classId === activeAssignment?.classId && assign.mapel === activeAssignment?.mapel;
+                    const isActive = assign.classId === activeAssignment?.classId && assign.mapel === activeAssignment?.mapel && assign.type !== 'WALI';
                     return (
                       <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isActive ? theme.activeBtn : theme.inactiveBtn}`}>
                         <div className="text-left"><span className={`block text-[11px] font-black ${isActive?'text-white':isSAS?'text-slate-800':'text-rose-950'}`}>{assign.mapel}</span><span className={`block text-[9px] font-bold uppercase tracking-wider ${isActive?'text-white/70':isSAS?'text-slate-400':'text-rose-700/70'}`}>Kls {assign.classId}</span></div>
@@ -1290,118 +1519,134 @@
               </div>
             </div>
 
-            <div className={`flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border mt-3 min-h-0 mx-2 sm:mx-4 mb-2 transition-colors duration-500 ${theme.border}`}>
-              <div className="flex-none flex items-center justify-between bg-slate-50 p-2 border-b border-slate-200">
-                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
-                   <button onClick={downloadDetailedGradesExcel} className={`flex items-center gap-1 bg-white border border-slate-300 ${isSAS ? 'text-indigo-700 hover:bg-indigo-50' : 'text-rose-700 hover:bg-rose-50'} px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95 shadow-sm whitespace-nowrap transition-colors`}><IconDownload className="w-3 h-3"/> Unduh</button>
-                   <button onClick={() => fileUploadRef.current.click()} className="flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-emerald-100 active:scale-95 shadow-sm whitespace-nowrap"><IconUploadCloud className="w-3 h-3"/> Upload</button>
-                   <input type="file" accept=".xls,.xlsx" ref={fileUploadRef} onChange={handleUploadExcelGrades} className="hidden" />
+            {isWaliMode ? renderWaliKelasView() : (
+              <div className={`flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border mt-3 min-h-0 mx-2 sm:mx-4 mb-2 transition-colors duration-500 ${theme.border}`}>
+                <div className="flex-none flex items-center justify-between bg-slate-50 p-2 border-b border-slate-200">
+                   <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
+                     <button onClick={downloadDetailedGradesExcel} className={`flex items-center gap-1 bg-white border border-slate-300 ${isSAS ? 'text-indigo-700 hover:bg-indigo-50' : 'text-rose-700 hover:bg-rose-50'} px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95 shadow-sm whitespace-nowrap transition-colors`}><IconDownload className="w-3 h-3"/> Unduh</button>
+                     
+                     {!isWaliMode && (
+                       <React.Fragment>
+                         <button onClick={() => fileUploadRef.current.click()} className="flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-emerald-100 active:scale-95 shadow-sm whitespace-nowrap"><IconUploadCloud className="w-3 h-3"/> Upload</button>
+                         <input type="file" accept=".xls,.xlsx" ref={fileUploadRef} onChange={handleUploadExcelGrades} className="hidden" />
+                         
+                         <div className="w-px h-5 bg-slate-300 mx-1"></div>
+                         
+                         <button onClick={() => setShowPasteModal(true)} className="flex items-center gap-1 bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-100 active:scale-95 shadow-sm whitespace-nowrap"><IconFileText className="w-3 h-3"/> Paste</button>
+                         <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↩️ Undo</button>
+                         <button onClick={handleRedo} disabled={historyIndex >= gradesHistory.length - 1} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↪️ Redo</button>
+                       </React.Fragment>
+                     )}
+                   </div>
                    
-                   <div className="w-px h-5 bg-slate-300 mx-1"></div>
-                   
-                   <button onClick={() => setShowPasteModal(true)} className="flex items-center gap-1 bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-100 active:scale-95 shadow-sm whitespace-nowrap"><IconFileText className="w-3 h-3"/> Paste</button>
-                   <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↩️ Undo</button>
-                   <button onClick={handleRedo} disabled={historyIndex >= gradesHistory.length - 1} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↪️ Redo</button>
-                 </div>
-                 
-                 <div className="flex items-center gap-1.5 ml-2 overflow-x-auto scrollbar-hide py-1">
-                   <button onClick={() => onUpdateSuccess(false)} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-sky-100 active:scale-95 shadow-sm whitespace-nowrap"><IconRefresh className="w-3 h-3"/> Tarik Data GAS</button>
-                   
-                   <div className="w-px h-5 bg-slate-300 mx-1"></div>
+                   <div className="flex items-center gap-1.5 ml-2 overflow-x-auto scrollbar-hide py-1">
+                     <button onClick={() => onUpdateSuccess(false)} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-sky-100 active:scale-95 shadow-sm whitespace-nowrap"><IconRefresh className="w-3 h-3"/> Tarik Data GAS</button>
+                     
+                     {!isWaliMode && (
+                       <React.Fragment>
+                         <div className="w-px h-5 bg-slate-300 mx-1"></div>
 
-                   <button onClick={() => { const r = {}; students.forEach(s => r[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {})); updateGrades(r); showToast("Layar Dikosongkan!", "success"); }} className="flex items-center gap-1 bg-slate-100 border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-200 active:scale-95 shadow-sm whitespace-nowrap">🗑️ Kosong Layar</button>
-                   <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-1 bg-rose-100 border border-rose-300 text-rose-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-rose-200 active:scale-95 shadow-sm whitespace-nowrap">⚠️ Reset GAS</button>
+                         <button onClick={() => { const r = {}; students.forEach(s => r[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {})); updateGrades(r); showToast("Layar Dikosongkan!", "success"); }} className="flex items-center gap-1 bg-slate-100 border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-200 active:scale-95 shadow-sm whitespace-nowrap">🗑️ Kosong Layar</button>
+                         <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-1 bg-rose-100 border border-rose-300 text-rose-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-rose-200 active:scale-95 shadow-sm whitespace-nowrap">⚠️ Reset GAS</button>
 
-                   <button onClick={handleSaveToSpreadsheet} disabled={isSaving || students.length === 0} className={`flex items-center justify-center space-x-1 active:scale-95 text-white px-4 py-1.5 rounded-lg transition-colors shadow-md disabled:opacity-50 font-black text-[10px] whitespace-nowrap ${theme.headerBg} hover:opacity-90`}>
-                    {isSaving ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <IconSend className="w-3 h-3" />}
-                    <span>Kirim</span>
-                   </button>
-                 </div>
-              </div>
+                         <button onClick={handleSaveToSpreadsheet} disabled={isSaving || students.length === 0} className={`flex items-center justify-center space-x-1 active:scale-95 text-white px-4 py-1.5 rounded-lg transition-colors shadow-md disabled:opacity-50 font-black text-[10px] whitespace-nowrap ${theme.headerBg} hover:opacity-90`}>
+                          {isSaving ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <IconSend className="w-3 h-3" />}
+                          <span>Kirim</span>
+                         </button>
+                       </React.Fragment>
+                     )}
+                   </div>
+                </div>
 
-              {/* TABLE AREA SCROLLABLE (STICKY PAKU BUMI) */}
-              <div className="flex-1 overflow-auto relative bg-slate-50/50">
-                <div className="min-w-max bg-white">
-                  <table className="w-full text-xs text-left text-slate-600 whitespace-nowrap border-separate" style={{ borderSpacing: 0 }}>
-                    <thead className="text-[10px] font-extrabold uppercase tracking-wider">
+                {/* TABLE AREA SCROLLABLE (GURU MAPEL) */}
+                <div className="flex-1 overflow-auto relative bg-white rounded-b-2xl">
+                  <div className="min-w-max bg-white">
+                    <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
+                      <thead className="text-[10px] text-slate-700 font-extrabold uppercase tracking-wider">
                       {colData.type === 'normal' ? (
-                        <tr>
-                          <th className={`px-2 py-3 text-center sticky-no sticky-header-no border-b border-r border-slate-300 shadow-sm ${theme.stickyHeader}`}>No</th>
-                          <th className={`px-3 py-3 sticky-nama sticky-header-nama border-b border-r border-slate-300 shadow-sm ${theme.stickyHeader}`}>Nama Siswa</th>
-                          {colData.headers.map(h => {
-                             let displayName = h;
-                             if (h === 'STS') displayName = labelSTS;
-                             if (h === 'SAS') displayName = labelSAS;
-                             return <th key={h} className={`px-2 py-3 text-center min-w-[50px] border-b border-r border-slate-300 sticky-top-row ${theme.stickyHeader}`}>{displayName}</th>
-                          })}
-                        </tr>
-                      ) : (
-                        <>
-                          <tr>
-                            <th rowSpan="3" className={`px-2 py-2 text-center sticky-no sticky-header-no border-b border-r border-slate-300 align-middle shadow-sm ${theme.stickyHeader}`}>No</th>
-                            <th rowSpan="3" className={`px-3 py-2 sticky-nama sticky-header-nama border-b border-r border-slate-300 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${theme.stickyHeader}`}>Nama Siswa</th>
-                            <th rowSpan="3" className={`px-2 py-2 min-w-[130px] border-b border-r border-slate-300 text-center align-middle sticky-top-row ${theme.stickyHeader}`}>Penguji</th>
-                            {colData.schema.categories.map(cat => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 py-2 text-center border-b border-r border-slate-300 font-black text-[11px] sticky-top-row ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
+                        <tr className="h-[50px]">
+                          <th className={`w-[41px] min-w-[41px] max-w-[41px] px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 box-border ${theme.stickyHeader}`}>No</th>
+                          <th className={`w-[180px] min-w-[180px] max-w-[180px] px-3 sticky left-[40px] z-[70] border-b border-r border-slate-300 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 box-border ${theme.stickyHeader}`}>Nama Siswa</th>
+                          {colData.headers.map((h, idx) => {
+                               let displayName = h;
+                               if (h === 'STS') displayName = labelSTS;
+                               if (h === 'SAS') displayName = labelSAS;
+                               const tBorder = getThickBorderClass(h, colData.type, idx === colData.headers.length - 1);
+                               return <th key={h} className={`px-2 text-center min-w-[50px] border-b ${tBorder} sticky top-0 z-[40] ${theme.stickyHeader}`}>{displayName}</th>
+                            })}
                           </tr>
-                          <tr>
-                            {colData.schema.categories.map((cat) => cat.items.map((item, iIdx) => (
-                              <th key={item} colSpan="3" className={`px-2 py-2 text-center border-b border-r border-slate-300 text-[10px] font-black sticky-top-2 ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
-                            )))}
-                          </tr>
-                          <tr>
-                            {colData.schema.categories.map((cat) => cat.items.map((item, iIdx) => (
-                              <React.Fragment key={`${cat.name}-${item}-sub`}>
-                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky-top-3 ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>UH</th>
-                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky-top-3 ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{labelSTS}</th>
-                                <th className={`px-1 py-1.5 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky-top-3 ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`}>{labelSAS}</th>
-                              </React.Fragment>
-                            )))}
-                          </tr>
-                        </>
-                      )}
-                    </thead>
-                    <tbody>
+                        ) : (
+                          <>
+                          <tr className="h-[50px]">
+                            <th rowSpan="3" className={`w-[41px] min-w-[41px] max-w-[41px] px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 align-middle shadow-sm top-0 box-border ${theme.stickyHeader}`}>No</th>
+                            <th rowSpan="3" className={`w-[180px] min-w-[180px] max-w-[180px] px-3 sticky left-[40px] z-[70] border-b border-r border-slate-300 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 box-border ${theme.stickyHeader}`}>Nama Siswa</th>
+                            <th rowSpan="3" className={`px-2 min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle sticky top-0 z-[40] ${isSAS ? 'bg-slate-200 text-indigo-700' : 'bg-orange-200 text-rose-800'}`}>Penguji</th>
+                              {colData.schema.categories.map((cat, cIdx) => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-0 z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
+                            </tr>
+                            <tr className="h-[40px]">
+                              {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
+                                <th key={item} colSpan="3" className={`px-2 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[50px] z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
+                              )))}
+                            </tr>
+                            <tr className="h-[40px]">
+                              {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
+                                <React.Fragment key={`${cat.name}-${item}-sub`}>
+                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>UH</th>
+                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{labelSTS}</th>
+                                  <th className={`px-1 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{labelSAS}</th>
+                                </React.Fragment>
+                              )))}
+                            </tr>
+                          </>
+                        )}
+                      </thead>
+                      <tbody>
                       {students.length === 0 ? (
                         <tr><td colSpan={colData.keys.length + 2} className="text-center py-8 font-bold text-slate-400 text-sm bg-white border-b border-slate-100">Siswa kosong. Hubungi Admin!</td></tr>
                       ) : students.map((student, rowIdx) => (
                         <tr key={student.id} className={`transition-colors duration-200 group ${theme.tableHover} ${theme.rowBg}`}>
-                          <td className={`px-2 py-2 font-black text-slate-500 text-center sticky-no border-b border-r border-slate-200 transition-colors ${theme.stickyColBg}`}>{rowIdx + 1}</td>
-                          <td className={`px-3 py-2 font-bold text-slate-800 sticky-nama truncate max-w-[180px] border-b border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors ${theme.stickyColBg}`}>{student.name}</td>
+                          <td className={`w-[41px] min-w-[41px] max-w-[41px] p-2 font-black text-slate-500 text-center align-middle sticky left-0 z-[50] border-b border-r border-slate-200 transition-colors box-border ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
+                          <td className={`w-[180px] min-w-[180px] max-w-[180px] p-3 font-bold text-slate-800 align-middle sticky left-[40px] z-[50] truncate border-b border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors box-border ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
                           {colData.keys.map((colKey, colIdx) => {
-                            const val = grades[student.id]?.[colKey];
-                            
-                            if (colKey === 'penguji') {
-                              return <td key={colKey} className={`px-1.5 py-1 border-b border-r border-slate-200 transition-colors ${theme.stickyColBg}`}><input id={`input-${rowIdx}-${colIdx}`} type="text" value={val||''} onChange={e=>handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)} className={`w-full min-w-[110px] px-2 py-1.5 rounded-lg border text-[10px] font-bold ${theme.focusRing} focus:ring-2 transition-all text-center shadow-inner ${theme.inputBorder} ${theme.inputBg} ${isSAS ? 'text-slate-800' : 'text-rose-950'}`}/></td>;
-                            }
-                            
-                            const isRemedi = val !== '' && Number(val) < 70;
-                            const isSuccess = val !== '' && Number(val) >= 70;
+                              const val = grades[student.id]?.[colKey];
+                              const tBorder = getThickBorderClass(colKey, colData.type, colIdx === colData.keys.length - 1);
+                              
+                              if (colKey === 'penguji') {
+                                return (
+                                  <td key={colKey} className={`p-1 border-b align-middle ${tBorder} transition-colors ${theme.inputBg}`}>
+                                    <input id={`input-${rowIdx}-${colIdx}`} type="text" value={val||''} onChange={e=>handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)} className={`w-full h-8 px-2 rounded border text-[10px] font-bold ${theme.focusRing} focus:ring-2 transition-all text-center shadow-inner ${theme.inputBorder} bg-white/70 ${isSAS ? 'text-slate-800' : 'text-rose-950'}`}/>
+                                  </td>
+                                );
+                              }
+                              
+                              const isRemedi = val !== '' && Number(val) < 70;
+                              const isSuccess = val !== '' && Number(val) >= 70;
+                              const parts = colKey.split('_');
+                              const itemIdx = parts.length > 1 ? parseInt(parts[0]) : 0; // Use cat index for color
+                              const bgClass = colData.type === 'special' ? ITEM_BG_COLORS[itemIdx % ITEM_BG_COLORS.length] : theme.inputBg;
 
-                            const parts = colKey.split('_');
-                            const itemIdx = parts.length > 1 ? parseInt(parts[1]) : 0;
-                            const bgClass = colData.type === 'special' ? ITEM_BG_COLORS[itemIdx % ITEM_BG_COLORS.length] : theme.inputBg;
-
-                            return (
-                              <td key={colKey} className={`px-1 py-1.5 border-b border-r border-slate-200 ${bgClass}`}>
-                                <input id={`input-${rowIdx}-${colIdx}`} type="text" inputMode="numeric" placeholder="-" value={val || ''} 
-                                  onChange={(e) => handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)}
-                                  className={`w-12 mx-auto block text-center rounded border h-8 focus:outline-none focus:ring-2 ${theme.focusRing} transition-all font-black text-[11px] shadow-sm 
-                                    ${theme.rowBg} ${theme.inputBorder}
-                                    ${isRemedi ? 'text-rose-600 shadow-[inset_0_1px_3px_rgba(225,29,72,0.3)]' 
-                                    : isSuccess ? 'text-emerald-700 shadow-[inset_0_1px_3px_rgba(16,185,129,0.3)]' 
-                                    : (isSAS ? 'text-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]' : 'text-rose-950 shadow-[inset_0_1px_2px_rgba(234,88,12,0.1)]')}
-                                  `} 
-                                />
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              return (
+                                <td key={colKey} className={`p-1 border-b align-middle ${tBorder} ${bgClass}`}>
+                                  <input id={`input-${rowIdx}-${colIdx}`} type="text" inputMode="numeric" placeholder="-" value={val || ''} 
+                                    onChange={(e) => handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)}
+                                    className={`w-11 h-8 mx-auto block text-center rounded border focus:outline-none focus:ring-2 ${theme.focusRing} transition-all font-black text-[11px] shadow-sm box-border
+                                      ${theme.rowBg} ${theme.inputBorder}
+                                      ${isRemedi ? 'text-rose-600 shadow-[inset_0_1px_3px_rgba(225,29,72,0.3)]' 
+                                      : isSuccess ? 'text-emerald-700 shadow-[inset_0_1px_3px_rgba(16,185,129,0.3)]' 
+                                      : (isSAS ? 'text-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]' : 'text-rose-950 shadow-[inset_0_1px_2px_rgba(234,88,12,0.1)]')}
+                                    `} 
+                                  />
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </main>
         </div>
       );
