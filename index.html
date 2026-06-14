@@ -5,9 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ASTAGA - Asisten Sistem Terpadu Guru Al Kautsar</title>
   
-  <!-- CSS Tailwind (Sumber Gaya) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SCRIPT PEMBERSIH SERVICE WORKER LAMA YANG BIKIN ERROR CSS -->
+  <script>
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) { registration.unregister(); }
+        }).catch(function(err) {});
+      }
+    } catch(e) {}
+  </script>
+
+  <!-- MANIFEST PWA BASE64 (DITANAM LANGSUNG AGAR VALID DI BROWSER HP) -->
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQVNUQUdBIC0gQXNpc3RlbiBHdXJ1Iiwic2hvcnRfbmFtZSI6IkFTVEFHQSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2Y4ZmFmYyIsInRoZW1lX2NvbG9yIjoiIzRmNDZlNSIsImljb25zIjpbeyJzcmMiOiJpY29uLnBuZyIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9wbmciLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn0seyJzcmMiOiJpY29uLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmciLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==" />
   
+  <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -20,8 +32,6 @@
     input[type=number] { -moz-appearance: textfield; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    /* Utility Class: Cegah outline tebal pada input */
     input:focus { outline: none !important; }
   </style>
 </head>
@@ -36,17 +46,15 @@
     // =========================================================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    // VERSI APP & CHANGELOG (RAHASIA ADMIN DIHAPUS DARI LIST INI BIAR AMAN)
-    const APP_VERSION = "2.1.0-Premium";
+    const APP_VERSION = "2.2.0-Premium";
     const APP_CHANGELOG = [
-      "✅ Sinkronisasi Indikator GAS: Frontend sekarang tegas meminta data menggunakan indikator -S (SAS) dan -T (SAT) pada nama Sheet (contoh: 1A-S & 1A-T).",
-      "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi, meminimalisir salah input data.",
-      "👨‍🏫 Fitur Super Guru Mapel: Input nilai langsung melesat! Tersedia fitur Paste nilai dari Excel (Ctrl+V), Undo/Redo jika salah ketik, dan sinkronisasi pintar.",
-      "👑 Dashboard Eksklusif Wali Kelas: Pantau seluruh nilai dari semua Mata Pelajaran kelas Anda dalam satu layar rekapitulasi komprehensif tanpa loading lama.",
-      "📊 Unduh Excel Sekali Klik (Wali Kelas): Tarik rekap nilai lengkap satu kelas ke format Excel (.xlsx) dengan rapi hanya dalam satu sentuhan.",
-      "📋 Salin Nilai Instan: Tombol 'COPY NILAI' khusus untuk menyalin blok nilai secara otomatis agar mudah di-paste ke aplikasi Rapor sekolah.",
-      "📲 Support Web App (PWA): Wajib Install! Aplikasi bisa disematkan langsung menjadi Icon di Home Screen HP atau Laptop Anda, buka aplikasi tanpa perlu mengetik URL web lagi.",
-      "⚡ Visual Premium: Desain antarmuka baru yang super mulus, tabel responsif anti-bocor, mode warna dinamis, dan sistem tracking progres pengisian nilai."
+      "⚡ Loading Layar Instan: Tidak ada lagi layar loading putih lama, sinkronisasi kini berjalan diam-diam di balik layar!",
+      "📲 PWA Super Engine: Aplikasi sekarang akan memaksa penginstalan Icon ke layar HP/Laptop dengan sistem Fallback Anti-Error.",
+      "✅ Sinkronisasi Indikator GAS: Frontend sekarang tegas meminta data menggunakan indikator -S (SAS) dan -T (SAT) pada nama Sheet.",
+      "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi.",
+      "👨‍🏫 Fitur Super Guru Mapel: Tersedia fitur Paste nilai dari Excel (Ctrl+V), Undo/Redo jika salah ketik.",
+      "👑 Dashboard Eksklusif Wali Kelas: Pantau seluruh nilai dari semua Mata Pelajaran kelas Anda dalam satu layar komprehensif.",
+      "📋 Salin Nilai Instan: Tombol 'COPY NILAI' khusus untuk menyalin blok nilai secara otomatis ke aplikasi Rapor.",
     ];
 
     const DEFAULT_MAPELS = [
@@ -77,15 +85,11 @@
       "IQRA'": { bg: "#ea580c", light: "#fff7ed", text: "#ffffff", textDark: "#7c2d12" }
     };
 
-    // DEFAULT SCHEMA
     const DEFAULT_SCHEMAS = {
       "NORMAL": { 
         type: "normal", 
         headers: ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'],
-        sts_sas: 'STS',
-        sas_sas: 'SAS',
-        sts_sat: 'STS',
-        sas_sat: 'SAT' 
+        sts_sas: 'STS', sas_sas: 'SAS', sts_sat: 'STS', sas_sat: 'SAT' 
       },
       "IBADAH (WUDHU, TAYAMUM, SHALAT)": {
         type: "special", categories: [
@@ -123,11 +127,7 @@
     };
 
     const getAdminPassword = (masterData) => {
-      try {
-         if (masterData?.students?.["__ADMIN__"]) {
-            return masterData.students["__ADMIN__"][0].password;
-         }
-      } catch(e) {}
+      try { if (masterData?.students?.["__ADMIN__"]) return masterData.students["__ADMIN__"][0].password; } catch(e) {}
       return "admin123"; 
     };
 
@@ -277,15 +277,38 @@
        );
     }
 
+    // KOMPONEN INSTALL POPUP CERDAS DENGAN FALLBACK MANUAL
     function InstallPromptPopup({ show, onInstall }) {
+       const [step, setStep] = useState('prompt');
+
        if (!show) return null;
+
+       if (step === 'manual') {
+          return (
+             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in slide-in-from-bottom duration-500">
+                 <div className="w-full max-w-sm rounded-[32px] bg-white shadow-2xl p-6 text-center border-4 border-sky-400">
+                    <h2 className="text-xl font-black text-sky-950 mb-4 uppercase tracking-wide">CARA INSTALL MANUAL</h2>
+                    <div className="text-left bg-sky-50 p-4 rounded-xl mb-4 border border-sky-100">
+                        <ol className="list-decimal pl-4 space-y-2 text-xs font-bold text-sky-900">
+                            <li>Pastikan buka ini di <b>Google Chrome</b> atau <b>Safari</b>.</li>
+                            <li>Klik ikon <b>Titik Tiga ⋮</b> (Chrome) atau <b>Share ⍗</b> (Safari).</li>
+                            <li>Pilih menu <b>"Tambahkan ke Layar Utama"</b> atau <b>"Add to Home Screen"</b>.</li>
+                            <li>Selesai! ASTAGA akan muncul di HP Anda.</li>
+                        </ol>
+                    </div>
+                    <button onClick={() => { localStorage.setItem('astaga_installed', 'true'); window.location.reload(); }} className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-black py-3 rounded-2xl active:scale-95 transition-transform uppercase tracking-widest text-xs">Saya Mengerti</button>
+                 </div>
+             </div>
+          );
+       }
+
        return (
           <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in slide-in-from-bottom duration-500">
              <div className="w-full max-w-sm rounded-[32px] bg-gradient-to-b from-sky-50 to-white shadow-2xl p-6 text-center border-4 border-sky-400">
                 <img src="icon.png" alt="App Icon" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-20 h-20 mx-auto mb-4 animate-[pulse_2s_infinite] drop-shadow-xl rounded-2xl" />
                 <h2 className="text-xl font-black text-sky-950 mb-2 uppercase tracking-wide">WAJIB INSTALL!</h2>
                 <p className="text-xs font-bold text-sky-800 mb-6 leading-relaxed opacity-90">Aplikasi ASTAGA ini dirancang khusus dan WAJIB di-install ke HP/Laptop kamu bosku. Biar bisa offline dan lebih sat-set!</p>
-                <button onClick={onInstall} className="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-4 rounded-2xl shadow-[0_4px_15px_rgba(2,132,199,0.4)] active:scale-95 transition-transform uppercase tracking-widest text-xs">🚀 Install Sekarang</button>
+                <button onClick={() => onInstall(setStep)} className="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-4 rounded-2xl shadow-[0_4px_15px_rgba(2,132,199,0.4)] active:scale-95 transition-transform uppercase tracking-widest text-xs">🚀 Install Sekarang</button>
              </div>
           </div>
        );
@@ -295,70 +318,30 @@
     // --- 4. KOMPONEN INDUK APLIKASI ---
     // =========================================================================
     function App() {
-      const [masterData, setMasterData] = useState(DEFAULT_MASTER_DATA);
+      // MASTER DATA INSTAN DARI CACHE (Mencegah Layar Putih)
+      const [masterData, setMasterData] = useState(() => {
+          try {
+             const cached = localStorage.getItem('astaga_master_cache');
+             if (cached) return JSON.parse(cached);
+          } catch(e){}
+          return DEFAULT_MASTER_DATA;
+      });
       const [currentUser, setCurrentUser] = useState(null);
       const [activeAssignment, setActiveAssignment] = useState(null);
       const [popup, setPopup] = useState({ show: false, type: 'success', index: 0 });
       const [kocakPopup, setKocakPopup] = useState({ show: false, message: '', isSAS: true });
       const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-      const [isLoading, setIsLoading] = useState(true);
+      
+      const [isFetchingData, setIsFetchingData] = useState(false);
 
       // PWA Install & Update States
       const [installPromptEvent, setInstallPromptEvent] = useState(null);
       const [showInstallPopup, setShowInstallPopup] = useState(false);
       const [showUpdatePopup, setShowUpdatePopup] = useState(false);
 
-      // INJEKSI MANIFEST & CLEANER SERVICE WORKER PWA
+      // MENCEGAH PWA MUNCUL SAAT DI DALAM IFRAME PREVIEW
       useEffect(() => {
-         const manifest = {
-            name: "ASTAGA - Asisten Guru",
-            short_name: "ASTAGA",
-            start_url: window.location.pathname || "/", 
-            display: "standalone",
-            background_color: "#f8fafc",
-            theme_color: "#4f46e5",
-            icons: [
-               { src: "icon.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-               { src: "icon.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
-            ]
-         };
-         
-         const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-         const manifestURL = URL.createObjectURL(blob);
-         let link = document.querySelector('link[rel="manifest"]');
-         if (!link) {
-            link = document.createElement('link');
-            link.rel = 'manifest';
-            document.head.appendChild(link);
-         }
-         link.href = manifestURL;
-
-         // MEMBUNUH SERVICE WORKER LAMA & MENCEGAH INVALID STATE ERROR
-         try {
-             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                   for (let reg of registrations) {
-                      reg.unregister();
-                   }
-                }).then(() => {
-                   // Mendaftarkan Service Worker dummy baru yang sangat aman
-                   const swCode = `
-                      self.addEventListener('install', (e) => { self.skipWaiting(); });
-                      self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
-                      self.addEventListener('fetch', (e) => {
-                         // KOSONG: Biarkan browser menangani CDN Tailwind/React secara alamiah
-                      });
-                   `;
-                   const swBlob = new Blob([swCode], {type: 'application/javascript'});
-                   const swUrl = URL.createObjectURL(swBlob);
-                   navigator.serviceWorker.register(swUrl).catch(()=>{});
-                }).catch(e => console.warn('SW Registrations terblokir', e));
-             }
-         } catch (error) {
-             console.warn("Service Worker dinonaktifkan oleh browser/iframe.", error);
-         }
-
-         // PWA Install Event & Deteksi Standalone
+         const isIframe = window.self !== window.top;
          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
          
          if (isStandalone) {
@@ -368,13 +351,11 @@
          const handleBeforeInstall = (e) => {
             e.preventDefault();
             setInstallPromptEvent(e);
+            if (!isIframe && localStorage.getItem('astaga_installed') !== 'true') {
+               setTimeout(() => setShowInstallPopup(true), 1500); 
+            }
          };
          window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-         // MUNCULKAN POPUP WAJIB INSTALL SECARA PAKSA (JIKA BELUM INSTALL)
-         if (localStorage.getItem('astaga_installed') !== 'true' && !isStandalone) {
-            setTimeout(() => setShowInstallPopup(true), 2500); 
-         }
 
          window.addEventListener('appinstalled', () => {
             localStorage.setItem('astaga_installed', 'true');
@@ -392,7 +373,7 @@
          return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       }, []);
 
-      const executeInstall = async () => {
+      const executeInstall = async (setStep) => {
          if (installPromptEvent) {
             installPromptEvent.prompt();
             const { outcome } = await installPromptEvent.userChoice;
@@ -405,25 +386,29 @@
             }
             setInstallPromptEvent(null);
          } else {
-             showToast("Gagal Auto-Install di Mode ini. Silakan klik Titik 3 di Pojok Kanan Atas Chrome -> Pilih 'Instal Aplikasi / Tambahkan ke Layar Utama'.", "error");
-             setShowInstallPopup(false); // Beri ampun tutup popup agar tidak nyangkut selamanya
+             setStep('manual');
          }
       };
 
+      // TARIK DATA DARI GAS KE LOCALSTORAGE DIAM-DIAM DI BACKGROUND
       const fetchCloudMasterData = async (silent = false) => {
-        if (!silent) setIsLoading(true);
+        setIsFetchingData(true);
         try {
           const response = await fetch(SCRIPT_URL);
           const data = await response.json();
           setMasterData(data);
+          localStorage.setItem('astaga_master_cache', JSON.stringify(data));
         } catch (err) {
-          showToast("Gagal memuat data dari server.", "error");
+          if (!silent) showToast("Menggunakan data offline karena jaringan lambat.", "error");
         } finally {
-          if (!silent) setIsLoading(false);
+          setIsFetchingData(false);
         }
       };
 
-      useEffect(() => { fetchCloudMasterData(); }, []);
+      // Tarik data cuma 1x saat baru buka aplikasi, supaya tidak me-reset inputan guru yang sedang mengetik nilai.
+      useEffect(() => { 
+          fetchCloudMasterData(masterData.teachers && masterData.teachers.length > 0); 
+      }, []);
 
       const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
@@ -437,23 +422,14 @@
          return DEFAULT_SCHEMAS;
       }, [masterData.students]);
 
-      if (isLoading) {
-        return (
-          <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-[11px] text-slate-500 font-bold tracking-widest uppercase animate-pulse">Menghubungkan ke Cloud ASTAGA...</p>
-          </div>
-        );
-      }
-
       return (
         <div className="min-h-screen max-h-screen h-screen bg-slate-50 flex flex-col overflow-hidden text-xs">
           {!currentUser ? (
-            <LoginScreen masterData={masterData} onLogin={(user, assignment) => { setCurrentUser(user); setActiveAssignment(assignment); if(user !== 'ADMIN') setPopup({ show: true, type: 'success', index: Math.floor(Math.random() * 10) }); }} onLoginFail={() => setPopup({ show: true, type: 'error', index: Math.floor(Math.random() * 10) })} />
+            <LoginScreen masterData={masterData} isFetchingData={isFetchingData} onLogin={(user, assignment) => { setCurrentUser(user); setActiveAssignment(assignment); if(user !== 'ADMIN') setPopup({ show: true, type: 'success', index: Math.floor(Math.random() * 10) }); }} onLoginFail={() => setPopup({ show: true, type: 'error', index: Math.floor(Math.random() * 10) })} />
           ) : currentUser === 'ADMIN' ? (
-            <AdminDashboard masterData={masterData} setMasterData={setMasterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onRefreshData={() => fetchCloudMasterData(true)} />
+            <AdminDashboard masterData={masterData} setMasterData={setMasterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onRefreshData={() => fetchCloudMasterData(false)} isFetchingData={isFetchingData} />
           ) : (
-            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={(silent) => fetchCloudMasterData(silent)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} />
+            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={(silent) => fetchCloudMasterData(silent)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} isFetchingData={isFetchingData} />
           )}
           
           <FunnyPopup show={popup.show} type={popup.type} msgIndex={popup.index} onClose={() => setPopup({ ...popup, show: false })} />
@@ -476,7 +452,7 @@
     // =========================================================================
     // --- 5. KOMPONEN LAYAR LOGIN ---
     // =========================================================================
-    function LoginScreen({ masterData, onLogin, onLoginFail }) {
+    function LoginScreen({ masterData, isFetchingData, onLogin, onLoginFail }) {
       const [mode, setMode] = useState('guru'); 
       const [selectedGuru, setSelectedGuru] = useState('');
       const [selectedAssign, setSelectedAssign] = useState('');
@@ -488,6 +464,7 @@
       }, [masterData.teachers]);
 
       const guruObj = masterData.teachers?.find(t => t.name === selectedGuru);
+      const isSyncing = masterData?.teachers?.length === 0;
 
       const handleLogin = (e) => {
         e.preventDefault();
@@ -509,9 +486,10 @@
         <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] w-full">
           <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl border border-slate-200 relative animate-in fade-in duration-300 hover:shadow-2xl transition-all">
             <div className={`p-6 text-center transition-colors duration-500 ${mode === 'admin' ? 'bg-slate-900' : 'bg-indigo-600'}`}>
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner overflow-hidden">
+              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner overflow-hidden relative">
                 <img src="icon.png" alt="Logo ASTAGA" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-12 h-12 object-contain" />
                 <IconSettings className={`text-white w-7 h-7 animate-[spin_4s_linear_infinite] ${!document.querySelector('img[src="icon.png"]') ? 'block' : 'hidden'}`} />
+                {isFetchingData && <div className="absolute inset-0 border-4 border-white/50 border-t-white rounded-full animate-spin"></div>}
               </div>
               <h1 className="text-2xl font-black text-white tracking-widest leading-none animate-pulse">ASTAGA</h1>
               <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru Al Kautsar'}</p>
@@ -525,8 +503,8 @@
                       <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Pilih Nama Guru</label>
                       <div className="relative hover:scale-[1.02] active:scale-95 transition-all duration-300">
                         <IconUser className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                        <select className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 font-bold bg-slate-50 focus:outline-none focus:border-indigo-500 cursor-pointer" value={selectedGuru} onChange={(e) => { setSelectedGuru(e.target.value); setSelectedAssign(''); }} required>
-                          <option value="" className="text-slate-400">-- Klik untuk memilih --</option>
+                        <select disabled={isSyncing} className="pl-9 w-full rounded-xl border border-slate-200 py-2.5 px-3 text-xs text-slate-800 font-bold bg-slate-50 focus:outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50" value={selectedGuru} onChange={(e) => { setSelectedGuru(e.target.value); setSelectedAssign(''); }} required>
+                          {isSyncing ? <option value="">⏳ Sedang menyinkronkan data...</option> : <option value="">-- Klik untuk memilih --</option>}
                           {sortedTeachersForLogin.map((t, i) => <option key={i} value={t.name}>{t.name}</option>)}
                         </select>
                       </div>
@@ -555,7 +533,7 @@
                     <input type="password" placeholder="Masukkan password" value={mode==='admin'?adminPass:password} onChange={(e) => mode==='admin'?setAdminPass(e.target.value):setPassword(e.target.value)} className={`pl-9 w-full rounded-xl border-2 py-2.5 px-3 text-xs text-slate-800 font-bold bg-slate-50 focus:outline-none ${mode==='admin'?'border-slate-300 focus:border-slate-800':'border-slate-200 focus:border-indigo-500'}`} required />
                   </div>
                 </div>
-                <button type="submit" className={`w-full text-white font-extrabold rounded-xl py-2.5 shadow-md mt-2 text-xs tracking-wide hover:-translate-y-1 active:scale-95 transition-all duration-300 ${mode==='admin'?'bg-slate-900 hover:bg-slate-800':'bg-indigo-600 hover:bg-indigo-700'}`}>
+                <button type="submit" disabled={isSyncing && mode==='guru'} className={`w-full text-white font-extrabold rounded-xl py-2.5 shadow-md mt-2 text-xs tracking-wide transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${mode==='admin'?'bg-slate-900 hover:bg-slate-800 hover:-translate-y-1':'bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-1'}`}>
                   {mode==='admin' ? 'BUKA PANEL ADMIN 🗝️' : 'GAS MASUK! 🚀'}
                 </button>
               </form>
@@ -574,7 +552,7 @@
     // =========================================================================
     // --- 6. KOMPONEN PANEL ADMIN UTAMA ---
     // =========================================================================
-    function AdminDashboard({ masterData, setMasterData, schemas, onLogout, showToast, toast, onRefreshData }) {
+    function AdminDashboard({ masterData, setMasterData, schemas, onLogout, showToast, toast, onRefreshData, isFetchingData }) {
       const [activeTab, setActiveTab] = useState('overview'); 
       const [selectedSemester, setSelectedSemester] = useState('SAS');
       const [isSyncing, setIsSyncing] = useState(false);
@@ -712,7 +690,7 @@
           <header className="flex-none bg-slate-900 text-white shadow-xl h-12 flex items-center justify-between px-4 z-20">
             <div className="flex items-center space-x-2 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer">
               <div className="bg-indigo-500 p-1 rounded-lg">
-                <img src="icon.png" alt="Logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-4 h-4 object-contain" />
+                <IconSettings className="w-4 h-4 text-white" />
               </div>
               <h1 className="font-extrabold text-[13px] tracking-widest flex items-center gap-1.5">ASTAGA <span className="bg-indigo-700 px-1.5 py-0.5 rounded text-[8px]">ADMIN</span></h1>
             </div>
@@ -725,7 +703,7 @@
           </header>
 
           <main className="flex-1 overflow-y-auto scrollbar-hide p-3 sm:p-4 pb-10 max-w-5xl mx-auto w-full">
-            {isSyncing && <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl flex justify-center space-x-2 font-bold animate-pulse mb-3"><div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data...</span></div>}
+            {(isSyncing || isFetchingData) && <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl flex justify-center space-x-2 font-bold animate-pulse mb-3"><div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data...</span></div>}
 
             {activeTab === 'overview' && (
               <div className="space-y-4 animate-in fade-in">
@@ -1296,7 +1274,7 @@
     // =========================================================================
     // --- 8. DASHBOARD GURU (SUPER RESPONSIVE, STICKY & THEME MAPEL) ---
     // =========================================================================
-    function Dashboard({ user, activeAssignment, masterData, schemas, onLogout, showToast, onUpdateSuccess, triggerKocakPopup, setActiveAssignment }) {
+    function Dashboard({ user, activeAssignment, masterData, schemas, onLogout, showToast, onUpdateSuccess, triggerKocakPopup, setActiveAssignment, isFetchingData }) {
       const [selectedSemester, setSelectedSemester] = useState('SAS'); 
       const [students, setStudents] = useState([]);
       const [grades, setGrades] = useState({});
@@ -1311,6 +1289,9 @@
       const [showConfirmReset, setShowConfirmReset] = useState(false);
       const [switchIndex, setSwitchIndex] = useState(0);
       const [targetAssignment, setTargetAssignment] = useState(null);
+
+      // ANTI OVERWRITE: Menyimpan status inisialisasi agar data tidak tertimpa saat background sync
+      const [initializedAssignment, setInitializedAssignment] = useState(null);
 
       const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas, selectedSemester === 'SAS'), [activeAssignment, schemas, selectedSemester]);
       const fileUploadRef = useRef(null);
@@ -1363,8 +1344,15 @@
         return { globalPct: totalExpected === 0 ? 0 : Math.round((totalFilled / totalExpected) * 100), assignmentsProgress };
       }, [user.assignments, masterData.gradesSummary, semCode]);
 
+      // Reset inisialisasi jika pindah kelas/semester agar ter-refresh
       useEffect(() => {
-        if (activeAssignment && masterData.students && !isWaliMode) {
+          setInitializedAssignment(null);
+      }, [activeAssignment, selectedSemester]);
+
+      useEffect(() => {
+        const assignKey = activeAssignment ? `${activeAssignment.classId}-${selectedSemester}-${activeAssignment.mapel}` : null;
+
+        if (activeAssignment && masterData.students && !isWaliMode && initializedAssignment !== assignKey) {
           const classStudents = [...(masterData.students[activeAssignment.classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
           setStudents(classStudents);
           
@@ -1383,9 +1371,12 @@
             }
           });
           
-          setGrades(initialGrades); setGradesHistory([initialGrades]); setHistoryIndex(0);
+          setGrades(initialGrades); 
+          setGradesHistory([initialGrades]); 
+          setHistoryIndex(0);
+          setInitializedAssignment(assignKey);
         }
-      }, [activeAssignment, colData.keys, user.name, masterData, semCode, isWaliMode]);
+      }, [activeAssignment, colData.keys, user.name, masterData, semCode, isWaliMode, initializedAssignment]);
 
       const isGradesEmpty = () => {
         if (!students.length) return true;
@@ -1823,7 +1814,11 @@
                <img src="icon.png" alt="Logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-6 h-6 object-contain rounded bg-white/20 p-0.5" />
                <div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div>
             </div>
-            <div className="flex items-center space-x-3"><div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
+            <div className="flex items-center space-x-3">
+               {isFetchingData && <div className="text-right hidden sm:block"><p className="text-[10px] font-bold text-white/80 animate-pulse">Sedang menyinkronkan...</p></div>}
+               <div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div>
+               <button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button>
+            </div>
           </header>
 
           <main className="flex-1 flex flex-col overflow-hidden w-full">
