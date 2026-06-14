@@ -34,17 +34,16 @@
     // =========================================================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    // VERSI APP & CHANGELOG
+    // VERSI APP & CHANGELOG (RAHASIA ADMIN DIHAPUS DARI LIST INI BIAR AMAN BOSKU)
     const APP_VERSION = "2.1.0-Premium";
     const APP_CHANGELOG = [
       "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi, meminimalisir salah input data.",
       "👨‍🏫 Fitur Super Guru Mapel: Input nilai langsung melesat! Tersedia fitur Paste nilai dari Excel (Ctrl+V), Undo/Redo jika salah ketik, dan sinkronisasi pintar.",
-      "👑 Dashboard Eksklusif Wali Kelas: Pantau seluruh nilai dari semua Mata Pelajaran kelas Anda dalam satu layar rekapitulasi komprehensif.",
+      "👑 Dashboard Eksklusif Wali Kelas: Pantau seluruh nilai dari semua Mata Pelajaran kelas Anda dalam satu layar rekapitulasi komprehensif tanpa loading lama.",
       "📊 Unduh Excel Sekali Klik (Wali Kelas): Tarik rekap nilai lengkap satu kelas ke format Excel (.xlsx) dengan rapi hanya dalam satu sentuhan.",
       "📋 Salin Nilai Instan: Tombol 'COPY NILAI' khusus untuk menyalin blok nilai secara otomatis agar mudah di-paste ke aplikasi Rapor sekolah.",
       "📲 Support Web App (PWA): Wajib Install! Aplikasi bisa disematkan langsung menjadi Icon di Home Screen HP atau Laptop Anda, buka aplikasi tanpa perlu mengetik URL web lagi.",
-      "⚡ Visual Premium: Desain antarmuka baru yang super mulus, tabel responsif anti-bocor, mode warna dinamis, dan sistem tracking progres pengisian nilai.",
-      "🔐 Ganti Password Admin: Sekarang Admin nggak cuma bisa ganti password orang, tapi bisa ganti password sendiri wkwk."
+      "⚡ Visual Premium: Desain antarmuka baru yang super mulus, tabel responsif anti-bocor, mode warna dinamis, dan sistem tracking progres pengisian nilai."
     ];
 
     const DEFAULT_MAPELS = [
@@ -77,7 +76,14 @@
 
     // DEFAULT SCHEMA
     const DEFAULT_SCHEMAS = {
-      "NORMAL": { type: "normal", headers: ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'] },
+      "NORMAL": { 
+        type: "normal", 
+        headers: ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'],
+        sts_sas: 'STS',
+        sas_sas: 'SAS',
+        sts_sat: 'STS',
+        sas_sat: 'SAT' 
+      },
       "IBADAH (WUDHU, TAYAMUM, SHALAT)": {
         type: "special", categories: [
           { name: "Wudhu", color: "#86efac", items: ["Niat", "Cuci Tangan", "Kumur", "Hidung", "Muka", "Tangan Siku", "Kepala Telinga", "Kaki", "Tertib", "Doa"] },
@@ -89,12 +95,19 @@
       "IQRA'": { type: "special", categories: [{ name: "Iqra'", color: "#fdba74", items: ["Ta'awudz & Basmalah", "Kesepatan Membaca", "Kelancaran Membaca", "Suara", "Hal-1", "Hal-2", "Hal-3", "Hal-4", "Hal-5", "Hal-6"] }] }
     };
 
-    const getMapelSchema = (mapelName, schemasObj) => {
+    const getMapelSchema = (mapelName, schemasObj, isSAS = true) => {
       if (mapelName === 'WALI KELAS') return { type: 'wali', keys: [] }; 
       const special = schemasObj[mapelName.toUpperCase().trim()];
       if (!special) {
-         const normHeaders = schemasObj["NORMAL"].headers;
-         return { type: 'normal', keys: normHeaders, headers: normHeaders };
+         const normKeys = schemasObj["NORMAL"].headers || GRADE_COLUMNS_NORMAL;
+         const stsLabel = isSAS ? (schemasObj["NORMAL"].sts_sas || normKeys[7] || 'STS') : (schemasObj["NORMAL"].sts_sat || 'STS');
+         const sasLabel = isSAS ? (schemasObj["NORMAL"].sas_sas || normKeys[8] || 'SAS') : (schemasObj["NORMAL"].sas_sat || 'SAT');
+         
+         const displayHeaders = [...normKeys];
+         displayHeaders[7] = stsLabel;
+         displayHeaders[8] = sasLabel;
+         
+         return { type: 'normal', keys: normKeys, headers: displayHeaders };
       }
       
       const keys = ['penguji'];
@@ -812,10 +825,16 @@
       }, [masterData.students, selClass]);
 
       // Schema actions
+      const getNorm = (key, defaultVal) => rubrikForm.NORMAL[key] !== undefined ? rubrikForm.NORMAL[key] : defaultVal;
+
       const handleRubrikNormalChange = (idx, val) => {
          const newHeaders = [...rubrikForm.NORMAL.headers];
          newHeaders[idx] = val;
          setRubrikForm({...rubrikForm, NORMAL: {...rubrikForm.NORMAL, headers: newHeaders}});
+      };
+
+      const handleRubrikFieldChange = (key, val) => {
+         setRubrikForm({...rubrikForm, NORMAL: {...rubrikForm.NORMAL, [key]: val}});
       };
 
       const handleRubrikCatChange = (mType, cIdx, val) => {
@@ -1045,7 +1064,7 @@
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm max-w-sm">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Password Admin Baru</label>
                       <div className="flex gap-2">
-                          <input type="text" value={newAdminPass} onChange={e=>setNewAdminPass(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-slate-400 focus:bg-white transition-colors" />
+                          <input type="password" value={newAdminPass} onChange={e=>setNewAdminPass(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-slate-400 focus:bg-white transition-colors" />
                           <button onClick={saveAdminPassword} className="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-md active:scale-95 hover:bg-slate-700 transition-all">Simpan</button>
                       </div>
                       <p className="text-[9px] text-slate-400 mt-2 italic">*Hati-hati jangan sampai lupa bosku!</p>
@@ -1071,13 +1090,34 @@
 
                   <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                      {selRubrikMapel === 'NORMAL' && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                           {rubrikForm.NORMAL.headers.map((h, i) => (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                           <div className="col-span-full mb-1"><h4 className="font-black text-amber-800 border-b border-amber-100 pb-1">Formatif (UH / Penugasan)</h4></div>
+                           {rubrikForm.NORMAL.headers.slice(0, 7).map((h, i) => (
                                <div key={i}>
-                                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{i === 7 ? 'Sumatif Tengah (STS)' : i === 8 ? 'Sumatif Akhir (SAS)' : `Formatif Ke-${i+1}`}</label>
+                                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Formatif Ke-{i+1}</label>
                                   <input value={h} onChange={(e) => handleRubrikNormalChange(i, e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-amber-400 focus:bg-white transition-colors" />
                                </div>
                            ))}
+                           
+                           <div className="col-span-full mt-2 mb-1"><h4 className="font-black text-amber-800 border-b border-amber-100 pb-1">Sumatif (Tengah / Akhir Semester)</h4></div>
+                           
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Tengah Sem. 1 (SAS)</label>
+                              <input value={getNorm('sts_sas', rubrikForm.NORMAL.headers[7] || 'STS')} onChange={(e) => handleRubrikFieldChange('sts_sas', e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-amber-400 focus:bg-white transition-colors" />
+                           </div>
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Akhir Sem. 1 (SAS)</label>
+                              <input value={getNorm('sas_sas', rubrikForm.NORMAL.headers[8] || 'SAS')} onChange={(e) => handleRubrikFieldChange('sas_sas', e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-amber-400 focus:bg-white transition-colors" />
+                           </div>
+                           
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Tengah Sem. 2 (SAT)</label>
+                              <input value={getNorm('sts_sat', 'STS')} onChange={(e) => handleRubrikFieldChange('sts_sat', e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-amber-400 focus:bg-white transition-colors" />
+                           </div>
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Akhir Sem. 2 (SAT)</label>
+                              <input value={getNorm('sas_sat', 'SAT')} onChange={(e) => handleRubrikFieldChange('sas_sat', e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-black bg-slate-50 focus:border-amber-400 focus:bg-white transition-colors" />
+                           </div>
                         </div>
                      )}
                      {selRubrikMapel !== 'NORMAL' && rubrikForm[selRubrikMapel] && (
@@ -1229,7 +1269,7 @@
       const [switchIndex, setSwitchIndex] = useState(0);
       const [targetAssignment, setTargetAssignment] = useState(null);
 
-      const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas), [activeAssignment, schemas]);
+      const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas, selectedSemester === 'S'), [activeAssignment, schemas, selectedSemester]);
       const fileUploadRef = useRef(null);
 
       // --- TEMA DINAMIS SEMESTER ---
@@ -1256,8 +1296,10 @@
       };
 
       // Dinamis Label dr Skema Normal (Premium)
-      const labelSTS = schemas.NORMAL.headers[7] || (isSAS ? 'STS 1' : 'STS 2');
-      const labelSAS = schemas.NORMAL.headers[8] || (isSAS ? 'SAS' : 'SAT');
+      const labelSTS = isSAS ? (schemas.NORMAL.sts_sas || schemas.NORMAL.headers[7] || 'STS') : (schemas.NORMAL.sts_sat || 'STS');
+      const labelSAS = isSAS ? (schemas.NORMAL.sas_sas || schemas.NORMAL.headers[8] || 'SAS') : (schemas.NORMAL.sas_sat || 'SAT');
+      const tfHeaders = schemas.NORMAL.headers.slice(0, 7);
+      const firstUhLabel = schemas.NORMAL.headers[0] || 'UH';
 
       const isWaliMode = activeAssignment?.type === 'WALI';
 
@@ -1416,8 +1458,7 @@
         if (isWaliMode) {
            const classId = activeAssignment.classId;
            const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
-           const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m, schemas) }));
-           const tfHeaders = schemas.NORMAL.headers.slice(0, 7); // Utk excel header
+           const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m, schemas, isSAS) }));
 
            const rowsData = [
              [`REKAP NILAI MATA PELAJARAN WALI KELAS - SEMESTER ${isSAS ? '1 (SAS)' : '2 (SAT)'}`],
@@ -1455,7 +1496,7 @@
                    headerRow4.push(""); // empty for penguji
                    m.schema.categories.forEach(cat => {
                        cat.items.forEach(item => {
-                           headerRow4.push(schemas.NORMAL.headers[0], labelSTS, labelSAS);
+                           headerRow4.push(firstUhLabel, labelSTS, labelSAS);
                        });
                    });
                }
@@ -1575,9 +1616,7 @@
       const renderWaliKelasView = () => {
          const classId = activeAssignment.classId;
          const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
-         const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m, schemas) }));
-         const tfHeaders = schemas.NORMAL.headers.slice(0, 7); 
-         const firstUhLabel = schemas.NORMAL.headers[0] || 'UH';
+         const allMapelsSchema = DEFAULT_MAPELS.map(m => ({ name: m, ...getMapelSchema(m, schemas, isSAS) }));
 
          return (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden mt-3 mx-2 sm:mx-4 mb-2">
@@ -1843,7 +1882,7 @@
                             <tr className="h-[40px]">
                               {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
                                 <React.Fragment key={`${cat.name}-${item}-sub`}>
-                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{schemas.NORMAL.headers[0] || 'UH'}</th>
+                                  <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{firstUhLabel}</th>
                                   <th className={`px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{labelSTS}</th>
                                   <th className={`px-1 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[9px] font-bold sticky top-[90px] z-[40] ${isSAS ? 'text-slate-800' : 'text-rose-900'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{labelSAS}</th>
                                 </React.Fragment>
