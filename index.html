@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ASTAGA - Asisten Sistem Terpadu Guru Al Kautsar</title>
   
+  <!-- CSS Tailwind (Sumber Gaya) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -37,6 +39,7 @@
     // VERSI APP & CHANGELOG (RAHASIA ADMIN DIHAPUS DARI LIST INI BIAR AMAN)
     const APP_VERSION = "2.1.0-Premium";
     const APP_CHANGELOG = [
+      "✅ Sinkronisasi Indikator GAS: Frontend sekarang tegas meminta data menggunakan indikator -S (SAS) dan -T (SAT) pada nama Sheet (contoh: 1A-S & 1A-T).",
       "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi, meminimalisir salah input data.",
       "👨‍🏫 Fitur Super Guru Mapel: Input nilai langsung melesat! Tersedia fitur Paste nilai dari Excel (Ctrl+V), Undo/Redo jika salah ketik, dan sinkronisasi pintar.",
       "👑 Dashboard Eksklusif Wali Kelas: Pantau seluruh nilai dari semua Mata Pelajaran kelas Anda dalam satu layar rekapitulasi komprehensif tanpa loading lama.",
@@ -279,7 +282,7 @@
        return (
           <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in slide-in-from-bottom duration-500">
              <div className="w-full max-w-sm rounded-[32px] bg-gradient-to-b from-sky-50 to-white shadow-2xl p-6 text-center border-4 border-sky-400">
-                <img src="icon.png" alt="App Icon" className="w-20 h-20 mx-auto mb-4 animate-[pulse_2s_infinite] drop-shadow-xl rounded-2xl" />
+                <img src="icon.png" alt="App Icon" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-20 h-20 mx-auto mb-4 animate-[pulse_2s_infinite] drop-shadow-xl rounded-2xl" />
                 <h2 className="text-xl font-black text-sky-950 mb-2 uppercase tracking-wide">WAJIB INSTALL!</h2>
                 <p className="text-xs font-bold text-sky-800 mb-6 leading-relaxed opacity-90">Aplikasi ASTAGA ini dirancang khusus dan WAJIB di-install ke HP/Laptop kamu bosku. Biar bisa offline dan lebih sat-set!</p>
                 <button onClick={onInstall} className="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-4 rounded-2xl shadow-[0_4px_15px_rgba(2,132,199,0.4)] active:scale-95 transition-transform uppercase tracking-widest text-xs">🚀 Install Sekarang</button>
@@ -305,7 +308,7 @@
       const [showInstallPopup, setShowInstallPopup] = useState(false);
       const [showUpdatePopup, setShowUpdatePopup] = useState(false);
 
-      // INJEKSI MANIFEST & SERVICE WORKER UNTUK PWA
+      // INJEKSI MANIFEST & CLEANER SERVICE WORKER PWA
       useEffect(() => {
          const manifest = {
             name: "ASTAGA - Asisten Guru",
@@ -330,18 +333,29 @@
          }
          link.href = manifestURL;
 
-         // Real Service Worker (Agar terdeteksi sbg PWA Valid)
-         const swCode = `
-            self.addEventListener('install', (e) => { self.skipWaiting(); });
-            self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
-            self.addEventListener('fetch', (e) => {
-               e.respondWith(fetch(e.request).catch(() => new Response('ASTAGA Mode Offline', { status: 200, headers: { 'Content-Type': 'text/plain' } })));
-            });
-         `;
-         const swBlob = new Blob([swCode], {type: 'application/javascript'});
-         const swUrl = URL.createObjectURL(swBlob);
-         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(swUrl).catch(()=>{});
+         // MEMBUNUH SERVICE WORKER LAMA & MENCEGAH INVALID STATE ERROR
+         try {
+             if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                   for (let reg of registrations) {
+                      reg.unregister();
+                   }
+                }).then(() => {
+                   // Mendaftarkan Service Worker dummy baru yang sangat aman
+                   const swCode = `
+                      self.addEventListener('install', (e) => { self.skipWaiting(); });
+                      self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+                      self.addEventListener('fetch', (e) => {
+                         // KOSONG: Biarkan browser menangani CDN Tailwind/React secara alamiah
+                      });
+                   `;
+                   const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                   const swUrl = URL.createObjectURL(swBlob);
+                   navigator.serviceWorker.register(swUrl).catch(()=>{});
+                }).catch(e => console.warn('SW Registrations terblokir', e));
+             }
+         } catch (error) {
+             console.warn("Service Worker dinonaktifkan oleh browser/iframe.", error);
          }
 
          // PWA Install Event & Deteksi Standalone
@@ -354,11 +368,13 @@
          const handleBeforeInstall = (e) => {
             e.preventDefault();
             setInstallPromptEvent(e);
-            if (localStorage.getItem('astaga_installed') !== 'true' && !isStandalone) {
-               setTimeout(() => setShowInstallPopup(true), 1500); 
-            }
          };
          window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+         // MUNCULKAN POPUP WAJIB INSTALL SECARA PAKSA (JIKA BELUM INSTALL)
+         if (localStorage.getItem('astaga_installed') !== 'true' && !isStandalone) {
+            setTimeout(() => setShowInstallPopup(true), 2500); 
+         }
 
          window.addEventListener('appinstalled', () => {
             localStorage.setItem('astaga_installed', 'true');
@@ -389,7 +405,8 @@
             }
             setInstallPromptEvent(null);
          } else {
-             showToast("Tombol install expired. Silakan reload (refresh) halaman.", "error");
+             showToast("Gagal Auto-Install di Mode ini. Silakan klik Titik 3 di Pojok Kanan Atas Chrome -> Pilih 'Instal Aplikasi / Tambahkan ke Layar Utama'.", "error");
+             setShowInstallPopup(false); // Beri ampun tutup popup agar tidak nyangkut selamanya
          }
       };
 
@@ -493,7 +510,8 @@
           <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl border border-slate-200 relative animate-in fade-in duration-300 hover:shadow-2xl transition-all">
             <div className={`p-6 text-center transition-colors duration-500 ${mode === 'admin' ? 'bg-slate-900' : 'bg-indigo-600'}`}>
               <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner overflow-hidden">
-                <img src="icon.png" alt="Logo ASTAGA" className="w-12 h-12 object-contain" />
+                <img src="icon.png" alt="Logo ASTAGA" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-12 h-12 object-contain" />
+                <IconSettings className={`text-white w-7 h-7 animate-[spin_4s_linear_infinite] ${!document.querySelector('img[src="icon.png"]') ? 'block' : 'hidden'}`} />
               </div>
               <h1 className="text-2xl font-black text-white tracking-widest leading-none animate-pulse">ASTAGA</h1>
               <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru Al Kautsar'}</p>
@@ -558,7 +576,7 @@
     // =========================================================================
     function AdminDashboard({ masterData, setMasterData, schemas, onLogout, showToast, toast, onRefreshData }) {
       const [activeTab, setActiveTab] = useState('overview'); 
-      const [selectedSemester, setSelectedSemester] = useState('S');
+      const [selectedSemester, setSelectedSemester] = useState('SAS');
       const [isSyncing, setIsSyncing] = useState(false);
       const [expandedGuru, setExpandedGuru] = useState({});
       const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -569,9 +587,10 @@
       
       const trackingData = useMemo(() => {
         let totalCellsExpected = 0, totalCellsFilled = 0;
+        const semCode = selectedSemester === 'SAS' ? 'S' : 'T';
         const list = (masterData.teachers || []).flatMap(t => 
           t.assignments.filter(a => a.type !== 'WALI').map(a => {
-            const sheetName = `${a.classId}-${selectedSemester}`;
+            const sheetName = `${a.classId}-${semCode}`;
             const key = `${sheetName}|${a.mapel}|${t.name}`;
             const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
             const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
@@ -693,7 +712,7 @@
           <header className="flex-none bg-slate-900 text-white shadow-xl h-12 flex items-center justify-between px-4 z-20">
             <div className="flex items-center space-x-2 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer">
               <div className="bg-indigo-500 p-1 rounded-lg">
-                <IconGraduationCap className="w-4 h-4 text-white" />
+                <img src="icon.png" alt="Logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-4 h-4 object-contain" />
               </div>
               <h1 className="font-extrabold text-[13px] tracking-widest flex items-center gap-1.5">ASTAGA <span className="bg-indigo-700 px-1.5 py-0.5 rounded text-[8px]">ADMIN</span></h1>
             </div>
@@ -711,15 +730,15 @@
             {activeTab === 'overview' && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="flex bg-slate-200/70 p-1 rounded-xl w-full max-w-sm mx-auto mb-4">
-                   <button onClick={() => setSelectedSemester('S')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'S' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 1 (SAS)</button>
-                   <button onClick={() => setSelectedSemester('T')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'T' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 2 (SAT)</button>
+                   <button onClick={() => setSelectedSemester('SAS')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'SAS' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 1 (SAS)</button>
+                   <button onClick={() => setSelectedSemester('SAT')} className={`flex-1 py-2 text-[11px] font-black uppercase rounded-lg transition-all ${selectedSemester === 'SAT' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500 hover:text-slate-700'}`}>Semester 2 (SAT)</button>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                   <div className="bg-gradient-to-br from-sky-100 to-sky-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconUsers className="w-6 h-6 text-sky-600 p-1 bg-white rounded-lg shadow-inner" /><div><p className="text-[9px] text-sky-700 font-bold uppercase">Guru Aktif</p><h3 className="text-sm font-black text-slate-800">{totalGuru}</h3></div></div>
                   <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconGraduationCap className="w-6 h-6 text-emerald-600 p-1 bg-white rounded-lg shadow-inner" /><div><p className="text-[9px] text-emerald-700 font-bold uppercase">Siswa</p><h3 className="text-sm font-black text-slate-800">{totalSiswa}</h3></div></div>
                   <div className="bg-gradient-to-br from-amber-100 to-amber-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5"><IconBookOpen className="w-6 h-6 text-amber-600 p-1 bg-white rounded-lg shadow-inner" /><div><p className="text-[9px] text-amber-700 font-bold uppercase">Kelas</p><h3 className="text-sm font-black text-slate-800">{totalKelas}</h3></div></div>
-                  <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 relative overflow-hidden"><IconActivity className="w-6 h-6 text-indigo-600 p-1 bg-white rounded-lg shadow-inner z-10" /><div className="z-10"><p className="text-[9px] text-indigo-700 font-bold uppercase">Global {selectedSemester === 'S' ? '(SAS)' : '(SAT)'}</p><h3 className="text-sm font-black text-indigo-800">{trackingData.globalProgress}%</h3></div><div className="absolute bottom-0 left-0 h-1 bg-indigo-400" style={{width: `${trackingData.globalProgress}%`}}></div></div>
+                  <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 p-3 rounded-2xl shadow-sm flex items-center space-x-2.5 relative overflow-hidden"><IconActivity className="w-6 h-6 text-indigo-600 p-1 bg-white rounded-lg shadow-inner z-10" /><div className="z-10"><p className="text-[9px] text-indigo-700 font-bold uppercase">Global {selectedSemester === 'SAS' ? '(SAS)' : '(SAT)'}</p><h3 className="text-sm font-black text-indigo-800">{trackingData.globalProgress}%</h3></div><div className="absolute bottom-0 left-0 h-1 bg-indigo-400" style={{width: `${trackingData.globalProgress}%`}}></div></div>
                 </div>
 
                 <div className="space-y-2">
@@ -1278,7 +1297,7 @@
     // --- 8. DASHBOARD GURU (SUPER RESPONSIVE, STICKY & THEME MAPEL) ---
     // =========================================================================
     function Dashboard({ user, activeAssignment, masterData, schemas, onLogout, showToast, onUpdateSuccess, triggerKocakPopup, setActiveAssignment }) {
-      const [selectedSemester, setSelectedSemester] = useState('S'); 
+      const [selectedSemester, setSelectedSemester] = useState('SAS'); 
       const [students, setStudents] = useState([]);
       const [grades, setGrades] = useState({});
       const [isSaving, setIsSaving] = useState(false);
@@ -1293,11 +1312,13 @@
       const [switchIndex, setSwitchIndex] = useState(0);
       const [targetAssignment, setTargetAssignment] = useState(null);
 
-      const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas, selectedSemester === 'S'), [activeAssignment, schemas, selectedSemester]);
+      const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas, selectedSemester === 'SAS'), [activeAssignment, schemas, selectedSemester]);
       const fileUploadRef = useRef(null);
 
       // --- TEMA DINAMIS SEMESTER ---
-      const isSAS = selectedSemester === 'S';
+      const isSAS = selectedSemester === 'SAS';
+      const semCode = isSAS ? 'S' : 'T';
+
       const theme = {
         bg: isSAS ? 'bg-[#f8faff]' : 'bg-[#fffcf8]',
         headerBg: isSAS ? 'bg-indigo-600' : 'bg-rose-600',
@@ -1331,7 +1352,7 @@
         let totalExpected = 0, totalFilled = 0;
         let assignmentsProgress = [];
         user.assignments.filter(a => a.type !== 'WALI').forEach(a => {
-          const sheetName = `${a.classId}-${selectedSemester}`;
+          const sheetName = `${a.classId}-${semCode}`;
           const key = `${sheetName}|${a.mapel}|${user.name}`;
           const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
           const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
@@ -1340,14 +1361,14 @@
           assignmentsProgress.push({ ...a, pct: expected === 0 ? 0 : Math.round((filled / expected) * 100) });
         });
         return { globalPct: totalExpected === 0 ? 0 : Math.round((totalFilled / totalExpected) * 100), assignmentsProgress };
-      }, [user.assignments, masterData.gradesSummary, selectedSemester]);
+      }, [user.assignments, masterData.gradesSummary, semCode]);
 
       useEffect(() => {
         if (activeAssignment && masterData.students && !isWaliMode) {
           const classStudents = [...(masterData.students[activeAssignment.classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
           setStudents(classStudents);
           
-          const serverKey = `${activeAssignment.classId}-${selectedSemester}|${activeAssignment.mapel.toUpperCase()}`;
+          const serverKey = `${activeAssignment.classId}-${semCode}|${activeAssignment.mapel.toUpperCase()}`;
           const serverGradesRaw = masterData.gradesData?.[serverKey] || {};
 
           const initialGrades = {};
@@ -1364,7 +1385,7 @@
           
           setGrades(initialGrades); setGradesHistory([initialGrades]); setHistoryIndex(0);
         }
-      }, [activeAssignment, colData.keys, user.name, masterData, selectedSemester, isWaliMode]);
+      }, [activeAssignment, colData.keys, user.name, masterData, semCode, isWaliMode]);
 
       const isGradesEmpty = () => {
         if (!students.length) return true;
@@ -1531,7 +1552,7 @@
            waliStudents.forEach((s, idx) => {
                const row = [idx + 1, s.id, s.name];
                allMapelsSchema.forEach(m => {
-                   const serverKey = `${classId}-${selectedSemester}|${m.name.toUpperCase()}`;
+                   const serverKey = `${classId}-${semCode}|${m.name.toUpperCase()}`;
                    const rawData = masterData.gradesData?.[serverKey]?.[s.id] || [];
                    m.keys.forEach((k, i) => {
                        row.push(rawData[i] || "");
@@ -1605,7 +1626,7 @@
       const copyMapelGrades = (mapelName, mapelKeys) => {
           const classId = activeAssignment.classId;
           const waliStudents = [...(masterData.students[classId] || [])].sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
-          const serverKey = `${classId}-${selectedSemester}|${activeAssignment.mapel === 'WALI KELAS' ? mapelName.toUpperCase() : activeAssignment.mapel.toUpperCase()}`;
+          const serverKey = `${classId}-${semCode}|${activeAssignment.mapel === 'WALI KELAS' ? mapelName.toUpperCase() : activeAssignment.mapel.toUpperCase()}`;
           
           let copyText = "";
           waliStudents.forEach(student => {
@@ -1741,7 +1762,7 @@
                           <td className={`w-[45px] min-w-[45px] max-w-[45px] p-2 font-black text-slate-500 text-center align-middle sticky left-0 z-[50] border-b border-r border-slate-200 transition-colors bg-clip-padding ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
                           <td className={`w-[180px] min-w-[180px] max-w-[180px] p-3 font-bold text-slate-800 align-middle sticky left-[45px] z-[50] truncate border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors bg-clip-padding ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
                           {allMapelsSchema.map(m => {
-                            const serverKey = `${classId}-${selectedSemester}|${m.name.toUpperCase()}`;
+                            const serverKey = `${classId}-${semCode}|${m.name.toUpperCase()}`;
                             const rawData = masterData.gradesData?.[serverKey]?.[student.id] || [];
                             return m.keys.map((key, idx) => {
                                const val = rawData[idx] || '';
@@ -1799,7 +1820,7 @@
 
           <header className={`flex-none text-white shadow-md h-12 flex items-center justify-between px-4 z-30 transition-colors duration-500 ${theme.headerBg}`}>
             <div className="flex items-center space-x-2">
-               <img src="icon.png" alt="Logo" className="w-6 h-6 object-contain rounded bg-white/20 p-0.5" />
+               <img src="icon.png" alt="Logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-6 h-6 object-contain rounded bg-white/20 p-0.5" />
                <div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div>
             </div>
             <div className="flex items-center space-x-3"><div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
@@ -1809,8 +1830,8 @@
             <div className="flex-none space-y-3 p-2 sm:p-4 pb-0">
               
               <div className={`flex p-1.5 rounded-xl w-full max-w-sm mx-auto shadow-inner transition-colors duration-500 ${isSAS ? 'bg-indigo-200/50' : 'bg-rose-200/50'}`}>
-                 <button onClick={() => setSelectedSemester('S')} className={`flex-1 py-2.5 text-[11px] font-black uppercase rounded-lg transition-all duration-300 ${isSAS ? 'bg-indigo-600 shadow-md text-white scale-105' : 'text-indigo-800 hover:bg-indigo-100/50'}`}>Semester 1 (SAS)</button>
-                 <button onClick={() => setSelectedSemester('T')} className={`flex-1 py-2.5 text-[11px] font-black uppercase rounded-lg transition-all duration-300 ${!isSAS ? 'bg-rose-600 shadow-md text-white scale-105' : 'text-rose-800 hover:bg-rose-100/50'}`}>Semester 2 (SAT)</button>
+                 <button onClick={() => setSelectedSemester('SAS')} className={`flex-1 py-2.5 text-[11px] font-black uppercase rounded-lg transition-all duration-300 ${isSAS ? 'bg-indigo-600 shadow-md text-white scale-105' : 'text-indigo-800 hover:bg-indigo-100/50'}`}>Semester 1 (SAS)</button>
+                 <button onClick={() => setSelectedSemester('SAT')} className={`flex-1 py-2.5 text-[11px] font-black uppercase rounded-lg transition-all duration-300 ${!isSAS ? 'bg-rose-600 shadow-md text-white scale-105' : 'text-rose-800 hover:bg-rose-100/50'}`}>Semester 2 (SAT)</button>
               </div>
 
               <div className={`bg-gradient-to-r ${theme.gradient} rounded-xl p-3 shadow-md relative overflow-hidden flex items-center justify-between hover:scale-[1.01] transition-all mt-2 duration-500`}>
