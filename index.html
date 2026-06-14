@@ -34,7 +34,7 @@
     // =========================================================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    // VERSI APP & CHANGELOG (RAHASIA ADMIN DIHAPUS DARI LIST INI BIAR AMAN BOSKU)
+    // VERSI APP & CHANGELOG (RAHASIA ADMIN DIHAPUS DARI LIST INI BIAR AMAN)
     const APP_VERSION = "2.1.0-Premium";
     const APP_CHANGELOG = [
       "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi, meminimalisir salah input data.",
@@ -99,7 +99,7 @@
       if (mapelName === 'WALI KELAS') return { type: 'wali', keys: [] }; 
       const special = schemasObj[mapelName.toUpperCase().trim()];
       if (!special) {
-         const normKeys = schemasObj["NORMAL"].headers || GRADE_COLUMNS_NORMAL;
+         const normKeys = schemasObj["NORMAL"].headers || ['UH1', 'UH2', 'UH3', 'UH4', 'UH5', 'UH6', 'UH7', 'STS', 'SAS'];
          const stsLabel = isSAS ? (schemasObj["NORMAL"].sts_sas || normKeys[7] || 'STS') : (schemasObj["NORMAL"].sts_sat || 'STS');
          const sasLabel = isSAS ? (schemasObj["NORMAL"].sas_sas || normKeys[8] || 'SAS') : (schemasObj["NORMAL"].sas_sat || 'SAT');
          
@@ -279,9 +279,9 @@
        return (
           <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in slide-in-from-bottom duration-500">
              <div className="w-full max-w-sm rounded-[32px] bg-gradient-to-b from-sky-50 to-white shadow-2xl p-6 text-center border-4 border-sky-400">
-                <div className="text-6xl mb-4 animate-[pulse_2s_infinite]">📲</div>
+                <img src="icon.png" alt="App Icon" className="w-20 h-20 mx-auto mb-4 animate-[pulse_2s_infinite] drop-shadow-xl rounded-2xl" />
                 <h2 className="text-xl font-black text-sky-950 mb-2 uppercase tracking-wide">WAJIB INSTALL!</h2>
-                <p className="text-xs font-bold text-sky-800 mb-6 leading-relaxed opacity-90">Aplikasi ASTAGA ini dirancang untuk di-install. Klik tombol di bawah biar langsung jadi Icon di HP/Laptop kamu bosku!</p>
+                <p className="text-xs font-bold text-sky-800 mb-6 leading-relaxed opacity-90">Aplikasi ASTAGA ini dirancang khusus dan WAJIB di-install ke HP/Laptop kamu bosku. Biar bisa offline dan lebih sat-set!</p>
                 <button onClick={onInstall} className="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-4 rounded-2xl shadow-[0_4px_15px_rgba(2,132,199,0.4)] active:scale-95 transition-transform uppercase tracking-widest text-xs">🚀 Install Sekarang</button>
              </div>
           </div>
@@ -307,17 +307,16 @@
 
       // INJEKSI MANIFEST & SERVICE WORKER UNTUK PWA
       useEffect(() => {
-         const iconSvg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#4f46e5'><path d='M22 10v6M2 10l10-5 10 5-10 5z'/><path d='M6 12v5c3 3 9 3 12 0v-5'/></svg>`);
          const manifest = {
             name: "ASTAGA - Asisten Guru",
             short_name: "ASTAGA",
-            start_url: window.location.href,
+            start_url: window.location.pathname || "/", 
             display: "standalone",
             background_color: "#f8fafc",
             theme_color: "#4f46e5",
             icons: [
-               { src: `data:image/svg+xml;charset=utf-8,${iconSvg}`, sizes: "192x192", type: "image/svg+xml" },
-               { src: `data:image/svg+xml;charset=utf-8,${iconSvg}`, sizes: "512x512", type: "image/svg+xml" }
+               { src: "icon.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+               { src: "icon.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
             ]
          };
          
@@ -331,21 +330,41 @@
          }
          link.href = manifestURL;
 
-         // Dummy Service Worker
-         const swCode = `self.addEventListener('fetch', function(e) {});`;
+         // Real Service Worker (Agar terdeteksi sbg PWA Valid)
+         const swCode = `
+            self.addEventListener('install', (e) => { self.skipWaiting(); });
+            self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+            self.addEventListener('fetch', (e) => {
+               e.respondWith(fetch(e.request).catch(() => new Response('ASTAGA Mode Offline', { status: 200, headers: { 'Content-Type': 'text/plain' } })));
+            });
+         `;
          const swBlob = new Blob([swCode], {type: 'application/javascript'});
          const swUrl = URL.createObjectURL(swBlob);
          if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register(swUrl).catch(()=>{});
          }
 
-         // PWA Install Event
+         // PWA Install Event & Deteksi Standalone
+         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+         
+         if (isStandalone) {
+             localStorage.setItem('astaga_installed', 'true');
+         }
+
          const handleBeforeInstall = (e) => {
             e.preventDefault();
             setInstallPromptEvent(e);
-            setTimeout(() => setShowInstallPopup(true), 2500); // Tunda dikit
+            if (localStorage.getItem('astaga_installed') !== 'true' && !isStandalone) {
+               setTimeout(() => setShowInstallPopup(true), 1500); 
+            }
          };
          window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+         window.addEventListener('appinstalled', () => {
+            localStorage.setItem('astaga_installed', 'true');
+            setShowInstallPopup(false);
+            showToast("Aplikasi berhasil diinstall!", "success");
+         });
 
          // Version Check
          const savedVer = localStorage.getItem('astaga_version');
@@ -363,11 +382,14 @@
             const { outcome } = await installPromptEvent.userChoice;
             if (outcome === 'accepted') {
                 showToast("Makasih bosku udah install! 🎉", "success");
+                localStorage.setItem('astaga_installed', 'true');
+                setShowInstallPopup(false);
             } else {
-                showToast("Yah dibatalin... reload halaman ya kalau mau install lagi!", "error");
+                showToast("Kamu membatalkan! Silakan reload (refresh) halaman untuk mengulang install.", "error");
             }
             setInstallPromptEvent(null);
-            setShowInstallPopup(false);
+         } else {
+             showToast("Tombol install expired. Silakan reload (refresh) halaman.", "error");
          }
       };
 
@@ -470,8 +492,8 @@
         <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] w-full">
           <div className="max-w-sm w-full bg-white rounded-[24px] shadow-xl border border-slate-200 relative animate-in fade-in duration-300 hover:shadow-2xl transition-all">
             <div className={`p-6 text-center transition-colors duration-500 ${mode === 'admin' ? 'bg-slate-900' : 'bg-indigo-600'}`}>
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner">
-                {mode === 'admin' ? <IconSettings className="text-white w-7 h-7 animate-[spin_4s_linear_infinite]" /> : <IconGraduationCap className="text-white w-7 h-7" />}
+              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner overflow-hidden">
+                <img src="icon.png" alt="Logo ASTAGA" className="w-12 h-12 object-contain" />
               </div>
               <h1 className="text-2xl font-black text-white tracking-widest leading-none animate-pulse">ASTAGA</h1>
               <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru Al Kautsar'}</p>
@@ -670,7 +692,9 @@
 
           <header className="flex-none bg-slate-900 text-white shadow-xl h-12 flex items-center justify-between px-4 z-20">
             <div className="flex items-center space-x-2 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer">
-              <div className="bg-indigo-500 p-1 rounded-lg"><IconSettings className="w-4 h-4 text-white" /></div>
+              <div className="bg-indigo-500 p-1 rounded-lg">
+                <IconGraduationCap className="w-4 h-4 text-white" />
+              </div>
               <h1 className="font-extrabold text-[13px] tracking-widest flex items-center gap-1.5">ASTAGA <span className="bg-indigo-700 px-1.5 py-0.5 rounded text-[8px]">ADMIN</span></h1>
             </div>
             <div className="flex space-x-1 border border-slate-700 bg-slate-800 rounded-lg p-0.5 shadow-inner">
@@ -1774,7 +1798,10 @@
           )}
 
           <header className={`flex-none text-white shadow-md h-12 flex items-center justify-between px-4 z-30 transition-colors duration-500 ${theme.headerBg}`}>
-            <div className="flex items-center space-x-2"><IconGraduationCap className="w-6 h-6 opacity-85" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div></div>
+            <div className="flex items-center space-x-2">
+               <img src="icon.png" alt="Logo" className="w-6 h-6 object-contain rounded bg-white/20 p-0.5" />
+               <div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div>
+            </div>
             <div className="flex items-center space-x-3"><div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
           </header>
 
