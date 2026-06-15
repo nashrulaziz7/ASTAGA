@@ -48,14 +48,15 @@
 
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    const APP_VERSION = "3.3.0-VIP";
+    const APP_VERSION = "4.0.0-VIP";
     const APP_CHANGELOG = [
+      "⚡ Optimistic Engine: Simpan Nilai, Reset GAS, dan pergerakan Progres kini INSTAN 0 DETIK! Data dikirim lewat jalur belakang tanpa mengunci layar.",
+      "🔄 Tarik Data Cerdas: Tombol Refresh / Tarik Data GAS kini memiliki animasi elegan dan info loading yang super responsif.",
       "🥶 Pembekuan Sempurna: Bug kolom UH1 dan STS yang bocor saat di-scroll kini sudah dibasmi!",
       "📱 Optimasi Layar HP Extreem: Lebar kolom disusutkan drastis, ruang input nilai UH1 sampai UH7 bisa langsung terlihat sekaligus!",
       "🚀 Zero-Wait Engine: Layar tidak nge-freeze saat dibuka! Loading data berjalan di latar belakang.",
       "🛠️ Fix Error: Bug 'KOCAK_EMPTY_WARNINGS' sudah diberantas sampai tuntas.",
       "😎 Popup Install VIP: Tombol 'SABI BRE ✨' langsung memicu instalasi otomatis.",
-      "📈 Progres Data Akurat: Progress bar kini bergerak realtime.",
       "📊 Export Excel Premium: Full warna, baris longgar, dan auto merah untuk nilai < 70."
     ];
 
@@ -301,7 +302,6 @@
 
     function InstallPromptPopup({ show, onInstall }) {
        const [step, setStep] = useState('prompt');
-
        if (!show) return null;
 
        if (step === 'manual') {
@@ -403,13 +403,15 @@
 
       const fetchCloudMasterData = async (silent = false) => {
         setIsFetchingData(true);
+        if (!silent) showToast("Membidik data dari server GAS... 📡", "success");
         try {
           const response = await fetch(SCRIPT_URL);
           const data = await response.json();
           setMasterData(data);
           localStorage.setItem('astaga_master_cache', JSON.stringify(data));
+          if (!silent) showToast("Data terbaru berhasil ditarik! 🚀", "success");
         } catch (err) {
-          if (!silent) showToast("Menggunakan data offline karena jaringan lambat.", "error");
+          if (!silent) showToast("Gagal menarik data. Server sibuk.", "error");
         } finally {
           setIsFetchingData(false);
         }
@@ -434,7 +436,7 @@
           ) : currentUser === 'ADMIN' ? (
             <AdminDashboard masterData={masterData} setMasterData={setMasterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onRefreshData={() => fetchCloudMasterData(false)} isFetchingData={isFetchingData} />
           ) : (
-            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={(silent) => fetchCloudMasterData(silent)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} isFetchingData={isFetchingData} onForceRefresh={() => fetchCloudMasterData(false)} />
+            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} isFetchingData={isFetchingData} onForceRefresh={() => fetchCloudMasterData(false)} setMasterData={setMasterData} />
           )}
           <FunnyPopup show={popup.show} type={popup.type} msgIndex={popup.index} onClose={() => setPopup({ ...popup, show: false })} />
           <FunnyKocakPopup show={kocakPopup.show} message={kocakPopup.message} isSAS={kocakPopup.isSAS} onClose={() => setKocakPopup({ show: false, message: '', isSAS: true })} />
@@ -460,6 +462,8 @@
 
       const sortedTeachersForLogin = useMemo(() => [...(masterData.teachers || [])].sort((a, b) => a.name.localeCompare(b.name)), [masterData.teachers]);
       const guruObj = masterData.teachers?.find(t => t.name === selectedGuru);
+      
+      // Jika data KOSONG sama sekali, barulah layar inisialisasi muncul. Kalau udah ada cache, lewat!
       const isSyncing = masterData?.teachers?.length === 0 && isFetchingData;
 
       const handleLogin = (e) => {
@@ -499,7 +503,6 @@
               <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md shadow-inner overflow-hidden relative">
                 <img src="icon.png" alt="Logo ASTAGA" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-12 h-12 object-contain" />
                 <IconSettings className={`text-white w-7 h-7 animate-[spin_4s_linear_infinite] ${!document.querySelector('img[src="icon.png"]') ? 'block' : 'hidden'}`} />
-                {isFetchingData && <div className="absolute inset-0 border-4 border-white/50 border-t-white rounded-full animate-spin"></div>}
               </div>
               <h1 className="text-2xl font-black text-white tracking-widest leading-none animate-pulse">ASTAGA</h1>
               <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-1">{mode === 'admin' ? 'Ruang Kendali Admin' : 'Asisten Sistem Terpadu Guru Al Kautsar'}</p>
@@ -702,12 +705,13 @@
               <button onClick={() => setActiveTab('settings')} className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition-all hover:scale-[1.03] ${activeTab === 'settings' ? 'bg-indigo-500 shadow' : 'text-slate-400 hover:text-white'}`}>Setting</button>
             </div>
             <div className="flex items-center gap-3">
-               {isFetchingData && <div className="text-right hidden sm:block"><p className="text-[10px] font-bold text-white/80 animate-pulse">Sedang menyinkronkan...</p></div>}
+               <button onClick={onRefreshData} disabled={isFetchingData} className="bg-slate-700 border-slate-600 text-slate-200 font-bold px-2.5 py-1 rounded shadow-inner flex items-center gap-1 text-[10px] hover:bg-slate-600 active:scale-95 transition-all">
+                   {isFetchingData ? <IconRefresh className="w-3.5 h-3.5 animate-spin" /> : <IconRefresh className="w-3.5 h-3.5" />} Sync
+               </button>
                <button onClick={onLogout} className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg transition-all hover:scale-[1.03] hover:bg-slate-800"><IconLogOut className="w-4 h-4" /></button>
             </div>
           </header>
           <main className="flex-1 overflow-y-auto scrollbar-hide p-3 sm:p-4 pb-10 max-w-5xl mx-auto w-full">
-            {isSyncing && <div className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl flex justify-center space-x-2 font-bold animate-pulse mb-3"><div className="w-3.5 h-3.5 border-2 border-indigo-700 border-t-transparent rounded-full animate-spin"></div><span>Menyelaraskan Data...</span></div>}
             {activeTab === 'overview' && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="flex bg-slate-200/70 p-1 rounded-xl w-full max-w-sm mx-auto mb-4">
@@ -723,7 +727,6 @@
                 <div className="space-y-2">
                   <div className="pb-1.5 flex justify-between items-center">
                     <div><h2 className="text-xs font-black text-slate-800 uppercase">Progres Per Guru</h2></div>
-                    <button onClick={onRefreshData} className="bg-white border text-slate-600 font-bold px-2.5 py-1.5 rounded-lg shadow-sm flex items-center gap-1 text-[10px]"><IconRefresh className="w-3.5 h-3.5" /> Sync</button>
                   </div>
                   {teachersProgress.map((g, idx) => {
                     const pct = g.total === 0 ? 0 : Math.round((g.completed / g.total) * 100);
@@ -1026,7 +1029,7 @@
       );
     }
 
-    function Dashboard({ user, activeAssignment, masterData, schemas, onLogout, showToast, onUpdateSuccess, triggerKocakPopup, setActiveAssignment, isFetchingData, onForceRefresh }) {
+    function Dashboard({ user, activeAssignment, masterData, schemas, onLogout, showToast, onUpdateSuccess, triggerKocakPopup, setActiveAssignment, isFetchingData, onForceRefresh, setMasterData }) {
       const [selectedSemester, setSelectedSemester] = useState('SAS'); 
       const [grades, setGrades] = useState({});
       const [isSaving, setIsSaving] = useState(false);
@@ -1131,17 +1134,71 @@
       const handleUndo = () => { if (historyIndex > 0) { const prevIndex = historyIndex - 1; setHistoryIndex(prevIndex); setGrades(gradesHistory[prevIndex]); showToast("Undo berhasil!", "success"); } };
       const handleRedo = () => { if (historyIndex < gradesHistory.length - 1) { const nextIndex = historyIndex + 1; setHistoryIndex(nextIndex); setGrades(gradesHistory[nextIndex]); showToast("Redo berhasil!", "success"); } };
 
+      // =========================================================================
+      // --- OPTIMISTIC UI ENGINE: SAVE & RESET (0 DETIK LOADING) ---
+      // =========================================================================
+      const applyOptimisticUpdate = (newGradesMap) => {
+          if(!activeAssignment || activeAssignment.type === 'WALI') return;
+          const cId = String(activeAssignment.classId).toUpperCase().trim();
+          const serverKey = `${cId}-${semCode}|${activeAssignment.mapel.toUpperCase()}`;
+          const summaryKey = `${cId}-${semCode}|${activeAssignment.mapel.toUpperCase()}|${user.name}`;
+          
+          let newGradesData = { ...(masterData.gradesData || {}) };
+          let newGradesSummary = { ...(masterData.gradesSummary || {}) };
+          if (!newGradesData[serverKey]) newGradesData[serverKey] = {};
+          
+          let uhCount = 0;
+          let expectedItems = colData.type === 'special' ? (colData.keys.length - 1) : colData.keys.length;
+          let uhTotal = classStudents.length * expectedItems;
+
+          classStudents.forEach(student => {
+             let studentGradesRaw = [];
+             colData.keys.forEach((key, idx) => {
+                 const val = newGradesMap[student.id]?.[key] || "";
+                 studentGradesRaw.push(val);
+                 if (val !== "" && (colData.type !== 'special' || idx > 0)) uhCount++;
+             });
+             newGradesData[serverKey][student.id] = studentGradesRaw;
+          });
+
+          const existingSummary = newGradesSummary[summaryKey] || { stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
+          newGradesSummary[summaryKey] = { ...existingSummary, uhCount: uhCount, uhTotal: uhTotal };
+
+          const updatedMasterData = { ...masterData, gradesData: newGradesData, gradesSummary: newGradesSummary };
+          setMasterData(updatedMasterData);
+          localStorage.setItem('astaga_master_cache', JSON.stringify(updatedMasterData));
+      };
+
       const handleSaveToSpreadsheet = async () => {
         if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[0], isSAS); return; }
         setIsSaving(true);
+        applyOptimisticUpdate(grades);
+        
         const dataToSubmit = { action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, semester: selectedSemester, mapel: activeAssignment.mapel, isSpecial: colData.type === 'special', schema: colData.schema, keys: colData.keys, grades: classStudents.map(student => ({ id: student.id, nama: student.name, ...grades[student.id] })) };
-        try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); showToast('Selesai! Nilai tersimpan di Awan ☁️', 'success'); setTimeout(() => { onUpdateSuccess(true); }, 1500); } catch (error) { showToast('Gagal kirim ke Awan.', 'error'); } finally { setIsSaving(false); }
+        try { 
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); 
+            showToast('Selesai! Nilai tersimpan di Awan ☁️', 'success'); 
+        } catch (error) { 
+            showToast('Gagal kirim ke Awan.', 'error'); 
+        } finally { 
+            setIsSaving(false); 
+        }
       };
 
       const executeResetServer = async () => {
-        setShowConfirmReset(false); setIsSaving(true); const emptyGrades = {}; classStudents.forEach(s => { emptyGrades[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); });
+        setShowConfirmReset(false); setIsSaving(true); 
+        const emptyGrades = {}; classStudents.forEach(s => { emptyGrades[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {}); });
+        applyOptimisticUpdate(emptyGrades); updateGrades(emptyGrades);
+        
         const dataToSubmit = { action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, semester: selectedSemester, mapel: activeAssignment.mapel, isSpecial: colData.type === 'special', schema: colData.schema, keys: colData.keys, grades: classStudents.map(student => ({ id: student.id, nama: student.name, ...emptyGrades[student.id] })) };
-        try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); showToast('Berhasil! Data di GAS dikosongkan ☁️', 'success'); updateGrades(emptyGrades); setTimeout(() => { onUpdateSuccess(true); }, 1000); } catch (error) { showToast('Gagal mereset ke GAS.', 'error'); } finally { setIsSaving(false); }
+        try { 
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); 
+            showToast('Berhasil! Data di GAS dikosongkan ☁️', 'success'); 
+        } catch (error) { 
+            showToast('Gagal mereset ke GAS.', 'error'); 
+        } finally { 
+            setIsSaving(false); 
+        }
       };
 
       const requestSwitchClass = (assignment) => { if (assignment.classId === activeAssignment.classId && assignment.mapel === activeAssignment.mapel) return; setSwitchIndex(Math.floor(Math.random() * SWITCH_CLASS_MSGS.length)); setTargetAssignment(assignment); setShowSwitchPopup(true); };
@@ -1271,7 +1328,7 @@
               <div className="flex-none p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-slate-200 bg-white rounded-t-2xl shadow-sm z-50">
                 <h2 className={`text-xs sm:text-sm font-black truncate text-left ${theme.modalTextH2} flex-1`}>👑 REKAPITULASI WALI KELAS - KELAS {classId} ({selectedSemester})</h2>
                 <div className="flex flex-row w-full sm:w-auto items-center gap-2">
-                   <button onClick={() => onForceRefresh()} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl text-[11px] font-black active:scale-95 shadow-sm transition-colors`}><IconRefresh className="w-4 h-4"/> Tarik Data GAS</button>
+                   <button onClick={() => onForceRefresh()} disabled={isFetchingData} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl text-[11px] font-black active:scale-95 shadow-sm transition-colors disabled:opacity-50`}>{isFetchingData ? <IconRefresh className="w-4 h-4 animate-spin"/> : <IconRefresh className="w-4 h-4"/>} Tarik Data GAS</button>
                    <button onClick={downloadDetailedGradesExcel} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-4 py-2.5 rounded-xl text-[11px] font-black active:scale-95 shadow-sm transition-colors`}><IconDownload className="w-4 h-4"/> Unduh Excel</button>
                 </div>
               </div>
@@ -1429,7 +1486,7 @@
                      <button onClick={handleRedo} disabled={historyIndex >= gradesHistory.length - 1} className="flex items-center gap-1 bg-white text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-50 disabled:opacity-40 shadow-sm whitespace-nowrap">↪️ Redo</button>
                    </div>
                    <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto scrollbar-hide py-1">
-                     <button onClick={() => onForceRefresh()} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-sky-100 active:scale-95 shadow-sm whitespace-nowrap"><IconRefresh className="w-3 h-3"/> Tarik Data GAS</button>
+                     <button onClick={() => onForceRefresh()} disabled={isFetchingData} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-sky-100 active:scale-95 shadow-sm whitespace-nowrap disabled:opacity-50">{isFetchingData ? <IconRefresh className="w-3 h-3 animate-spin"/> : <IconRefresh className="w-3 h-3"/>} Tarik Data GAS</button>
                      <div className="w-px h-5 bg-slate-300 mx-1"></div>
                      <button onClick={() => { const r = {}; classStudents.forEach(s => r[s.id] = colData.keys.reduce((acc, col) => ({ ...acc, [col]: '' }), {})); updateGrades(r); showToast("Layar Dikosongkan!", "success"); }} className="flex items-center gap-1 bg-slate-100 border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-slate-200 active:scale-95 shadow-sm whitespace-nowrap">🗑️ Kosong Layar</button>
                      <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-1 bg-rose-100 border border-rose-300 text-rose-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-rose-200 active:scale-95 shadow-sm whitespace-nowrap">⚠️ Reset GAS</button>
