@@ -57,15 +57,19 @@
     // =========================================================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    const APP_VERSION = "2.6.0-Premium";
+    const APP_VERSION = "2.9.0-Premium";
     const APP_CHANGELOG = [
-      "📱 Optimasi Layar HP: Lebar kolom No dan Nama Siswa diperkecil agar ruang input nilai terasa jauh lebih lega dan longgar saat diakses di HP.",
-      "🎨 Export Excel Super Premium: File Excel (.xlsx) yang diunduh kini tampil sangat mewah, full warna, baris lebih longgar, dan nilai di bawah 70 otomatis berwarna merah!",
-      "🎯 Perbaikan UI Tabel: Kolom STS dan SAS kini disatukan rapi tanpa duplikasi atas-bawah, tampilan makin profesional.",
-      "⚡ Loading Layar Instan: Tidak ada lagi layar loading putih lama, sinkronisasi kini berjalan diam-diam di balik layar!",
-      "📲 PWA Super Engine: Jaring Penangkap Event ditambahkan! Aplikasi sekarang dijamin 100% bisa terinstall langsung ke layar HP/Laptop.",
-      "✅ Sinkronisasi Indikator GAS: Frontend sekarang tegas meminta data menggunakan indikator -S (SAS) dan -T (SAT) pada nama Sheet.",
-      "🚀 Pemisahan Mode Semester: Ruang kerja Semester 1 (SAS) dan Semester 2 (SAT) sekarang terpisah rapi."
+      "😎 Popup Install VIP: Desain popup install dirombak total! Lebih menarik, premium, dan tombol 'SABI BRE ✨' langsung memicu instalasi otomatis.",
+      "🛠️ Bug Fix: Error 'KOCAK_EMPTY_WARNINGS' saat mau kirim data kosong sudah dibasmi sampai tuntas.",
+      "📈 Progres Data Akurat: Sistem persentase (progress bar) kini bergerak realtime secara cerdas membaca isian nilai dari GAS.",
+      "🎨 Redesain Shape Mapel: Tombol tugas dibuat jauh lebih modern dan ringkas (Nama Mapel | Kelas) dengan progres di bawahnya.",
+      "🔄 Fitur Tarik Data Wali Kelas: Wali kelas kini memiliki tombol 'Tarik Data GAS' di atas tabel rekap untuk menyinkronkan data terbaru secara instan.",
+      "📱 Optimasi Layar HP: Lebar kolom No dan Nama Siswa diperkecil drastis agar ruang input nilai terasa jauh lebih lega saat diakses di HP.",
+      "📊 Export Excel Super Premium: File Excel (.xlsx) yang diunduh kini tampil mewah, full warna, baris longgar, dan auto merah untuk nilai < 70."
+    ];
+
+    const KOCAK_EMPTY_WARNINGS = [
+      "Waduh Suhu, tabelnya masih kosong melompong nih! 😭 Isi minimal satu nilai dulu dong biar ada yang dikirim ke Awan. ☁️"
     ];
 
     const DEFAULT_MAPELS = [
@@ -311,37 +315,24 @@
        );
     }
 
+    // DESAIN INSTALL POPUP VIP SUPER ELEGAN
     function InstallPromptPopup({ show, onInstall }) {
-       const [step, setStep] = useState('prompt');
-
        if (!show) return null;
 
-       if (step === 'manual') {
-          return (
-             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in slide-in-from-bottom duration-500">
-                 <div className="w-full max-w-sm rounded-[32px] bg-white shadow-2xl p-6 text-center border-4 border-sky-400">
-                    <h2 className="text-xl font-black text-sky-950 mb-4 uppercase tracking-wide">CARA INSTALL MANUAL</h2>
-                    <div className="text-left bg-sky-50 p-4 rounded-xl mb-4 border border-sky-100">
-                        <ol className="list-decimal pl-4 space-y-2 text-xs font-bold text-sky-900">
-                            <li>Pastikan buka ini di <b>Google Chrome</b> atau <b>Safari</b>.</li>
-                            <li>Klik ikon <b>Titik Tiga ⋮</b> (Chrome) atau <b>Share ⍗</b> (Safari).</li>
-                            <li>Pilih menu <b>"Tambahkan ke Layar Utama"</b> atau <b>"Add to Home Screen"</b>.</li>
-                            <li>Selesai! ASTAGA akan muncul di HP Anda.</li>
-                        </ol>
-                    </div>
-                    <button onClick={() => { localStorage.setItem('astaga_installed', 'true'); window.location.reload(); }} className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-black py-3 rounded-2xl active:scale-95 transition-transform uppercase tracking-widest text-xs">Saya Mengerti</button>
-                 </div>
-             </div>
-          );
-       }
-
        return (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in slide-in-from-bottom duration-500">
-             <div className="w-full max-w-sm rounded-[32px] bg-gradient-to-b from-sky-50 to-white shadow-2xl p-6 text-center border-4 border-sky-400">
-                <img src="icon.png" alt="App Icon" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-20 h-20 mx-auto mb-4 animate-[pulse_2s_infinite] drop-shadow-xl rounded-2xl" />
-                <h2 className="text-xl font-black text-sky-950 mb-2 uppercase tracking-wide">WAJIB INSTALL!</h2>
-                <p className="text-xs font-bold text-sky-800 mb-6 leading-relaxed opacity-90">Aplikasi ASTAGA ini dirancang khusus dan WAJIB di-install ke HP/Laptop kamu bosku. Biar bisa offline dan lebih sat-set!</p>
-                <button onClick={() => onInstall(setStep)} className="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-4 rounded-2xl shadow-[0_4px_15px_rgba(2,132,199,0.4)] active:scale-95 transition-transform uppercase tracking-widest text-xs">🚀 Install Sekarang</button>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in zoom-in duration-300">
+             <div className="w-full max-w-[320px] bg-white rounded-[32px] p-8 text-center shadow-2xl relative border-4 border-indigo-50">
+                <div className="text-6xl mb-4 animate-bounce drop-shadow-md">😎</div>
+                <h2 className="text-2xl font-black text-indigo-600 mb-3 tracking-tight">Upgrade ke VIP!</h2>
+                <p className="text-sm font-bold text-slate-600 mb-8 leading-relaxed px-2">
+                    Jadikan aplikasinya permanen di HP kamu, performa 100x lipat lebih mulus no debat.
+                </p>
+                <button 
+                    onClick={onInstall} 
+                    className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:shadow-xl active:scale-95 transition-all uppercase tracking-widest text-sm"
+                >
+                    SABI BRE ✨
+                </button>
              </div>
           </div>
        );
@@ -379,7 +370,7 @@
          }
 
          if (!isIframe && !isStandalone && localStorage.getItem('astaga_installed') !== 'true') {
-            setTimeout(() => setShowInstallPopup(true), 1500); 
+            setTimeout(() => setShowInstallPopup(true), 2500); 
          }
 
          window.addEventListener('appinstalled', () => {
@@ -397,21 +388,22 @@
          }
       }, []);
 
-      const executeInstall = async (setStep) => {
+      const executeInstall = async () => {
          const promptEvent = window.deferredPWA;
          if (promptEvent) {
             promptEvent.prompt();
             const { outcome } = await promptEvent.userChoice;
             if (outcome === 'accepted') {
-                showToast("Makasih bosku udah install! 🎉", "success");
+                showToast("Berhasil upgrade ke VIP! 🎉", "success");
                 localStorage.setItem('astaga_installed', 'true');
                 setShowInstallPopup(false);
             } else {
-                showToast("Kamu membatalkan! Silakan reload (refresh) halaman untuk mengulang install.", "error");
+                showToast("Yah, gagal upgrade deh. 😢", "error");
             }
             window.deferredPWA = null;
          } else {
-             setStep('manual');
+             showToast("Fitur auto-install diblokir browser. Silakan klik 'Share/Titik 3' lalu 'Tambahkan ke Layar Utama'.", "error");
+             setShowInstallPopup(false);
          }
       };
 
@@ -452,7 +444,7 @@
           ) : currentUser === 'ADMIN' ? (
             <AdminDashboard masterData={masterData} setMasterData={setMasterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onRefreshData={() => fetchCloudMasterData(false)} isFetchingData={isFetchingData} />
           ) : (
-            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={(silent) => fetchCloudMasterData(silent)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} isFetchingData={isFetchingData} />
+            <Dashboard user={currentUser} activeAssignment={activeAssignment} masterData={masterData} schemas={currentSchemas} onLogout={() => setCurrentUser(null)} showToast={showToast} toast={toast} onUpdateSuccess={(silent) => fetchCloudMasterData(silent)} setActiveAssignment={setActiveAssignment} triggerKocakPopup={(msg, isSAS) => setKocakPopup({show: true, message: msg, isSAS})} isFetchingData={isFetchingData} onForceRefresh={() => fetchCloudMasterData(false)} />
           )}
           
           <FunnyPopup show={popup.show} type={popup.type} msgIndex={popup.index} onClose={() => setPopup({ ...popup, show: false })} />
@@ -591,11 +583,12 @@
         const semCode = selectedSemester === 'SAS' ? 'S' : 'T';
         const list = (masterData.teachers || []).flatMap(t => 
           t.assignments.filter(a => a.type !== 'WALI').map(a => {
-            const sheetName = `${a.classId}-${semCode}`;
-            const key = `${sheetName}|${a.mapel}|${t.name}`;
-            const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
-            const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
-            const filled = sum.uhCount + sum.stsCount + sum.sasCount;
+            const prefix = `${a.classId}-${semCode}|${a.mapel.toUpperCase()}|`;
+            const matchingKey = Object.keys(masterData.gradesSummary || {}).find(k => k.toUpperCase().startsWith(prefix.toUpperCase()));
+            const sum = masterData.gradesSummary?.[matchingKey] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
+            
+            const expected = sum.uhTotal; 
+            const filled = sum.uhCount;
             totalCellsExpected += expected; totalCellsFilled += filled;
             const progress = expected === 0 ? 0 : Math.round((filled / expected) * 100);
             return { guru: t.name, kelas: a.classId, mapel: a.mapel, progress, completed: progress===100 };
@@ -1318,7 +1311,6 @@
       const [switchIndex, setSwitchIndex] = useState(0);
       const [targetAssignment, setTargetAssignment] = useState(null);
 
-      // ANTI OVERWRITE: Menyimpan status inisialisasi agar data tidak tertimpa saat background sync
       const [initializedAssignment, setInitializedAssignment] = useState(null);
 
       const colData = useMemo(() => getMapelSchema(activeAssignment?.mapel, schemas, selectedSemester === 'SAS'), [activeAssignment, schemas, selectedSemester]);
@@ -1359,11 +1351,13 @@
         let totalExpected = 0, totalFilled = 0;
         let assignmentsProgress = [];
         user.assignments.filter(a => a.type !== 'WALI').forEach(a => {
-          const sheetName = `${a.classId}-${semCode}`;
-          const key = `${sheetName}|${a.mapel}|${user.name}`;
-          const sum = masterData.gradesSummary?.[key] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
-          const expected = sum.uhTotal + sum.stsTotal + sum.sasTotal;
-          const filled = sum.uhCount + sum.stsCount + sum.sasCount;
+          const prefix = `${a.classId}-${semCode}|${a.mapel.toUpperCase()}|`;
+          const matchingKey = Object.keys(masterData.gradesSummary || {}).find(k => k.toUpperCase().startsWith(prefix.toUpperCase()));
+          
+          const sum = masterData.gradesSummary?.[matchingKey] || { uhCount: 0, uhTotal: 0, stsCount: 0, stsTotal: 0, sasCount: 0, sasTotal: 0 };
+          const expected = sum.uhTotal; 
+          const filled = sum.uhCount;
+          
           totalExpected += expected; totalFilled += filled;
           assignmentsProgress.push({ ...a, pct: expected === 0 ? 0 : Math.round((filled / expected) * 100) });
         });
@@ -1798,19 +1792,22 @@
 
          return (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden mt-3 mx-2 sm:mx-4 mb-2">
-              <div className="flex-none p-3 sm:p-4 flex flex-col items-start gap-2 border border-slate-200 bg-white rounded-t-2xl shadow-sm z-50">
-                <h2 className={`text-xs sm:text-sm font-black truncate w-full text-left ${theme.modalTextH2}`}>👑 REKAPITULASI WALI KELAS - KELAS {classId} ({isSAS ? 'SAS' : 'SAT'})</h2>
-                <button onClick={downloadDetailedGradesExcel} className={`w-full sm:w-auto flex items-center justify-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-4 py-2 rounded-xl text-[10px] font-black active:scale-95 shadow-sm transition-colors`}><IconDownload className="w-4 h-4"/> Unduh Template / Rekap Excel</button>
+              <div className="flex-none p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-slate-200 bg-white rounded-t-2xl shadow-sm z-50">
+                <h2 className={`text-xs sm:text-sm font-black truncate text-left ${theme.modalTextH2} flex-1`}>👑 REKAPITULASI WALI KELAS - KELAS {classId} ({selectedSemester})</h2>
+                <div className="flex flex-row w-full sm:w-auto items-center gap-2">
+                   <button onClick={() => fetchCloudMasterData(false)} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl text-[11px] font-black active:scale-95 shadow-sm transition-colors`}><IconRefresh className="w-4 h-4"/> Tarik Data GAS</button>
+                   <button onClick={downloadDetailedGradesExcel} className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-4 py-2.5 rounded-xl text-[11px] font-black active:scale-95 shadow-sm transition-colors`}><IconDownload className="w-4 h-4"/> Unduh Excel</button>
+                </div>
               </div>
               <div className={`flex-1 overflow-auto relative rounded-b-2xl border-x border-b border-slate-200 bg-white`}>
                 <div className="min-w-max bg-white">
                   <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
                     <thead className="text-[10px] font-extrabold uppercase tracking-wider">
                       <tr className="h-[40px]">
-                        <th rowSpan="3" className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
-                        <th rowSpan="3" className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[32px] sm:left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
+                        <th rowSpan="3" className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky top-0 left-0 z-[80] border-b border-r border-slate-300 shadow-sm bg-clip-padding ${theme.stickyHeader}`}>No</th>
+                        <th rowSpan="3" className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky top-0 left-[32px] sm:left-[45px] z-[80] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
                         {allMapelsSchema.map(m => (
-                            <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
+                            <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[70] bg-clip-padding" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
                                <div className="flex flex-col items-center justify-center gap-1 h-full py-1">
                                   <span className="font-bold text-[11px] uppercase tracking-widest">{m.name}</span>
                                   {m.type === 'normal' && (
@@ -1827,17 +1824,17 @@
                            if (m.type === 'normal') {
                               return (
                                 <React.Fragment key={m.name}>
-                                  <th colSpan="7" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>FORMATIF (UH)</th>
-                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{labelSTS}</th>
-                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{labelSAS}</th>
+                                  <th colSpan="7" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-clip-padding" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>FORMATIF (UH)</th>
+                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-pink-200 text-slate-900 bg-clip-padding">{labelSTS}</th>
+                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-orange-200 text-slate-900 bg-clip-padding">{labelSAS}</th>
                                 </React.Fragment>
                               );
                            } else {
                               return (
                                 <React.Fragment key={m.name}>
-                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40]" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>Penguji</th>
+                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-slate-200 text-slate-900 bg-clip-padding">Penguji</th>
                                   {m.schema.categories.map((cat, cIdx) => (
-                                      <th key={cat.name} colSpan={cat.items.length * 3} className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[9px] sticky top-[40px] z-[40]" style={{backgroundColor: cat.color, color: "#fff"}}>
+                                      <th key={cat.name} colSpan={cat.items.length * 3} className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[9px] sticky top-[40px] z-[60] bg-clip-padding" style={{backgroundColor: cat.color, color: "#fff"}}>
                                          <div className="flex flex-col items-center justify-center gap-1">
                                             <span>{cat.name}</span>
                                          </div>
@@ -1851,9 +1848,9 @@
                       <tr className="h-[30px]">
                         {allMapelsSchema.map(m => {
                            if (m.type === 'normal') {
-                              return tfHeaders.map((tf, idx) => <th key={`${m.name}-${tf}`} className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[70px] z-[40]`} style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>{tf}</th>);
+                              return tfHeaders.map((tf, idx) => <th key={`${m.name}-${tf}`} className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[70px] z-[50] bg-white text-slate-800 bg-clip-padding`}>{tf}</th>);
                            } else {
-                              return m.schema.categories.flatMap((cat, iIdx) => cat.items.map((item, itemIdx) => <th key={`${m.name}-${item}`} colSpan="3" className={`px-2 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[70px] z-[40] ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{item}</th>));
+                              return m.schema.categories.flatMap((cat, iIdx) => cat.items.map((item, itemIdx) => <th key={`${m.name}-${item}`} colSpan="3" className={`px-2 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[70px] z-[50] bg-clip-padding ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{item}</th>));
                            }
                         })}
                       </tr>
@@ -1863,8 +1860,8 @@
                           <tr><td colSpan={100} className="text-center py-8 font-bold text-slate-400 text-sm bg-white border-b border-slate-100">Siswa kosong. Hubungi Admin!</td></tr>
                       ) : waliStudents.map((student, rowIdx) => (
                         <tr key={student.id} className={`transition-colors duration-200 group ${theme.tableHover} ${theme.rowBg}`}>
-                          <td className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 py-2 font-black text-slate-500 text-center align-middle sticky left-0 z-[50] border-b border-r border-slate-200 transition-colors bg-clip-padding text-[9px] sm:text-xs ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
-                          <td className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 py-2 font-bold text-slate-800 align-middle sticky left-[32px] sm:left-[45px] z-[50] truncate border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors bg-clip-padding text-[10px] sm:text-xs ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
+                          <td className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 py-3 font-black text-slate-500 text-center align-middle sticky left-0 z-[30] border-b border-r border-slate-200 transition-colors bg-clip-padding text-[9px] sm:text-xs ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
+                          <td className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 py-3 font-bold text-slate-800 align-middle sticky left-[32px] sm:left-[45px] z-[30] truncate border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors bg-clip-padding text-[10px] sm:text-xs leading-tight ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
                           {allMapelsSchema.map(m => {
                             const serverKey = `${classId}-${semCode}|${m.name.toUpperCase()}`;
                             const rawData = masterData.gradesData?.[serverKey]?.[student.id] || [];
@@ -1951,17 +1948,25 @@
               <div>
                 <div className="flex overflow-x-auto gap-1.5 pb-1 scrollbar-hide snap-x">
                   {user.assignments.find(a => a.type === 'WALI') && (
-                     <button onClick={() => requestSwitchClass(user.assignments.find(a => a.type === 'WALI'))} className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isWaliMode ? 'bg-amber-500 border-amber-600 text-white shadow-md' : 'bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100 shadow-sm'}`}>
-                        <div className="text-left"><span className={`block text-[11px] font-black`}>👑 WALI KELAS {user.assignments.find(a => a.type === 'WALI').classId}</span></div>
+                     <button onClick={() => requestSwitchClass(user.assignments.find(a => a.type === 'WALI'))} className={`flex-shrink-0 flex items-center justify-center px-4 py-2 min-w-[140px] rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isWaliMode ? 'bg-amber-500 border-amber-600 text-white shadow-md' : 'bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100 shadow-sm'}`}>
+                        <span className={`block text-[11px] font-black`}>👑 WALI KELAS {user.assignments.find(a => a.type === 'WALI').classId}</span>
                      </button>
                   )}
 
                   {teacherProgress.assignmentsProgress.map((assign, idx) => {
                     const isActive = assign.classId === activeAssignment?.classId && assign.mapel === activeAssignment?.mapel && assign.type !== 'WALI';
                     return (
-                      <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start ${isActive ? theme.activeBtn : theme.inactiveBtn}`}>
-                        <div className="text-left"><span className={`block text-[11px] font-black ${isActive?'text-white':isSAS?'text-slate-800':'text-rose-950'}`}>{assign.mapel}</span><span className={`block text-[9px] font-bold uppercase tracking-wider ${isActive?'text-white/70':isSAS?'text-slate-400':'text-rose-700/70'}`}>Kls {assign.classId}</span></div>
-                        <div className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg shadow-inner ${isActive ? 'bg-white/20 text-white border border-white/30' : assign.pct===100?'bg-emerald-100 text-emerald-700':(isSAS?'bg-slate-100 text-slate-500':'bg-orange-100 text-orange-600')}`}>{assign.pct}%</div>
+                      <button key={idx} onClick={() => requestSwitchClass(assign)} className={`flex-shrink-0 flex flex-col justify-center gap-1.5 px-3 py-2 min-w-[150px] max-w-[180px] rounded-xl border transition-all hover:scale-[1.05] active:scale-95 snap-start shadow-sm ${isActive ? theme.activeBtn : theme.inactiveBtn}`}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                           <span className={`text-[11px] sm:text-xs font-black truncate ${isActive?'text-white':isSAS?'text-slate-800':'text-rose-950'}`} title={assign.mapel}>{assign.mapel}</span>
+                           <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md whitespace-nowrap ${isActive?'bg-white/20 text-white':isSAS?'bg-indigo-100 text-indigo-700':'bg-rose-100 text-rose-700'}`}>{assign.classId}</span>
+                        </div>
+                        <div className="w-full flex items-center gap-2">
+                           <div className={`flex-1 rounded-full h-1.5 overflow-hidden ${isActive?'bg-black/20':'bg-slate-200'}`}>
+                              <div className={`h-1.5 rounded-full ${isActive?'bg-white':isSAS?'bg-indigo-500':'bg-rose-500'}`} style={{ width: `${assign.pct}%` }}></div>
+                           </div>
+                           <span className={`text-[9px] font-black ${isActive?'text-white':isSAS?'text-slate-500':'text-rose-600'}`}>{assign.pct}%</span>
+                        </div>
                       </button>
                     );
                   })}
@@ -1985,7 +1990,7 @@
                    </div>
                    
                    <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto scrollbar-hide py-1">
-                     <button onClick={() => onUpdateSuccess(false)} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-sky-100 active:scale-95 shadow-sm whitespace-nowrap"><IconRefresh className="w-3 h-3"/> Tarik Data GAS</button>
+                     <button onClick={() => fetchCloudMasterData(false)} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-sky-100 active:scale-95 shadow-sm whitespace-nowrap"><IconRefresh className="w-3 h-3"/> Tarik Data GAS</button>
                      
                      <div className="w-px h-5 bg-slate-300 mx-1"></div>
 
@@ -2007,33 +2012,33 @@
                       {colData.type === 'normal' ? (
                         <React.Fragment>
                         <tr className="h-[40px]">
-                          <th rowSpan="3" className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
-                          <th rowSpan="3" className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[32px] sm:left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
-                          <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40] ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
+                          <th rowSpan="3" className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky top-0 left-0 z-[80] border-b border-r border-slate-300 shadow-sm bg-clip-padding ${theme.stickyHeader}`}>No</th>
+                          <th rowSpan="3" className={`w-[100px] min-w-[100px] max-w-[100px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky top-0 left-[32px] sm:left-[45px] z-[80] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
+                          <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[70] bg-clip-padding ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
                         </tr>
                         <tr className="h-[30px]">
-                           <th colSpan="7" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-slate-100 text-slate-800">FORMATIF (UH)</th>
-                           <th rowSpan="2" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-pink-200 text-slate-900">{labelSTS}</th>
-                           <th rowSpan="2" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[40] bg-orange-200 text-slate-900">{labelSAS}</th>
+                           <th colSpan="7" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-slate-100 text-slate-800 bg-clip-padding">FORMATIF (UH)</th>
+                           <th rowSpan="2" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-pink-200 text-slate-900 bg-clip-padding">{labelSTS}</th>
+                           <th rowSpan="2" className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-[40px] z-[60] bg-orange-200 text-slate-900 bg-clip-padding">{labelSAS}</th>
                         </tr>
                         <tr className="h-[30px]">
-                           {tfHeaders.map((tf, idx) => <th key={tf} className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[70px] z-[40] bg-white text-slate-800`}>{tf}</th>)}
+                           {tfHeaders.map((tf, idx) => <th key={tf} className={`px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} sticky top-[70px] z-[50] bg-white text-slate-800 bg-clip-padding`}>{tf}</th>)}
                         </tr>
                         </React.Fragment>
                         ) : (
                           <React.Fragment>
                           <tr className="h-[40px]">
-                            <th rowSpan="3" className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[70] border-b border-r border-slate-300 align-middle shadow-sm top-0 bg-clip-padding ${theme.stickyHeader}`}>No</th>
-                            <th rowSpan="3" className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[32px] sm:left-[45px] z-[70] border-b border-r-[3px] !border-r-slate-400 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] top-0 bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
-                            <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[40] ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
+                            <th rowSpan="3" className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky top-0 left-0 z-[80] border-b border-r border-slate-300 align-middle shadow-sm bg-clip-padding ${theme.stickyHeader}`}>No</th>
+                            <th rowSpan="3" className={`w-[100px] min-w-[100px] max-w-[100px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky top-0 left-[32px] sm:left-[45px] z-[80] border-b border-r-[3px] !border-r-slate-400 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-clip-padding ${theme.stickyHeader}`}>Nama Siswa</th>
+                            <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 sticky top-0 z-[70] bg-clip-padding ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
                           </tr>
                           <tr className="h-[30px]">
-                            <th rowSpan="2" className={`px-2 min-w-[100px] sm:min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle sticky top-[40px] z-[40] bg-slate-200 text-slate-900`}>Penguji</th>
-                            {colData.schema.categories.map((cat, cIdx) => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-[40px] z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
+                            <th rowSpan="2" className={`px-2 min-w-[60px] sm:min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle sticky top-[40px] z-[60] bg-slate-200 text-slate-900 bg-clip-padding`}>Penguji</th>
+                            {colData.schema.categories.map((cat, cIdx) => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] sticky top-[40px] z-[60] bg-clip-padding ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
                           </tr>
                           <tr className="h-[30px]">
                             {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
-                                <th key={item} colSpan="3" className={`px-2 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[70px] z-[40] ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
+                                <th key={item} colSpan="3" className={`px-2 text-center border-b ${iIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black sticky top-[70px] z-[50] bg-clip-padding ${isSAS ? 'text-slate-900' : 'text-rose-950'} ${ITEM_BG_COLORS[cIdx % ITEM_BG_COLORS.length]}`}>{item}</th>
                             )))}
                           </tr>
                           </React.Fragment>
@@ -2044,8 +2049,8 @@
                         <tr><td colSpan={colData.keys.length + 2} className="text-center py-8 font-bold text-slate-400 text-sm bg-white border-b border-slate-100">Siswa kosong. Hubungi Admin!</td></tr>
                       ) : students.map((student, rowIdx) => (
                         <tr key={student.id} className={`transition-colors duration-200 group ${theme.tableHover} ${theme.rowBg}`}>
-                          <td className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 py-2 font-black text-slate-500 text-center align-middle sticky left-0 z-[50] border-b border-r border-slate-200 transition-colors bg-clip-padding text-[9px] sm:text-xs ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
-                          <td className={`w-[110px] min-w-[110px] max-w-[110px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 py-2 font-bold text-slate-800 align-middle sticky left-[32px] sm:left-[45px] z-[50] truncate border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors bg-clip-padding text-[10px] sm:text-xs ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
+                          <td className={`w-[32px] min-w-[32px] max-w-[32px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 py-4 font-black text-slate-500 text-center align-middle sticky left-0 z-[30] border-b border-r border-slate-200 transition-colors bg-clip-padding text-[9px] sm:text-xs ${theme.rowBg} ${theme.stickyColBg}`}>{rowIdx + 1}</td>
+                          <td className={`w-[100px] min-w-[100px] max-w-[100px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 py-4 font-bold text-slate-800 align-middle sticky left-[32px] sm:left-[45px] z-[30] truncate border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] transition-colors bg-clip-padding text-[10px] sm:text-xs leading-tight ${theme.rowBg} ${theme.stickyColBg}`}>{student.name}</td>
                           {colData.keys.map((colKey, colIdx) => {
                               const val = grades[student.id]?.[colKey];
                               const tBorder = getThickBorderClass(colKey, colData.type, colIdx === colData.keys.length - 1);
@@ -2053,7 +2058,7 @@
                               if (colKey === 'penguji') {
                                 return (
                                   <td key={colKey} className={`p-1 border-b align-middle ${tBorder} transition-colors ${theme.inputBg}`}>
-                                    <input id={`input-${rowIdx}-${colIdx}`} type="text" value={val||''} onChange={e=>handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)} className={`w-full h-7 sm:h-8 px-1 sm:px-2 rounded border text-[9px] sm:text-[10px] font-bold ${theme.focusRing} focus:ring-2 transition-all text-center shadow-inner ${theme.inputBorder} bg-white/70 ${isSAS ? 'text-slate-800' : 'text-rose-950'}`}/>
+                                    <input id={`input-${rowIdx}-${colIdx}`} type="text" value={val||''} onChange={e=>handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)} className={`w-full min-w-[60px] h-[30px] sm:min-w-[100px] sm:h-[36px] px-1 sm:px-2 rounded border text-[10px] sm:text-xs font-bold ${theme.focusRing} focus:ring-2 transition-all text-center shadow-inner ${theme.inputBorder} bg-white/70 ${isSAS ? 'text-slate-800' : 'text-rose-950'}`}/>
                                   </td>
                                 );
                               }
@@ -2061,14 +2066,14 @@
                               const isRemedi = val !== '' && Number(val) < 70;
                               const isSuccess = val !== '' && Number(val) >= 70;
                               const parts = colKey.split('_');
-                              const itemIdx = parts.length > 1 ? parseInt(parts[0]) : 0; // Use cat index for color
+                              const itemIdx = parts.length > 1 ? parseInt(parts[0]) : 0; 
                               const bgClass = colData.type === 'special' ? ITEM_BG_COLORS[itemIdx % ITEM_BG_COLORS.length] : theme.inputBg;
 
                               return (
                                 <td key={colKey} className={`p-1 border-b align-middle ${tBorder} ${bgClass}`}>
                                   <input id={`input-${rowIdx}-${colIdx}`} type="text" inputMode="numeric" placeholder="-" value={val || ''} 
                                     onChange={(e) => handleGradeChange(student.id, colKey, e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rowIdx, colIdx)} onPaste={(e) => handlePaste(e, rowIdx, colIdx)}
-                                    className={`w-8 h-7 sm:w-11 sm:h-8 mx-auto block text-center rounded border focus:outline-none focus:ring-2 ${theme.focusRing} transition-all font-black text-[10px] sm:text-[11px] shadow-sm box-border
+                                    className={`w-[28px] h-[30px] sm:w-[45px] sm:h-[36px] mx-auto block text-center rounded border focus:outline-none focus:ring-2 ${theme.focusRing} transition-all font-black text-[10px] sm:text-xs shadow-sm box-border px-0.5
                                       ${theme.rowBg} ${theme.inputBorder}
                                       ${isRemedi ? 'text-rose-600 shadow-[inset_0_1px_3px_rgba(225,29,72,0.3)]' 
                                       : isSuccess ? 'text-emerald-700 shadow-[inset_0_1px_3px_rgba(16,185,129,0.3)]' 
