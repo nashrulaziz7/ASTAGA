@@ -26,10 +26,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
   <style>
+    /* FIX: Mengembalikan &amp; menjadi & agar Google Fonts terbaca normal */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     body, html, #root { font-family: 'Inter', sans-serif; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #f8fafc; }
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -43,7 +44,10 @@
 <body class="text-slate-900 antialiased text-xs">
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-presets="react,env">
+    /** @jsx React.createElement */
+    /** @jsxFrag React.Fragment */
+    
     const { useState, useEffect, useRef, useMemo } = React;
 
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
@@ -463,7 +467,6 @@
       const sortedTeachersForLogin = useMemo(() => [...(masterData.teachers || [])].sort((a, b) => a.name.localeCompare(b.name)), [masterData.teachers]);
       const guruObj = masterData.teachers?.find(t => t.name === selectedGuru);
       
-      // Jika data KOSONG sama sekali, barulah layar inisialisasi muncul. Kalau udah ada cache, lewat!
       const isSyncing = masterData?.teachers?.length === 0 && isFetchingData;
 
       const handleLogin = (e) => {
@@ -861,7 +864,7 @@
       return (
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in pb-4">
           <FunnyDeletePopup show={deletePrompt.show} targetName={deletePrompt.target} type={deletePrompt.type} onConfirm={executeDelete} onCancel={() => setDeletePrompt({show:false})} />
-          {editingMapel && (<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div className="w-full max-w-sm rounded-[28px] bg-white p-6 shadow-2xl"><h3 className="font-black text-slate-800 text-sm mb-4">Edit Nama Mapel</h3><input type="text" value={editMapelName} onChange={e=>setEditMapelName(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border bg-slate-50 mb-4" /><div className="flex gap-2"><button onClick={() => setEditingMapel(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 font-bold text-xs">Batal</button><button onClick={saveMapel} className="flex-1 py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold text-xs">Simpan</button></div></div></div>)}
+          {editingMapel && (<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div className="w-full max-w-sm rounded-[28px] bg-white p-6 shadow-2xl"><h3 className="font-black text-slate-800 text-sm mb-2">Edit Nama Mapel</h3><p className="text-[9px] text-rose-600 mb-4 font-bold leading-tight">⚠️ PERINGATAN: Jika mengubah nama Mapel, pastikan Anda juga mengupdate MAPEL_CONFIG di script GAS agar sinkronisasi tidak rusak!</p><input type="text" value={editMapelName} onChange={e=>setEditMapelName(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border bg-slate-50 mb-4" /><div className="flex gap-2"><button onClick={() => setEditingMapel(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 font-bold text-xs">Batal</button><button onClick={saveMapel} className="flex-1 py-2.5 rounded-xl bg-fuchsia-600 text-white font-bold text-xs">Simpan</button></div></div></div>)}
           {editingTeacherObj && (<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div className="w-full max-w-sm rounded-[28px] bg-white p-6 shadow-2xl"><h3 className="font-black text-slate-800 text-sm mb-4">Edit Profil Guru</h3><input type="text" value={editingTeacherName} onChange={e=>setEditingTeacherName(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border mb-2" placeholder="Nama Guru"/><input type="text" value={editingTeacherPass} onChange={e=>setEditingTeacherPass(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border mb-2" placeholder="Password"/><input type="text" value={editingTeacherWali} onChange={e=>setEditingTeacherWali(e.target.value)} className="w-full px-3 py-2 text-xs font-bold rounded-xl border mb-4" placeholder="Wali Kelas (Opsional, cth: 5A)"/><div className="flex gap-2"><button onClick={()=>setEditingTeacherObj(null)} className="flex-1 py-2 rounded-xl bg-slate-100 font-bold text-xs">Batal</button><button onClick={saveTeacher} className="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs">Simpan</button></div></div></div>)}
           {editingStudentObj && (<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"><div className="w-full max-w-sm rounded-[28px] bg-white p-6 shadow-2xl"><h3 className="font-black text-slate-800 text-sm mb-4">Edit Profil Siswa</h3><input type="text" value={editStudentNumber} onChange={e=>setEditStudentNumber(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border bg-slate-50 mb-2" /><input type="text" value={editStudentName} onChange={e=>setEditStudentName(e.target.value)} className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border bg-slate-50 mb-4" /><div className="flex gap-2"><button onClick={() => setEditingStudentObj(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 font-bold text-xs">Batal</button><button onClick={saveStudent} className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs">Simpan</button></div></div></div>)}
 
@@ -1176,7 +1179,7 @@
         
         const dataToSubmit = { action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, semester: selectedSemester, mapel: activeAssignment.mapel, isSpecial: colData.type === 'special', schema: colData.schema, keys: colData.keys, grades: classStudents.map(student => ({ id: student.id, nama: student.name, ...grades[student.id] })) };
         try { 
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); 
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); 
             showToast('Selesai! Nilai tersimpan di Awan ☁️', 'success'); 
         } catch (error) { 
             showToast('Gagal kirim ke Awan.', 'error'); 
@@ -1192,7 +1195,7 @@
         
         const dataToSubmit = { action: "saveGrades", guru: user.name, kelas: activeAssignment.classId, semester: selectedSemester, mapel: activeAssignment.mapel, isSpecial: colData.type === 'special', schema: colData.schema, keys: colData.keys, grades: classStudents.map(student => ({ id: student.id, nama: student.name, ...emptyGrades[student.id] })) };
         try { 
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); 
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSubmit) }); 
             showToast('Berhasil! Data di GAS dikosongkan ☁️', 'success'); 
         } catch (error) { 
             showToast('Gagal mereset ke GAS.', 'error'); 
@@ -1337,8 +1340,8 @@
                   <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
                     <thead className="shadow-sm bg-white">
                       <tr>
-                        <th rowSpan="3" className={`w-[30px] min-w-[30px] max-w-[30px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[90] border-b border-r border-slate-300 bg-white bg-clip-padding`}>No</th>
-                        <th rowSpan="3" className={`w-[90px] min-w-[90px] max-w-[90px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[30px] sm:left-[45px] z-[90] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-white bg-clip-padding`}>Nama Siswa</th>
+                        <th rowSpan="4" className={`w-[30px] min-w-[30px] max-w-[30px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[90] border-b border-r border-slate-300 bg-white bg-clip-padding`}>No</th>
+                        <th rowSpan="4" className={`w-[90px] min-w-[90px] max-w-[90px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[30px] sm:left-[45px] z-[90] border-b border-r-[3px] !border-r-slate-400 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-white bg-clip-padding`}>Nama Siswa</th>
                         {allMapelsSchema.map(m => (
                             <th key={m.name} colSpan={m.keys.length} className="px-2 text-center border-b border-r-[3px] !border-r-slate-400 bg-clip-padding" style={{ backgroundColor: MAPEL_THEMES[m.name]?.bg, color: MAPEL_THEMES[m.name]?.text }}>
                                <div className="flex flex-col items-center justify-center gap-1 h-full py-1">
@@ -1354,14 +1357,14 @@
                               return (
                                 <React.Fragment key={m.name}>
                                   <th colSpan="7" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-clip-padding" style={{ backgroundColor: MAPEL_THEMES[m.name]?.light, color: MAPEL_THEMES[m.name]?.textDark }}>FORMATIF (UH)</th>
-                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-pink-200 text-slate-900 bg-clip-padding">{labelSTS}</th>
-                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-orange-200 text-slate-900 bg-clip-padding">{labelSAS}</th>
+                                  <th rowSpan="3" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-pink-200 text-slate-900 bg-clip-padding">{labelSTS}</th>
+                                  <th rowSpan="3" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-orange-200 text-slate-900 bg-clip-padding">{labelSAS}</th>
                                 </React.Fragment>
                               );
                            } else {
                               return (
                                 <React.Fragment key={m.name}>
-                                  <th rowSpan="2" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-slate-200 text-slate-900 bg-clip-padding">Penguji</th>
+                                  <th rowSpan="3" className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 bg-slate-200 text-slate-900 bg-clip-padding">Penguji</th>
                                   {m.schema.categories.map((cat, cIdx) => (
                                       <th key={cat.name} colSpan={cat.items.length * 3} className="px-1 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[9px] bg-clip-padding" style={{backgroundColor: cat.color, color: "#fff"}}><div className="flex flex-col items-center justify-center gap-1"><span>{cat.name}</span></div></th>
                                   ))}
@@ -1373,14 +1376,13 @@
                       <tr>
                         {allMapelsSchema.map(m => {
                            if (m.type === 'normal') {
-                              return tfHeaders.map((tf, idx) => <th key={`${m.name}-${tf}`} className={`px-0.5 sm:px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} bg-white text-slate-800 bg-clip-padding`}>{tf}</th>);
+                              return tfHeaders.map((tf, idx) => <th key={`${m.name}-${tf}`} rowSpan="2" className={`px-0.5 sm:px-2 text-center border-b ${idx===6?'border-r-[3px] !border-r-slate-400':'border-r border-slate-300'} bg-white text-slate-800 bg-clip-padding`}>{tf}</th>);
                            } else {
                               return m.schema.categories.flatMap((cat, iIdx) => cat.items.map((item, itemIdx) => <th key={`${m.name}-${item}`} colSpan="3" className={`px-0.5 sm:px-2 text-center border-b ${itemIdx === cat.items.length -1 ? 'border-r-[3px] !border-r-slate-400' : 'border-r border-slate-300'} text-[10px] font-black bg-clip-padding ${ITEM_BG_COLORS[iIdx % ITEM_BG_COLORS.length]}`} style={{color: MAPEL_THEMES[m.name]?.textDark}}>{item}</th>));
                            }
                         })}
                       </tr>
                       <tr>
-                        <th colSpan="2" className="border-0 p-0 m-0 w-[120px] sm:w-[225px] sticky left-0 z-[80] bg-transparent"></th>
                         {allMapelsSchema.map(m => {
                            if (m.type === 'normal') return null; 
                            return m.schema.categories.flatMap((cat, iIdx) => cat.items.flatMap((item, itemIdx) => (
@@ -1473,6 +1475,7 @@
               </div>
             </div>
 
+            {}
             {isWaliMode ? renderWaliKelasView() : (
               <div className={`flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-sm border mt-3 min-h-0 mx-2 sm:mx-4 mb-2 transition-colors duration-500 ${theme.border}`}>
                 <div className="flex-none flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50 p-2 border-b border-slate-200 gap-2">
@@ -1494,7 +1497,6 @@
                    </div>
                 </div>
 
-                {/* TABLE AREA SCROLLABLE (GURU MAPEL) */}
                 <div className="flex-1 overflow-auto relative bg-white rounded-b-2xl">
                   <div className="min-w-max bg-white">
                     <table className="w-full text-xs text-left text-slate-600 border-separate border-spacing-0">
@@ -1518,12 +1520,12 @@
                         ) : (
                           <React.Fragment>
                           <tr>
-                            <th rowSpan="3" className={`w-[30px] min-w-[30px] max-w-[30px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[90] border-b border-r border-slate-300 align-middle bg-white bg-clip-padding`}>No</th>
-                            <th rowSpan="3" className={`w-[90px] min-w-[90px] max-w-[90px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[30px] sm:left-[45px] z-[90] border-b border-r-[3px] !border-r-slate-400 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-white bg-clip-padding`}>Nama Siswa</th>
+                            <th rowSpan="4" className={`w-[30px] min-w-[30px] max-w-[30px] sm:w-[45px] sm:min-w-[45px] sm:max-w-[45px] px-1 sm:px-2 text-center sticky left-0 z-[90] border-b border-r border-slate-300 align-middle bg-white bg-clip-padding`}>No</th>
+                            <th rowSpan="4" className={`w-[90px] min-w-[90px] max-w-[90px] sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] px-1.5 sm:px-3 sticky left-[30px] sm:left-[45px] z-[90] border-b border-r-[3px] !border-r-slate-400 align-middle shadow-[2px_0_5px_-2px_rgba(0,0,0,0.15)] bg-white bg-clip-padding`}>Nama Siswa</th>
                             <th colSpan={colData.keys.length} className={`px-2 text-center border-b border-r-[3px] !border-r-slate-400 bg-clip-padding ${isSAS ? 'bg-indigo-500 text-white' : 'bg-rose-500 text-white'}`}>{activeAssignment.mapel}</th>
                           </tr>
                           <tr>
-                            <th rowSpan="2" className={`px-2 min-w-[60px] sm:min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle bg-slate-200 text-slate-900 bg-clip-padding`}>Penguji</th>
+                            <th rowSpan="3" className={`px-2 min-w-[60px] sm:min-w-[130px] border-b border-r-[3px] !border-r-slate-400 text-center align-middle bg-slate-200 text-slate-900 bg-clip-padding`}>Penguji</th>
                             {colData.schema.categories.map((cat, cIdx) => <th key={cat.name} colSpan={cat.items.length * 3} className={`px-1 text-center border-b border-r-[3px] !border-r-slate-400 font-black text-[11px] bg-clip-padding ${isSAS ? 'text-slate-900' : 'text-rose-950'}`} style={{backgroundColor: cat.color}}>{cat.name}</th>)}
                           </tr>
                           <tr>
@@ -1532,7 +1534,6 @@
                             )))}
                           </tr>
                           <tr>
-                            <th colSpan="2" className="border-0 p-0 m-0 w-[120px] sm:w-[225px] sticky left-0 z-[80] bg-transparent"></th>
                             {colData.schema.categories.map((cat, cIdx) => cat.items.map((item, iIdx) => (
                                 <React.Fragment key={`${cat.name}-${item}-sub`}>
                                   <th className={`px-0.5 sm:px-1 text-center border-b border-r border-slate-300 text-[9px] font-bold bg-slate-50 text-slate-800 bg-clip-padding`}>{firstUhLabel}</th>
