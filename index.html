@@ -51,14 +51,14 @@
 
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4kVdn7U-DcRxkeSEUaRb9Pv2yXKPdmnI34bZDlXJ1zYWcRolhrNSD-ctGpS_MjV3b/exec';
     
-    const APP_VERSION = "4.1.0-VIP";
+    const APP_VERSION = "4.2.0-VIP";
     const APP_CHANGELOG = [
+      "🔒 Validasi KKM: Dilarang keras kirim nilai di bawah 70 (merah)! Sistem akan menolak otomatis.",
       "⚡ Validasi Anti-Copas: Nilai UH tidak boleh sama persis (minimal 1 nilai beda) dan wajib diisi minimal 2 UH.",
       "🔴 Peringatan Visual Merah Mencolok: Kotak nilai di bawah 70 kini berubah warna jadi merah pekat.",
       "🔄 Urutan Mapel Wali Kelas: Posisi Mapel di Raport Wali Kelas sudah dikunci sesuai pakem standar sekolah.",
       "🚀 Optimistic Engine: Simpan Nilai, Reset GAS, dan pergerakan Progres kini INSTAN 0 DETIK! Data dikirim lewat jalur belakang tanpa mengunci layar.",
-      "🥶 Pembekuan Sempurna: Bug kolom UH1 dan STS yang bocor saat di-scroll kini sudah dibasmi!",
-      "📱 Optimasi Layar HP Extreem: Lebar kolom disusutkan drastis, ruang input nilai UH1 sampai UH7 bisa langsung terlihat sekaligus!"
+      "🥶 Pembekuan Sempurna: Bug kolom UH1 dan STS yang bocor saat di-scroll kini sudah dibasmi!"
     ];
 
     const KOCAK_EMPTY_WARNINGS = [
@@ -1234,6 +1234,21 @@
       const handleSaveToSpreadsheet = async () => {
         if (isGradesEmpty()) { triggerKocakPopup(KOCAK_EMPTY_WARNINGS[0], isSAS); return; }
 
+        for (let student of classStudents) {
+            const studentGrades = grades[student.id] || {};
+            for (let k of colData.keys) {
+                if (k !== 'penguji') {
+                    const val = studentGrades[k];
+                    if (val !== '' && val !== undefined && val !== null && !isNaN(val)) {
+                        if (Number(val) < 70) {
+                            triggerKocakPopup(`Waduh! Masih ada nilai merah di bawah 70 (Remedi) nih atas nama ${student.name}. 😱 Benerin dulu dong bosku jadi minimal 70 biar bisa dikirim ke Awan! 🚀`, isSAS);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         if (colData.type === 'normal') {
             for (let student of classStudents) {
                 const studentGrades = grades[student.id] || {};
@@ -1546,7 +1561,7 @@
           )}
 
           <header className={`flex-none text-white shadow-md h-12 flex items-center justify-between px-4 z-30 transition-colors duration-500 ${theme.headerBg}`}>
-            <div className="flex items-center space-x-2"><img src="icon.png" alt="Logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-6 h-6 object-contain rounded bg-white/20 p-0.5" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none">{isWaliMode ? `WALI KELAS ${activeAssignment?.classId}` : `KELAS ${activeAssignment?.classId}`}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[150px]">{activeAssignment?.mapel}</p></div></div>
+            <div className="flex items-center space-x-2"><img src="icon.png" alt="Logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} className="w-6 h-6 object-contain rounded bg-white/20 p-0.5" /><div><h1 className="font-extrabold text-sm tracking-wide leading-none uppercase">{user.name}</h1><p className="text-[9px] text-white/80 font-bold truncate max-w-[200px]">{isWaliMode ? `Guru Kelas ${activeAssignment?.classId}` : `Guru Pengampu Kls ${activeAssignment?.classId} - ${activeAssignment?.mapel}`}</p></div></div>
             <div className="flex items-center space-x-3">{isFetchingData && <div className="text-right hidden sm:block"><p className="text-[10px] font-bold text-white/80 animate-pulse">Sedang menyinkronkan...</p></div>}<div className="text-right hidden sm:block"><p className="text-[10px] font-bold leading-tight">{user.name}</p></div><button onClick={onLogout} className="p-1.5 bg-black/20 hover:bg-red-500 rounded-full transition-all hover:scale-105 shadow-inner" title="Keluar"><IconLogOut className="w-4 h-4" /></button></div>
           </header>
 
